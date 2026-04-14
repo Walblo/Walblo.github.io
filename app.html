@@ -22,7 +22,7 @@ body{background:var(--bg);color:var(--text);font-family:var(--font);font-size:14
 #data-status span{color:#16a34a}
 
 /* ── main grid ── */
-#main{display:grid;grid-template-columns:255px 185px 255px 300px 255px;flex:1;overflow-x:auto;overflow-y:auto;min-height:0;min-width:0;align-items:start}
+#main{display:grid;grid-template-columns:280px 255px 170px 255px 280px;flex:1;overflow-x:auto;overflow-y:auto;min-height:0;min-width:0;align-items:start}
 .col{display:flex;flex-direction:column;border-right:1px solid var(--border);min-height:100%}
 .col:last-child{border-right:none}
 .col-head{padding:8px 10px;background:var(--bg2);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:5}
@@ -128,13 +128,14 @@ input[type=range]{width:100%;accent-color:#4f46e5;height:4px}
 .cond-item input[type=radio]{accent-color:#4f46e5;cursor:pointer}
 
 /* ── HP bar and damage viz (col 4) ── */
-.defender-block{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:10px}
-.defender-name{font-size:13px;font-weight:600;margin-bottom:6px}
-.hp-track{position:relative;height:20px;background:var(--bg3);border-radius:5px;overflow:hidden;margin-bottom:4px;border:1px solid var(--border)}
+.defender-block{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:6px 8px}
+.defender-name{font-size:12px;font-weight:600;margin-bottom:3px;display:flex;align-items:center;justify-content:space-between;cursor:pointer;user-select:none}
+.defender-name .collapse-btn{font-size:11px;color:var(--text3)}
+.hp-track{position:relative;height:12px;background:var(--bg3);border-radius:5px;overflow:hidden;margin-bottom:3px;border:1px solid var(--border)}
 .hp-fill{height:100%;border-radius:5px;transition:width .3s;background:#16a34a}
 .hp-fill.yellow{background:#d97706}
 .hp-fill.red{background:#dc2626}
-.hp-label{position:absolute;right:6px;top:50%;transform:translateY(-50%);font-size:11px;font-weight:600;color:#fff;text-shadow:0 1px 2px rgba(0,0,0,.5)}
+.hp-label{position:absolute;right:4px;top:50%;transform:translateY(-50%);font-size:10px;font-weight:600;color:#fff;text-shadow:0 1px 2px rgba(0,0,0,.5)}
 .dmg-bar-wrap{margin:3px 0}
 .dmg-bar-label{font-size:11px;color:var(--text2);margin-bottom:2px;display:flex;justify-content:space-between}
 .dmg-track{position:relative;height:16px;background:var(--bg3);border-radius:4px;overflow:hidden;border:1px solid var(--border)}
@@ -326,10 +327,15 @@ input[type=range]{width:100%;accent-color:#4f46e5;height:4px}
   <button class="tab-btn active" id="tab-calc" onclick="switchTab('calc')">Calculator</button>
   <button class="tab-btn" id="tab-dex" onclick="switchTab('dex')">Pokédex</button>
   <button class="tab-btn" id="tab-cov" onclick="switchTab('cov')">Type Chart</button>
+  <button class="tab-btn" id="tab-ohko" onclick="switchTab('ohko')">OHKO Calc</button>
 </div>
 
 <div id="view-calc">
 <div id="main">
+  <div class="col" id="col-plot-a">
+    <div class="col-head"><h2>Side B → Side A</h2></div>
+    <div class="col-body" id="plot-body-a"><div class="no-defenders">Add Pokémon to both sides to see damage.</div></div>
+  </div>
   <div class="col" id="col-atk">
     <div class="col-head">
       <h2>Side A</h2>
@@ -348,15 +354,15 @@ input[type=range]{width:100%;accent-color:#4f46e5;height:4px}
     </div>
     <div class="col-body" id="def-body"></div>
   </div>
-  <div class="col" id="col-plot">
-    <div class="col-head"><h2>Damage Plots</h2></div>
-    <div class="col-body" id="plot-body"><div class="no-defenders">Add attackers and defenders to see damage.</div></div>
-  </div>
-  <div class="col" id="col-power">
-    <div class="col-head"><h2>Atk Needed → OHKO</h2></div>
-    <div class="col-body" id="power-body"></div>
+  <div class="col" id="col-plot-b">
+    <div class="col-head"><h2>Side A → Side B</h2></div>
+    <div class="col-body" id="plot-body-b"><div class="no-defenders">Add Pokémon to both sides to see damage.</div></div>
   </div>
 </div>
+</div>
+
+<div id="view-ohko" style="display:none;flex-direction:column;flex:1;overflow-y:auto;min-height:0;padding:12px">
+  <div id="power-body"></div>
 </div>
 
 <div id="view-dex">
@@ -1978,51 +1984,61 @@ function buildConditions() {
 // PLOT RENDERING
 // ─────────────────────────────────────────────────────────
 function renderPlots() {
-  const body = document.getElementById('plot-body');
-  body.innerHTML = '';
+  const bodyA = document.getElementById('plot-body-a'); // B attacks A
+  const bodyB = document.getElementById('plot-body-b'); // A attacks B
+  bodyA.innerHTML = '';
+  bodyB.innerHTML = '';
 
+  const empty = '<div class="no-defenders">Add Pokémon to both sides to see damage.</div>';
   if (defPanels.length === 0 || atkPanels.length === 0) {
-    body.innerHTML = '<div class="no-defenders">Add Pokémon to both sides to see damage.</div>';
-    return;
+    bodyA.innerHTML = empty; bodyB.innerHTML = empty; return;
   }
 
-  // Render damage in both directions
-  // direction: { attackers, defenders, label }
+  // direction: { attackers, defenders, body }
   const directions = [
-    { attackers: atkPanels, defenders: defPanels, label: 'Side A → Side B' },
-    { attackers: defPanels, defenders: atkPanels, label: 'Side B → Side A' },
+    { attackers: defPanels, defenders: atkPanels, body: bodyA }, // B → A
+    { attackers: atkPanels, defenders: defPanels, body: bodyB }, // A → B
   ];
 
-  directions.forEach(({ attackers, defenders, label }) => {
-    // Skip direction if no attacker has any active moves
+  directions.forEach(({ attackers, defenders, body }) => {
     const hasAnyMoves = attackers.some(atk =>
       (atk.moves || []).some(m => m.active) && DB.pokemon[atk.poke]
     );
-    if (!hasAnyMoves) return;
-
-    // Section header
-    const sectionHead = document.createElement('div');
-    sectionHead.style.cssText = 'font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--text2);padding:6px 2px 4px;margin-top:4px;border-top:1px solid var(--border)';
-    sectionHead.textContent = label;
-    body.appendChild(sectionHead);
+    if (!hasAnyMoves) {
+      body.innerHTML = '<div class="no-defenders" style="font-size:12px;color:var(--text3);padding:16px 0;text-align:center">No moves selected on attacking side.</div>';
+      return;
+    }
 
   defenders.forEach(def => {
     const defPoke = DB.pokemon[def.poke];
     const block = document.createElement('div');
     block.className = 'defender-block';
     const defHP = defPoke ? calcHP(defPoke.stats.hp, parseInt(def.evHP)||0, 31, 50) : 0;
-    block.innerHTML = `<div class="defender-name">${defPoke ? defPoke.display : 'No Pokémon'}</div>`;
 
-    if (!defPoke) { body.appendChild(block); return; }
+    const hpFillId = `hpfill-${def.id}-${body.id}`;
+
+    // Collapsible header
+    const nameRow = document.createElement('div');
+    nameRow.className = 'defender-name';
+    nameRow.innerHTML = `<span>${defPoke ? defPoke.display : 'No Pokémon'}</span><span class="collapse-btn">▾</span>`;
+    block.appendChild(nameRow);
+
+    const inner = document.createElement('div');
+    inner.className = 'defender-inner';
+    nameRow.addEventListener('click', () => {
+      const collapsed = inner.style.display === 'none';
+      inner.style.display = collapsed ? '' : 'none';
+      nameRow.querySelector('.collapse-btn').textContent = collapsed ? '▾' : '▸';
+    });
+
+    if (!defPoke) { block.appendChild(inner); body.appendChild(block); return; }
 
     // HP bar
     const hpBarWrap = document.createElement('div');
     hpBarWrap.className = 'hp-track';
-    const hpFillId = `hpfill-${def.id}-${label.replace(/\s/g,'')}`;
     hpBarWrap.innerHTML = `<div class="hp-fill" id="${hpFillId}" style="width:100%"></div><div class="hp-label">${defHP} HP</div>`;
-    block.appendChild(hpBarWrap);
+    inner.appendChild(hpBarWrap);
 
-    // Entry hazard damage
     let entryHazardDmg = 0;
     if (conds.hz_sr)  entryHazardDmg += hazardDamagePerTurn('sr',     defPoke, 1);
     if (conds.hz_sp1) entryHazardDmg += hazardDamagePerTurn('spikes1', defPoke, 1);
@@ -2041,11 +2057,11 @@ function renderPlots() {
           <b>Entry Hazards</b>
         </span>
         <span>${hPct.toFixed(1)}%</span></div>
-        <div class="dmg-track" style="background:var(--bg3);border-radius:4px;height:16px;position:relative;overflow:hidden;border:1px solid var(--border)">
+        <div class="dmg-track" style="background:var(--bg3);border-radius:4px;height:12px;position:relative;overflow:hidden;border:1px solid var(--border)">
           <div class="dmg-range" style="position:absolute;top:0;height:100%;left:0;width:${hPct.toFixed(1)}%;background:#6b7280;opacity:.7;border-radius:4px"></div>
-          <div class="dmg-val" style="position:absolute;right:5px;top:50%;transform:translateY(-50%);font-size:11px;font-weight:600;color:#fff;text-shadow:0 1px 2px rgba(0,0,0,.5)">${entryHazardDmg}</div>
+          <div class="dmg-val" style="position:absolute;right:5px;top:50%;transform:translateY(-50%);font-size:10px;font-weight:600;color:#fff;text-shadow:0 1px 2px rgba(0,0,0,.5)">${entryHazardDmg}</div>
         </div>`;
-      block.appendChild(hw);
+      inner.appendChild(hw);
     }
 
     attackers.forEach(atk => {
@@ -2063,7 +2079,7 @@ function renderPlots() {
           wrap.className = 'dmg-bar-wrap';
           const move = DB.moves[entry.name];
           wrap.innerHTML = `<div class="dmg-bar-label"><span style="display:flex;align-items:center;gap:5px"><span style="width:8px;height:8px;border-radius:50%;background:${atk.color};display:inline-block"></span>${atkPoke.display} · ${move?.display||entry.name}</span><span style="color:var(--text3);font-size:11px">${dmg.absorbed ? '🛡 Absorbed' : '✗ Immune'}</span></div>`;
-          block.appendChild(wrap);
+          inner.appendChild(wrap);
           return;
         }
 
@@ -2108,11 +2124,9 @@ function renderPlots() {
             totalMax = h1.max + hRest.max * (mhi.maxHits - 1);
             const avgHits = (mhi.minHits + mhi.maxHits) / 2;
             totalAvg = Math.floor(h1.avg + hRest.avg * (avgHits - 1));
-            if (mhi.minHits === mhi.maxHits) {
-              hitLabel = ` <span style="font-size:10px;color:var(--text2)">(×${mhi.minHits}${hasMultiscale ? ' · MS' : ''}${hasBerry ? ' · berry' : ''})</span>`;
-            } else {
-              hitLabel = ` <span style="font-size:10px;color:var(--text2)">(×${mhi.minHits}–${mhi.maxHits}${hasMultiscale ? ' · MS' : ''}${hasBerry ? ' · berry' : ''})</span>`;
-            }
+            hitLabel = mhi.minHits === mhi.maxHits
+              ? ` <span style="font-size:10px;color:var(--text2)">(×${mhi.minHits}${hasMultiscale ? ' · MS' : ''}${hasBerry ? ' · berry' : ''})</span>`
+              : ` <span style="font-size:10px;color:var(--text2)">(×${mhi.minHits}–${mhi.maxHits}${hasMultiscale ? ' · MS' : ''}${hasBerry ? ' · berry' : ''})</span>`;
           }
         } else {
           totalMin = dmg.min; totalMax = dmg.max; totalAvg = dmg.avg;
@@ -2125,11 +2139,8 @@ function renderPlots() {
 
         const hitsToKO = totalAvg > 0 ? Math.ceil((defHP - entryHazardDmg) / totalAvg) : 999;
         let toxicDmg = 0;
-        if (conds.hz_tsp2) {
-          for (let t = 1; t <= hitsToKO; t++) toxicDmg += Math.floor(defHP * t / 16);
-        } else if (conds.hz_tsp) {
-          toxicDmg = Math.floor(defHP * 0.125) * hitsToKO;
-        }
+        if (conds.hz_tsp2) { for (let t = 1; t <= hitsToKO; t++) toxicDmg += Math.floor(defHP * t / 16); }
+        else if (conds.hz_tsp) { toxicDmg = Math.floor(defHP * 0.125) * hitsToKO; }
         const totalWithHazards = cumulativeAvg + toxicDmg;
 
         let koText = '';
@@ -2138,9 +2149,7 @@ function renderPlots() {
         else if (totalWithHazards >= defHP) {
           const h = Math.ceil((defHP - entryHazardDmg - toxicDmg) / totalAvg);
           koText = `<span class="ko-badge ko-2">${h}HKO+haz</span>`;
-        } else {
-          koText = `<span class="ko-badge ko-n">${hitsToKO}HKO</span>`;
-        }
+        } else { koText = `<span class="ko-badge ko-n">${hitsToKO}HKO</span>`; }
 
         const wrap = document.createElement('div');
         wrap.className = 'dmg-bar-wrap';
@@ -2163,11 +2172,10 @@ function renderPlots() {
             const segMaxPct = Math.min(100 - cursor, h.max / defHP * 100);
             const seg = document.createElement('div');
             seg.style.cssText = `position:absolute;top:0;height:100%;border-radius:2px;`;
-            seg.style.left  = `${cursor + segMinPct}%`;
+            seg.style.left = `${cursor + segMinPct}%`;
             seg.style.width = `${Math.max(0.3, segMaxPct - segMinPct)}%`;
             seg.style.background = atk.color;
-            const isOptional = i >= mhi.minHits;
-            seg.style.opacity = isOptional ? '0.35' : (i === 0 && hasMultiscale ? '0.5' : '0.85');
+            seg.style.opacity = i >= mhi.minHits ? '0.35' : (i === 0 && hasMultiscale ? '0.5' : '0.85');
             track.appendChild(seg);
             cursor += segMinPct;
           }
@@ -2178,7 +2186,7 @@ function renderPlots() {
             const segMaxPct = Math.min(100 - cursor, h.max / defHP * 100);
             const seg = document.createElement('div');
             seg.style.cssText = `position:absolute;top:0;height:100%;border-radius:2px;`;
-            seg.style.left  = `${cursor + segMinPct}%`;
+            seg.style.left = `${cursor + segMinPct}%`;
             seg.style.width = `${Math.max(0.3, segMaxPct - segMinPct)}%`;
             seg.style.background = atk.color;
             seg.style.opacity = i === 0 && hasMultiscale ? '0.45' : String(0.65 + i * 0.1);
@@ -2200,7 +2208,7 @@ function renderPlots() {
         track.appendChild(val);
         wrap.appendChild(lbl);
         wrap.appendChild(track);
-        block.appendChild(wrap);
+        inner.appendChild(wrap);
       });
     });
 
@@ -2212,11 +2220,11 @@ function renderPlots() {
       hpFill.className = 'hp-fill' + (remaining > 50 ? '' : remaining > 25 ? ' yellow' : ' red');
     }
 
+    block.appendChild(inner);
     body.appendChild(block);
   });
-  }); // end directions.forEach
+  }); // end directions
 }
-
 
 // ─────────────────────────────────────────────────────────
 // POWER NEEDED PANEL
@@ -2364,9 +2372,11 @@ function switchTab(tab) {
   document.getElementById('view-calc').style.display = tab === 'calc' ? 'flex' : 'none';
   document.getElementById('view-dex').style.display  = tab === 'dex'  ? 'flex' : 'none';
   document.getElementById('view-cov').style.display  = tab === 'cov'  ? 'block' : 'none';
+  document.getElementById('view-ohko').style.display = tab === 'ohko' ? 'flex' : 'none';
   document.getElementById('tab-calc').classList.toggle('active', tab === 'calc');
   document.getElementById('tab-dex').classList.toggle('active',  tab === 'dex');
   document.getElementById('tab-cov').classList.toggle('active',  tab === 'cov');
+  document.getElementById('tab-ohko').classList.toggle('active', tab === 'ohko');
   if (tab === 'dex') renderDex();
   if (tab === 'cov') { tcRender(); optInitPills(); }
 }
