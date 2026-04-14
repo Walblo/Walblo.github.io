@@ -390,7 +390,11 @@ input[type=range]{width:100%;accent-color:#4f46e5;height:4px}
   <div style="flex:1;display:flex;flex-direction:column;overflow:hidden;min-height:0">
     <div id="ohko-list-controls" style="padding:8px 12px;border-bottom:1px solid var(--border);background:var(--bg2);display:flex;flex-wrap:wrap;gap:6px;align-items:center;flex-shrink:0">
       <input id="ohko-search" type="text" placeholder="Search name or ability…" style="background:var(--bg3);border:1px solid var(--border);color:var(--text);padding:4px 8px;border-radius:5px;font-size:12px;outline:none;font-family:var(--font);width:170px">
-      <input id="ohko-move-search" type="text" placeholder="Must learn move…" style="background:var(--bg3);border:1px solid var(--border);color:var(--text);padding:4px 8px;border-radius:5px;font-size:12px;outline:none;font-family:var(--font);width:150px">
+      <div style="position:relative;display:flex;align-items:center;gap:4px;flex-wrap:wrap">
+        <input id="ohko-move-input" type="text" placeholder="Must learn move…" autocomplete="off" style="background:var(--bg3);border:1px solid var(--border);color:var(--text);padding:4px 8px;border-radius:5px;font-size:12px;outline:none;font-family:var(--font);width:150px">
+        <div id="ohko-move-suggestions" style="position:absolute;top:100%;left:0;background:var(--bg2);border:1px solid var(--border);border-radius:5px;z-index:50;max-height:200px;overflow-y:auto;min-width:180px;box-shadow:var(--shadow-md)"></div>
+        <div id="ohko-move-tags" style="display:flex;flex-wrap:wrap;gap:4px"></div>
+      </div>
       <select id="ohko-sort" style="background:var(--bg3);border:1px solid var(--border);color:var(--text);padding:4px 8px;border-radius:5px;font-size:12px;outline:none;font-family:var(--font)">
         <option value="eff">Sort: Effectiveness</option>
         <option value="atk">Sort: Atk stat ↓</option>
@@ -601,8 +605,62 @@ async function init() {
 
     // OHKO list control listeners
     document.getElementById('ohko-search').addEventListener('input', () => renderOhkoListDisplay());
-    document.getElementById('ohko-move-search').addEventListener('input', () => renderOhkoListDisplay());
     document.getElementById('ohko-sort').addEventListener('change', () => renderOhkoListDisplay());
+
+    // Move filter (tag-based autocomplete like Pokédex)
+    window._ohkoMoveFilters = [];
+    const ohkoMoveInput = document.getElementById('ohko-move-input');
+    const ohkoMoveSugg  = document.getElementById('ohko-move-suggestions');
+    const ohkoMoveTags  = document.getElementById('ohko-move-tags');
+
+    function ohkoRenderMoveTags() {
+      ohkoMoveTags.innerHTML = '';
+      window._ohkoMoveFilters.forEach(key => {
+        const move = DB.moves[key];
+        const tag = document.createElement('div');
+        tag.className = 'move-filter-tag';
+        tag.innerHTML = `<span>${move ? move.display : key}</span><button>×</button>`;
+        tag.querySelector('button').addEventListener('click', () => {
+          window._ohkoMoveFilters = window._ohkoMoveFilters.filter(m => m !== key);
+          ohkoRenderMoveTags();
+          renderOhkoListDisplay();
+        });
+        ohkoMoveTags.appendChild(tag);
+      });
+    }
+
+    function ohkoAddMoveFilter(key) {
+      if (!key || window._ohkoMoveFilters.includes(key)) { ohkoMoveSugg.innerHTML=''; ohkoMoveInput.value=''; return; }
+      window._ohkoMoveFilters.push(key);
+      ohkoMoveInput.value = '';
+      ohkoMoveSugg.innerHTML = '';
+      ohkoRenderMoveTags();
+      renderOhkoListDisplay();
+    }
+
+    ohkoMoveInput.addEventListener('input', () => {
+      const q = ohkoMoveInput.value.toLowerCase().trim();
+      ohkoMoveSugg.innerHTML = '';
+      if (!q) return;
+      const matches = Object.values(DB.moves).filter(m => m.display && m.display.toLowerCase().includes(q)).slice(0, 12);
+      matches.forEach(m => {
+        const d = document.createElement('div');
+        d.textContent = m.display;
+        d.style.cssText = 'padding:5px 10px;font-size:12px;cursor:pointer;color:var(--text)';
+        d.addEventListener('mouseover', () => d.style.background = 'var(--bg3)');
+        d.addEventListener('mouseout',  () => d.style.background = '');
+        d.addEventListener('mousedown', e => { e.preventDefault(); ohkoAddMoveFilter(m.name); });
+        ohkoMoveSugg.appendChild(d);
+      });
+    });
+    ohkoMoveInput.addEventListener('keydown', e => {
+      if (e.key === 'Enter') {
+        const q = ohkoMoveInput.value.toLowerCase().trim().replace(/ /g,'-');
+        if (DB.moves[q]) ohkoAddMoveFilter(q);
+      }
+      if (e.key === 'Escape') { ohkoMoveSugg.innerHTML=''; ohkoMoveInput.value=''; }
+    });
+    ohkoMoveInput.addEventListener('blur', () => setTimeout(() => { ohkoMoveSugg.innerHTML=''; }, 150));
   } catch(e) {
     document.getElementById('data-status').textContent = 'Error loading data — run generate_data.py first.';
     console.error(e);
@@ -2737,7 +2795,6 @@ function _renderOhkoResults(results, defTypes) {
 
   // ── Controls state ──
   const searchVal    = (document.getElementById('ohko-search')?.value || '').toLowerCase();
-  const moveSearchVal = (document.getElementById('ohko-move-search')?.value || '').toLowerCase();
   const sortVal      = document.getElementById('ohko-sort')?.value || 'eff';
 
   // Build type tag filter UI
@@ -2775,14 +2832,17 @@ function _renderOhkoResults(results, defTypes) {
     return false;
   });
 
-  // ── Filter by learnable move search ──
-  if (moveSearchVal) {
+  // ── Filter by learnable move tags ──
+  const ohkoMoveFilters = window._ohkoMoveFilters || [];
+  if (ohkoMoveFilters.length > 0) {
     filtered = filtered.filter(({ poke }) =>
-      (poke.moves || []).some(m => {
-        const move = DB.moves[m];
-        return move && move.display && move.display.toLowerCase().includes(moveSearchVal);
-      })
+      ohkoMoveFilters.every(key => (poke.moves || []).includes(key))
     );
+  }
+
+  if (filtered.length === 0) {
+    body.innerHTML = '<div style="font-size:12px;color:var(--text3);padding:12px 0">No Pokémon match the current filters.</div>';
+    return;
   }
 
   // ── Filter by selected type tags ──
