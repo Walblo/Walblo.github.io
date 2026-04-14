@@ -595,7 +595,7 @@ const COLORS = ['#e53e3e','#3182ce','#38a169','#d69e2e','#805ad5','#dd6b20','#00
 let atkPanels = [];
 let defPanels = [];
 let atkCounter = 0, defCounter = 100;
-const pwTarget = { poke: '', nature: 'Hardy', evHP:0, evDef:0, evSpDef:0, weather:'none', doubles:false, reflect:false, lightscreen:false, auroraveil:false, weatherBoost:false };
+const pwTarget = { poke: '', nature: 'Hardy', evHP:0, evDef:0, evSpDef:0, weather:'none', doubles:false, reflect:false, lightscreen:false, auroraveil:false, weatherMult:1 };
 
 // Condition state
 const conds = {
@@ -2348,7 +2348,11 @@ function buildPowerPanel() {
                   ${{none:'— None',sun:'☀ Sun',rain:'🌧 Rain',sand:'🌪 Sand',hail:'❄ Hail',snow:'🌨 Snow'}[w]}
                 </label>`).join('')}
             </div>
-            <label class="cond-item" style="font-size:12px;margin-bottom:6px"><input type="checkbox" id="pw-weatherboost"> Move type boosted by weather ×1.5</label>
+            <div style="font-size:11px;color:var(--text2);font-weight:600;margin-bottom:2px">Move vs weather</div>
+            <label class="cond-item" style="font-size:12px"><input type="radio" name="pw-weathermult" id="pw-wm-neutral" value="1" checked> Neutral</label>
+            <label class="cond-item" style="font-size:12px"><input type="radio" name="pw-weathermult" id="pw-wm-boost" value="1.5"> Boosted ×1.5 <span style="font-size:10px;color:var(--text3)">(Water/Rain, Fire/Sun)</span></label>
+            <label class="cond-item" style="font-size:12px;margin-bottom:6px"><input type="radio" name="pw-weathermult" id="pw-wm-weak" value="0.5"> Weakened ×0.5 <span style="font-size:10px;color:var(--text3)">(Fire/Rain, Water/Sun)</span></label>
+            <label class="cond-item" style="font-size:12px;margin-bottom:6px"><input type="checkbox" id="pw-weatherpen"> Move weakened by weather ×0.5</label>
             <div style="font-size:11px;color:var(--text2);font-weight:600;margin-bottom:2px">Screens on defender</div>
             <label class="cond-item" style="font-size:12px;margin-bottom:2px"><input type="checkbox" id="pw-doubles"> Doubles</label>
             <label class="cond-item" style="font-size:12px"><input type="checkbox" id="pw-reflect"> Reflect (phys ÷2)</label>
@@ -2387,14 +2391,15 @@ function buildPowerPanel() {
   document.getElementById('pw-poke-search').appendChild(pwSearchWrap);
   buildNatureDropdown('pw-nature', pwTarget);
 
-  ['pw-stab','pw-se-none','pw-se-2x','pw-se-4x','pw-doubles','pw-reflect','pw-lightscreen','pw-auroraveil','pw-weatherboost',
+  ['pw-stab','pw-se-none','pw-se-2x','pw-se-4x','pw-doubles','pw-reflect','pw-lightscreen','pw-auroraveil',
+   'pw-wm-neutral','pw-wm-boost','pw-wm-weak',
    'pw-item-none','pw-item-typeplate','pw-item-lifeorb','pw-item-choice'].forEach(id => {
     document.getElementById(id).addEventListener('change', () => {
-      pwTarget.doubles      = document.getElementById('pw-doubles').checked;
-      pwTarget.reflect      = document.getElementById('pw-reflect').checked;
-      pwTarget.lightscreen  = document.getElementById('pw-lightscreen').checked;
-      pwTarget.auroraveil   = document.getElementById('pw-auroraveil').checked;
-      pwTarget.weatherBoost = document.getElementById('pw-weatherboost').checked;
+      pwTarget.doubles     = document.getElementById('pw-doubles').checked;
+      pwTarget.reflect     = document.getElementById('pw-reflect').checked;
+      pwTarget.lightscreen = document.getElementById('pw-lightscreen').checked;
+      pwTarget.auroraveil  = document.getElementById('pw-auroraveil').checked;
+      pwTarget.weatherMult = parseFloat(document.querySelector('input[name="pw-weathermult"]:checked')?.value || 1);
       renderPowerPanel();
     });
   });
@@ -2477,7 +2482,7 @@ function renderPowerPanel() {
   // Weather offensive boost — 1.5× if attacker's move type is boosted by weather
   // Sun boosts Fire, Rain boosts Water. The user indicates this via the weather selection.
   // We apply it as a separate multiplier so it's transparent.
-  const weatherOffMult = (pwTarget.weatherBoost) ? 1.5 : 1;
+  const weatherOffMult = pwTarget.weatherMult || 1;
 
    function minAtk(D) {
      return Math.max(1, Math.ceil((defHP - 2) * 50 * D / (22 * power * totalMult * weatherOffMult)));
