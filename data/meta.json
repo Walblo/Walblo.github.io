@@ -1,0 +1,698 @@
+{
+  "version": 1,
+  "generated": "2026-04-09T12:18:50.087099Z",
+  "natures": [
+    {
+      "name": "Hardy",
+      "boost": null,
+      "drop": null
+    },
+    {
+      "name": "Lonely",
+      "boost": "attack",
+      "drop": "defense"
+    },
+    {
+      "name": "Brave",
+      "boost": "attack",
+      "drop": "speed"
+    },
+    {
+      "name": "Adamant",
+      "boost": "attack",
+      "drop": "special-attack"
+    },
+    {
+      "name": "Naughty",
+      "boost": "attack",
+      "drop": "special-defense"
+    },
+    {
+      "name": "Bold",
+      "boost": "defense",
+      "drop": "attack"
+    },
+    {
+      "name": "Docile",
+      "boost": null,
+      "drop": null
+    },
+    {
+      "name": "Relaxed",
+      "boost": "defense",
+      "drop": "speed"
+    },
+    {
+      "name": "Impish",
+      "boost": "defense",
+      "drop": "special-attack"
+    },
+    {
+      "name": "Lax",
+      "boost": "defense",
+      "drop": "special-defense"
+    },
+    {
+      "name": "Timid",
+      "boost": "speed",
+      "drop": "attack"
+    },
+    {
+      "name": "Hasty",
+      "boost": "speed",
+      "drop": "defense"
+    },
+    {
+      "name": "Serious",
+      "boost": null,
+      "drop": null
+    },
+    {
+      "name": "Jolly",
+      "boost": "speed",
+      "drop": "special-attack"
+    },
+    {
+      "name": "Naive",
+      "boost": "speed",
+      "drop": "special-defense"
+    },
+    {
+      "name": "Modest",
+      "boost": "special-attack",
+      "drop": "attack"
+    },
+    {
+      "name": "Mild",
+      "boost": "special-attack",
+      "drop": "defense"
+    },
+    {
+      "name": "Quiet",
+      "boost": "special-attack",
+      "drop": "speed"
+    },
+    {
+      "name": "Bashful",
+      "boost": null,
+      "drop": null
+    },
+    {
+      "name": "Rash",
+      "boost": "special-attack",
+      "drop": "special-defense"
+    },
+    {
+      "name": "Calm",
+      "boost": "special-defense",
+      "drop": "attack"
+    },
+    {
+      "name": "Gentle",
+      "boost": "special-defense",
+      "drop": "defense"
+    },
+    {
+      "name": "Sassy",
+      "boost": "special-defense",
+      "drop": "speed"
+    },
+    {
+      "name": "Careful",
+      "boost": "special-defense",
+      "drop": "special-attack"
+    },
+    {
+      "name": "Quirky",
+      "boost": null,
+      "drop": null
+    }
+  ],
+  "type_chart": {
+    "normal": {
+      "rock": 0.5,
+      "steel": 0.5,
+      "ghost": 0
+    },
+    "fire": {
+      "fire": 0.5,
+      "water": 0.5,
+      "rock": 0.5,
+      "dragon": 0.5,
+      "grass": 2,
+      "ice": 2,
+      "bug": 2,
+      "steel": 2
+    },
+    "water": {
+      "water": 0.5,
+      "grass": 0.5,
+      "dragon": 0.5,
+      "fire": 2,
+      "ground": 2,
+      "rock": 2
+    },
+    "electric": {
+      "electric": 0.5,
+      "grass": 0.5,
+      "dragon": 0.5,
+      "ground": 0,
+      "flying": 2,
+      "water": 2
+    },
+    "grass": {
+      "fire": 0.5,
+      "grass": 0.5,
+      "poison": 0.5,
+      "flying": 0.5,
+      "bug": 0.5,
+      "dragon": 0.5,
+      "steel": 0.5,
+      "water": 2,
+      "ground": 2,
+      "rock": 2
+    },
+    "ice": {
+      "water": 0.5,
+      "ice": 0.5,
+      "steel": 0.5,
+      "fire": 0.5,
+      "grass": 2,
+      "ground": 2,
+      "flying": 2,
+      "dragon": 2
+    },
+    "fighting": {
+      "poison": 0.5,
+      "flying": 0.5,
+      "psychic": 0.5,
+      "bug": 0.5,
+      "fairy": 0.5,
+      "ghost": 0,
+      "normal": 2,
+      "ice": 2,
+      "rock": 2,
+      "dark": 2,
+      "steel": 2
+    },
+    "poison": {
+      "poison": 0.5,
+      "ground": 0.5,
+      "rock": 0.5,
+      "ghost": 0.5,
+      "steel": 0,
+      "grass": 2,
+      "fairy": 2
+    },
+    "ground": {
+      "grass": 0.5,
+      "bug": 0.5,
+      "flying": 0,
+      "fire": 2,
+      "electric": 2,
+      "poison": 2,
+      "rock": 2,
+      "steel": 2
+    },
+    "flying": {
+      "electric": 0.5,
+      "rock": 0.5,
+      "steel": 0.5,
+      "grass": 2,
+      "fighting": 2,
+      "bug": 2
+    },
+    "psychic": {
+      "psychic": 0.5,
+      "steel": 0.5,
+      "dark": 0,
+      "fighting": 2,
+      "poison": 2
+    },
+    "bug": {
+      "fire": 0.5,
+      "fighting": 0.5,
+      "flying": 0.5,
+      "ghost": 0.5,
+      "steel": 0.5,
+      "fairy": 0.5,
+      "grass": 2,
+      "psychic": 2,
+      "dark": 2
+    },
+    "rock": {
+      "fighting": 0.5,
+      "ground": 0.5,
+      "steel": 0.5,
+      "fire": 2,
+      "ice": 2,
+      "flying": 2,
+      "bug": 2
+    },
+    "ghost": {
+      "normal": 0,
+      "dark": 0.5,
+      "ghost": 2,
+      "psychic": 2
+    },
+    "dragon": {
+      "steel": 0.5,
+      "fairy": 0,
+      "dragon": 2
+    },
+    "dark": {
+      "fighting": 0.5,
+      "dark": 0.5,
+      "fairy": 0.5,
+      "ghost": 2,
+      "psychic": 2
+    },
+    "steel": {
+      "fire": 0.5,
+      "water": 0.5,
+      "electric": 0.5,
+      "steel": 0.5,
+      "ice": 2,
+      "rock": 2,
+      "fairy": 2
+    },
+    "fairy": {
+      "fire": 0.5,
+      "poison": 0.5,
+      "steel": 0.5,
+      "fighting": 2,
+      "dragon": 2,
+      "dark": 2
+    }
+  },
+  "items": {
+    "leftovers": {
+      "name": "leftovers",
+      "display": "Leftovers",
+      "effect": "Tenu: Restaure 1/16 (6.25%) des PV max du porteur \u00e0 la fin de chaque tour.",
+      "category": "held-items"
+    },
+    "black-sludge": {
+      "name": "black-sludge",
+      "display": "Black Sludge",
+      "effect": "Tenu: Le porteur de type Poison regagne 1/16 (6.25%) de ses PV max \u00e0 chaque tour. Les non-types Poison subissent 1/8 (12.5%) de PV max en d\u00e9g\u00e2ts.",
+      "category": "held-items"
+    },
+    "assault-vest": {
+      "name": "assault-vest",
+      "display": "Assault Vest",
+      "effect": "Augmente la D\u00e9fense Sp\u00e9ciale du porteur de 1.5x.  Emp\u00eache le porteur de s\u00e9lectionner des capacit\u00e9s de statut.",
+      "category": "held-items"
+    },
+    "rocky-helmet": {
+      "name": "rocky-helmet",
+      "display": "Rocky Helmet",
+      "effect": "Tenu: Quand le porteur est touch\u00e9 par une capacit\u00e9 \u00e0 contact, le Pok\u00e9mon attaquant subit 1/6 de ses PV max en d\u00e9g\u00e2ts.",
+      "category": "held-items"
+    },
+    "choice-band": {
+      "name": "choice-band",
+      "display": "Choice Band",
+      "effect": "Tenu: Augmente l'Attaque de 50%, mais restreint le porteur \u00e0 seulement une capacit\u00e9.",
+      "category": "choice"
+    },
+    "choice-specs": {
+      "name": "choice-specs",
+      "display": "Choice Specs",
+      "effect": "Tenu: Augmente l'Attaque Sp\u00e9ciale de 50%, mais restreint le porteur a seulement une capacit\u00e9.",
+      "category": "choice"
+    },
+    "choice-scarf": {
+      "name": "choice-scarf",
+      "display": "Choice Scarf",
+      "effect": "Tenu: Augmente la Vitesse de 50%, mais restreint le porteur \u00e0 une seule capacit\u00e9.",
+      "category": "choice"
+    },
+    "life-orb": {
+      "name": "life-orb",
+      "display": "Life Orb",
+      "effect": "Tenu: Les capacit\u00e9s du porteur infligent 30% de d\u00e9g\u00e2ts suppl\u00e9mentaires, mais co\u00fbtent 10% des PV max.",
+      "category": "held-items"
+    },
+    "expert-belt": {
+      "name": "expert-belt",
+      "display": "Expert Belt",
+      "effect": "Tenu: Les capacit\u00e9s super efficaces du porteur infligent 20% de d\u00e9g\u00e2ts suppl\u00e9mentaires.",
+      "category": "held-items"
+    },
+    "muscle-band": {
+      "name": "muscle-band",
+      "display": "Muscle Band",
+      "effect": "Tenu: Booste les d\u00e9g\u00e2ts des capacit\u00e9s physiques utilis\u00e9es par le porteur de 10%.",
+      "category": "held-items"
+    },
+    "wise-glasses": {
+      "name": "wise-glasses",
+      "display": "Wise Glasses",
+      "effect": "Tenu: Booste les d\u00e9g\u00e2ts des capacit\u00e9s sp\u00e9ciales utilis\u00e9es par le porteur de 10%.",
+      "category": "held-items"
+    },
+    "focus-sash": {
+      "name": "focus-sash",
+      "display": "Focus Sash",
+      "effect": "Tenu: Le porteur survit \u00e0 n'importe quelle attaque \u00e0 un coup \u00e0 1 PV s'il est aux PV max, ensuite l'objet est consomm\u00e9.",
+      "category": "held-items"
+    },
+    "eviolite": {
+      "name": "eviolite",
+      "display": "Eviolite",
+      "effect": "Tenu: La D\u00e9fense et D\u00e9fense Sp\u00e9ciale du porteur augmentent de 50%, tant qu'il n'est pas compl\u00e8tement \u00e9volu\u00e9.",
+      "category": "held-items"
+    },
+    "sitrus-berry": {
+      "name": "sitrus-berry",
+      "display": "Sitrus Berry",
+      "effect": "Tenu: Consomm\u00e9 \u00e0 1/2 des PV max pour regagner 1/4 des PV max.",
+      "category": "medicine"
+    },
+    "lum-berry": {
+      "name": "lum-berry",
+      "display": "Lum Berry",
+      "effect": "Tenu: Consomme pour soigner n'importe quelle condition de statut ou la confusion.",
+      "category": "medicine"
+    },
+    "weakness-policy": {
+      "name": "weakness-policy",
+      "display": "Weakness Policy",
+      "effect": "Tenu: Quand le porteur est touch\u00e9 par une capacit\u00e9 super efficace, son Attaque et Attaque Sp\u00e9ciale augmentent de deux niveaux.",
+      "category": "held-items"
+    },
+    "booster-energy": {
+      "name": "booster-energy",
+      "display": "Booster Energy",
+      "effect": "",
+      "category": "held-items"
+    },
+    "clear-amulet": {
+      "name": "clear-amulet",
+      "display": "Clear Amulet",
+      "effect": "",
+      "category": "held-items"
+    },
+    "covert-cloak": {
+      "name": "covert-cloak",
+      "display": "Covert Cloak",
+      "effect": "",
+      "category": "held-items"
+    },
+    "mirror-herb": {
+      "name": "mirror-herb",
+      "display": "Mirror Herb",
+      "effect": "",
+      "category": "held-items"
+    },
+    "loaded-dice": {
+      "name": "loaded-dice",
+      "display": "Loaded Dice",
+      "effect": "",
+      "category": "held-items"
+    },
+    "punching-glove": {
+      "name": "punching-glove",
+      "display": "Punching Glove",
+      "effect": "",
+      "category": "held-items"
+    },
+    "protective-pads": {
+      "name": "protective-pads",
+      "display": "Protective Pads",
+      "effect": "Tenu: Emp\u00eache les effets secondaires des capacit\u00e9s \u00e0 contact utilis\u00e9es sur le porteur.",
+      "category": "held-items"
+    },
+    "flame-orb": {
+      "name": "flame-orb",
+      "display": "Flame Orb",
+      "effect": "Tenu: Inflige la Br\u00fblure au porteur \u00e0 la fin du tour. S'active apr\u00e8s que les d\u00e9g\u00e2ts due la Br\u00fblure devraient avoir lieu.",
+      "category": "bad-held-items"
+    },
+    "toxic-orb": {
+      "name": "toxic-orb",
+      "display": "Toxic Orb",
+      "effect": "Tenu: Inflige Toxik au porteur \u00e0 la fin du tour. S'active apr\u00e8s que les d\u00e9g\u00e2ts du Poison devraient avoir lieu.",
+      "category": "bad-held-items"
+    },
+    "iron-ball": {
+      "name": "iron-ball",
+      "display": "Iron Ball",
+      "effect": "Tenu: La Vitesse du porteur est divis\u00e9e par deux. Annule toutes les immunit\u00e9s au type Sol, et les capacit\u00e9s Sol infligent des d\u00e9g\u00e2ts neutres aux types Vol. Pi\u00e8ge Sable, Picots et Pics Toxik affectent le porteur.",
+      "category": "bad-held-items"
+    },
+    "ring-target": {
+      "name": "ring-target",
+      "display": "Ring Target",
+      "effect": "Tenu: Annule les immunit\u00e9s de type du porteur. Les immunit\u00e9s aux talents ne sont pas supprim\u00e9es.",
+      "category": "held-items"
+    },
+    "safety-goggles": {
+      "name": "safety-goggles",
+      "display": "Safety Goggles",
+      "effect": "Tenu: Emp\u00eache les d\u00e9g\u00e2ts des capacit\u00e9s \u00e0 base de poudre et les d\u00e9g\u00e2ts de Gr\u00eale et Temp\u00eate de Sable.",
+      "category": "held-items"
+    },
+    "shed-shell": {
+      "name": "shed-shell",
+      "display": "Shed Shell",
+      "effect": "Tenu: Le porteur peut ignorer les effets des pi\u00e8ges et se retirer. Il n'est pas possible de se retirer des capacit\u00e9s multitours.",
+      "category": "held-items"
+    },
+    "white-herb": {
+      "name": "white-herb",
+      "display": "White Herb",
+      "effect": "Tenu: R\u00e9initialise toutes les stats diminu\u00e9es \u00e0 la normale \u00e0 la fin du tour. Consomm\u00e9 apr\u00e8s utilisation.",
+      "category": "held-items"
+    },
+    "charcoal": {
+      "name": "charcoal",
+      "display": "Charcoal",
+      "effect": "Tenu: Les capacit\u00e9s de type Feu du porteur infligent 20% de d\u00e9g\u00e2ts suppl\u00e9mentaires.",
+      "category": "type-enhancement"
+    },
+    "mystic-water": {
+      "name": "mystic-water",
+      "display": "Mystic Water",
+      "effect": "Tenu: Les capacit\u00e9s de type Eau du porteur infligent 20% de d\u00e9g\u00e2ts suppl\u00e9mentaires.",
+      "category": "type-enhancement"
+    },
+    "miracle-seed": {
+      "name": "miracle-seed",
+      "display": "Miracle Seed",
+      "effect": "Tenu: Les capacit\u00e9s de type Plante du porteur infligent 20% de d\u00e9g\u00e2ts suppl\u00e9mentaires.",
+      "category": "type-enhancement"
+    },
+    "magnet": {
+      "name": "magnet",
+      "display": "Magnet",
+      "effect": "Tenu: Les capacit\u00e9s de type \u00c9lectrik du porteur infligent 20% de d\u00e9g\u00e2ts suppl\u00e9mentaires.",
+      "category": "type-enhancement"
+    },
+    "never-melt-ice": {
+      "name": "never-melt-ice",
+      "display": "Never Melt Ice",
+      "effect": "Tenu: Les capacit\u00e9s de type Glace du porteur infligent 20% de d\u00e9g\u00e2ts suppl\u00e9mentaires.",
+      "category": "type-enhancement"
+    },
+    "black-belt": {
+      "name": "black-belt",
+      "display": "Black Belt",
+      "effect": "Tenu: Les capacit\u00e9s de type Combat du porteur infligent 20% de d\u00e9g\u00e2ts suppl\u00e9mentaires.",
+      "category": "type-enhancement"
+    },
+    "poison-barb": {
+      "name": "poison-barb",
+      "display": "Poison Barb",
+      "effect": "Tenu: Les capacit\u00e9s de type Poison du porteur infligent 20% de d\u00e9g\u00e2ts suppl\u00e9mentaires.",
+      "category": "type-enhancement"
+    },
+    "soft-sand": {
+      "name": "soft-sand",
+      "display": "Soft Sand",
+      "effect": "Tenu: Les capacit\u00e9s de type Sol du porteur infligent 20% de d\u00e9g\u00e2ts suppl\u00e9mentaires.",
+      "category": "type-enhancement"
+    },
+    "sharp-beak": {
+      "name": "sharp-beak",
+      "display": "Sharp Beak",
+      "effect": "Tenu: Les capacit\u00e9s de type Vol du porteur infligent 20% de d\u00e9g\u00e2ts suppl\u00e9mentaires.",
+      "category": "type-enhancement"
+    },
+    "twisted-spoon": {
+      "name": "twisted-spoon",
+      "display": "Twisted Spoon",
+      "effect": "Tenu: Les capacit\u00e9s de type Psy du porteur infligent 20% de d\u00e9g\u00e2ts suppl\u00e9mentaires.",
+      "category": "type-enhancement"
+    },
+    "hard-stone": {
+      "name": "hard-stone",
+      "display": "Hard Stone",
+      "effect": "Tenu: Les capacit\u00e9s de type Roche du porteur infligent 20% de d\u00e9g\u00e2ts suppl\u00e9mentaires.",
+      "category": "type-enhancement"
+    },
+    "spell-tag": {
+      "name": "spell-tag",
+      "display": "Spell Tag",
+      "effect": "Tenu: Les capacit\u00e9s de type Spectre du porteur infligent 20% de d\u00e9g\u00e2ts suppl\u00e9mentaires.",
+      "category": "type-enhancement"
+    },
+    "dragon-fang": {
+      "name": "dragon-fang",
+      "display": "Dragon Fang",
+      "effect": "Tenu: Les capacit\u00e9s de type Dragon du porteur infligent 20% de d\u00e9g\u00e2ts suppl\u00e9mentaires.",
+      "category": "type-enhancement"
+    },
+    "black-glasses": {
+      "name": "black-glasses",
+      "display": "Black Glasses",
+      "effect": "Tenu: Les capacit\u00e9s de type T\u00e9n\u00e8bres du porteur infligent 20% de d\u00e9g\u00e2ts suppl\u00e9mentaires.",
+      "category": "type-enhancement"
+    },
+    "metal-coat": {
+      "name": "metal-coat",
+      "display": "Metal Coat",
+      "effect": "Tenu: Les capacit\u00e9s de type Acier du porteur infligent 20% de d\u00e9g\u00e2ts suppl\u00e9mentaires.",
+      "category": "type-enhancement"
+    },
+    "silk-scarf": {
+      "name": "silk-scarf",
+      "display": "Silk Scarf",
+      "effect": "Tenu: Les capacit\u00e9s de type Normal du porteur infligent 20% de d\u00e9g\u00e2ts suppl\u00e9mentaires.",
+      "category": "type-enhancement"
+    },
+    "fairy-feather": {
+      "name": "fairy-feather",
+      "display": "Fairy Feather",
+      "effect": "",
+      "category": "held-items"
+    },
+    "occa-berry": {
+      "name": "occa-berry",
+      "display": "Occa Berry",
+      "effect": "Halves damage from a supereffective Fire-type move.",
+      "category": "resist-berry",
+      "resist_type": "fire"
+    },
+    "passho-berry": {
+      "name": "passho-berry",
+      "display": "Passho Berry",
+      "effect": "Halves damage from a supereffective Water-type move.",
+      "category": "resist-berry",
+      "resist_type": "water"
+    },
+    "wacan-berry": {
+      "name": "wacan-berry",
+      "display": "Wacan Berry",
+      "effect": "Halves damage from a supereffective Electric-type move.",
+      "category": "resist-berry",
+      "resist_type": "electric"
+    },
+    "rindo-berry": {
+      "name": "rindo-berry",
+      "display": "Rindo Berry",
+      "effect": "Halves damage from a supereffective Grass-type move.",
+      "category": "resist-berry",
+      "resist_type": "grass"
+    },
+    "yache-berry": {
+      "name": "yache-berry",
+      "display": "Yache Berry",
+      "effect": "Halves damage from a supereffective Ice-type move.",
+      "category": "resist-berry",
+      "resist_type": "ice"
+    },
+    "chople-berry": {
+      "name": "chople-berry",
+      "display": "Chople Berry",
+      "effect": "Halves damage from a supereffective Fighting-type move.",
+      "category": "resist-berry",
+      "resist_type": "fighting"
+    },
+    "kebia-berry": {
+      "name": "kebia-berry",
+      "display": "Kebia Berry",
+      "effect": "Halves damage from a supereffective Poison-type move.",
+      "category": "resist-berry",
+      "resist_type": "poison"
+    },
+    "shuca-berry": {
+      "name": "shuca-berry",
+      "display": "Shuca Berry",
+      "effect": "Halves damage from a supereffective Ground-type move.",
+      "category": "resist-berry",
+      "resist_type": "ground"
+    },
+    "coba-berry": {
+      "name": "coba-berry",
+      "display": "Coba Berry",
+      "effect": "Halves damage from a supereffective Flying-type move.",
+      "category": "resist-berry",
+      "resist_type": "flying"
+    },
+    "payapa-berry": {
+      "name": "payapa-berry",
+      "display": "Payapa Berry",
+      "effect": "Halves damage from a supereffective Psychic-type move.",
+      "category": "resist-berry",
+      "resist_type": "psychic"
+    },
+    "tanga-berry": {
+      "name": "tanga-berry",
+      "display": "Tanga Berry",
+      "effect": "Halves damage from a supereffective Bug-type move.",
+      "category": "resist-berry",
+      "resist_type": "bug"
+    },
+    "charti-berry": {
+      "name": "charti-berry",
+      "display": "Charti Berry",
+      "effect": "Halves damage from a supereffective Rock-type move.",
+      "category": "resist-berry",
+      "resist_type": "rock"
+    },
+    "kasib-berry": {
+      "name": "kasib-berry",
+      "display": "Kasib Berry",
+      "effect": "Halves damage from a supereffective Ghost-type move.",
+      "category": "resist-berry",
+      "resist_type": "ghost"
+    },
+    "haban-berry": {
+      "name": "haban-berry",
+      "display": "Haban Berry",
+      "effect": "Halves damage from a supereffective Dragon-type move.",
+      "category": "resist-berry",
+      "resist_type": "dragon"
+    },
+    "colbur-berry": {
+      "name": "colbur-berry",
+      "display": "Colbur Berry",
+      "effect": "Halves damage from a supereffective Dark-type move.",
+      "category": "resist-berry",
+      "resist_type": "dark"
+    },
+    "babiri-berry": {
+      "name": "babiri-berry",
+      "display": "Babiri Berry",
+      "effect": "Halves damage from a supereffective Steel-type move.",
+      "category": "resist-berry",
+      "resist_type": "steel"
+    },
+    "chilan-berry": {
+      "name": "chilan-berry",
+      "display": "Chilan Berry",
+      "effect": "Halves damage from any Normal-type move (not just supereffective).",
+      "category": "resist-berry",
+      "resist_type": "normal"
+    },
+    "roseli-berry": {
+      "name": "roseli-berry",
+      "display": "Roseli Berry",
+      "effect": "Halves damage from a supereffective Fairy-type move.",
+      "category": "resist-berry",
+      "resist_type": "fairy"
+    }
+  }
+}

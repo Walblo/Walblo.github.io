@@ -1,0 +1,3366 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Champions Calc</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#f0f2f5;--bg2:#ffffff;--bg3:#f5f6f8;--bg4:#e8eaed;
+  --border:rgba(0,0,0,0.09);--border2:rgba(0,0,0,0.16);
+  --text:#1a1d24;--text2:#5a6075;--text3:#aab0c0;
+  --radius:7px;--font:'Segoe UI',system-ui,sans-serif;
+}
+body{background:var(--bg);color:var(--text);font-family:var(--font);font-size:14px;overflow-x:hidden;overflow-y:auto;height:100vh;display:flex;flex-direction:column}
+
+/* ── header ── */
+#hdr{display:flex;align-items:center;gap:10px;padding:8px 14px;background:var(--bg2);border-bottom:1px solid var(--border);flex-shrink:0;z-index:10}
+#hdr h1{font-size:14px;font-weight:600;letter-spacing:.04em}
+.dot{width:8px;height:8px;border-radius:50%;background:#4f46e5}
+#data-status{font-size:12px;color:var(--text2);margin-left:auto}
+#data-status span{color:#16a34a}
+
+/* ── main grid ── */
+#main{display:grid;grid-template-columns:255px 185px 255px 300px 255px;flex:1;overflow-x:auto;overflow-y:auto;min-height:0;min-width:0;align-items:start}
+.col{display:flex;flex-direction:column;border-right:1px solid var(--border);min-height:100%}
+.col:last-child{border-right:none}
+.col-head{padding:8px 10px;background:var(--bg2);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:5}
+.col-head h2{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.1em;color:var(--text2)}
+.col-body{padding:8px;display:flex;flex-direction:column;gap:7px}
+
+/* ── add button ── */
+.add-btn{width:22px;height:22px;border-radius:5px;border:1px dashed var(--border2);background:none;color:var(--text2);cursor:pointer;font-size:15px;line-height:1;display:flex;align-items:center;justify-content:center;transition:all .15s}
+.add-btn:hover{background:#4f46e5;border-color:#4f46e5;color:#fff}
+
+/* ── panel ── */
+.panel{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden}
+.panel-bar{display:flex;align-items:center;gap:7px;padding:6px 9px;border-bottom:1px solid var(--border)}
+.panel-stripe{width:4px;height:18px;border-radius:2px;flex-shrink:0}
+.panel-title{font-size:13px;font-weight:600;flex:1;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.panel-close{background:none;border:none;color:var(--text3);cursor:pointer;font-size:14px;padding:0 2px;line-height:1}
+.panel-close:hover{color:#dc2626}
+.panel-body{padding:8px;display:flex;flex-direction:column;gap:6px}
+
+/* ── form elements ── */
+label.lbl{font-size:11px;color:var(--text2);text-transform:uppercase;letter-spacing:.06em;display:block;margin-bottom:2px}
+input[type=text],select{width:100%;background:var(--bg3);border:1px solid var(--border);color:var(--text);padding:4px 7px;border-radius:5px;font-size:13px;outline:none;font-family:var(--font)}
+input[type=text]:focus,select:focus{border-color:#4f46e580}
+select option{background:#ffffff}
+
+/* ── pokemon search dropdown ── */
+.poke-wrap{position:relative}
+.poke-input{padding-right:28px!important}
+.poke-sprite{position:absolute;right:4px;top:50%;transform:translateY(-50%);width:22px;height:22px;object-fit:contain;image-rendering:pixelated;pointer-events:none}
+.poke-list{position:absolute;top:100%;left:0;right:0;z-index:50;background:#ffffff;border:1px solid var(--border2);border-radius:5px;max-height:180px;overflow-y:auto;display:none}
+.poke-list.open{display:block}
+.poke-opt{padding:5px 8px;cursor:pointer;font-size:13px;display:flex;align-items:center;gap:6px}
+.poke-opt:hover,.poke-opt.focused{background:#4f46e511}
+.poke-opt img{width:20px;height:20px;object-fit:contain;image-rendering:pixelated}
+.poke-opt .type-pip{font-size:10px;padding:1px 5px;border-radius:3px;color:#fff}
+
+/* ── type badge ── */
+.type-row{display:flex;gap:4px;flex-wrap:wrap;margin-top:2px}
+.type-badge{font-size:11px;padding:1px 7px;border-radius:3px;color:#fff;font-weight:600;text-transform:uppercase;letter-spacing:.04em}
+
+/* ── stats strip ── */
+.stat-row{display:grid;grid-template-columns:60px 1fr 34px;align-items:center;gap:5px}
+.stat-name{font-size:11px;color:var(--text2);text-transform:uppercase;letter-spacing:.04em}
+.stat-bar-bg{height:6px;background:var(--bg3);border-radius:3px;overflow:hidden;border:1px solid var(--border)}
+.stat-bar{height:100%;border-radius:3px;transition:width .25s}
+.stat-val{font-size:12px;text-align:right;color:var(--text)}
+
+/* ── ev / nature row ── */
+.ev-row{display:grid;grid-template-columns:1fr 1fr;gap:5px}
+.ev-field{display:flex;flex-direction:column}
+.ev-field input[type=number]{-moz-appearance:textfield}
+.ev-field input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none}
+.ev-field input{width:100%;background:var(--bg3);border:1px solid var(--border);color:var(--text);padding:3px 6px;border-radius:5px;font-size:13px;font-family:var(--font);outline:none}
+
+/* ── ev sliders ── */
+.ev-slider-row{display:grid;grid-template-columns:34px 1fr 34px;align-items:center;gap:6px;margin-bottom:3px}
+.ev-slider-label{font-size:11px;color:var(--text2);text-transform:uppercase;letter-spacing:.04em}
+.ev-slider-val{font-size:11px;font-weight:600;text-align:right;color:var(--text)}
+input[type=range]{width:100%;accent-color:#4f46e5;height:4px}
+
+/* ── buff checkboxes ── */
+.buff-grid{display:grid;grid-template-columns:1fr 1fr;gap:3px}
+.buff-item{display:flex;align-items:center;gap:5px;font-size:12px;color:var(--text2);cursor:pointer;padding:2px 0}
+.buff-item input[type=checkbox]{accent-color:#4f46e5;cursor:pointer}
+
+/* ── stage select ── */
+.stage-row{display:flex;align-items:center;gap:6px}
+.stage-row label{font-size:12px;color:var(--text2);min-width:48px}
+.stage-row select{flex:1}
+
+/* ── move select ── */
+.move-row{display:flex;gap:5px}
+.move-row select{flex:1}
+.move-type-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0;align-self:center}
+
+/* ── custom move picker ── */
+.move-picker-wrap{position:relative}
+.move-search-input{width:100%;background:var(--bg3);border:1px solid var(--border);color:var(--text);padding:4px 7px;border-radius:5px;font-size:13px;outline:none;font-family:var(--font)}
+.move-search-input:focus{border-color:#4f46e580}
+.move-dropdown{position:absolute;top:100%;left:0;right:0;z-index:100;background:#fff;border:1px solid var(--border2);border-radius:6px;max-height:220px;overflow-y:auto;display:none;box-shadow:0 4px 14px rgba(0,0,0,0.12)}
+.move-dropdown.open{display:block}
+.move-opt{display:grid;grid-template-columns:1fr auto auto auto;align-items:center;gap:6px;padding:5px 9px;cursor:pointer;font-size:12px;position:relative}
+.move-opt:hover{background:#f0f0ff}
+.move-opt-name{font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.move-cat-icon{font-size:13px;flex-shrink:0}
+.move-bp{font-size:11px;color:var(--text2);min-width:34px;text-align:right;flex-shrink:0}
+.move-tip{display:none;position:fixed;z-index:999;background:#1a1d24;color:#e8eaf0;font-size:11px;line-height:1.5;padding:7px 10px;border-radius:6px;max-width:220px;pointer-events:none;box-shadow:0 4px 12px rgba(0,0,0,.3)}
+
+/* ── selected moves list ── */
+.move-list{display:flex;flex-direction:column;gap:4px;margin-top:4px}
+.move-chip{display:grid;grid-template-columns:18px 1fr auto auto auto;align-items:center;gap:5px;background:var(--bg3);border:1px solid var(--border);border-radius:5px;padding:4px 7px;font-size:12px}
+.move-chip-check{accent-color:#4f46e5;cursor:pointer;width:14px;height:14px}
+.move-chip-name{font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.move-chip-type{font-size:10px;padding:1px 5px;border-radius:3px;color:#fff;font-weight:600;text-transform:uppercase}
+.move-chip-bp{font-size:11px;color:var(--text2)}
+.move-chip-del{background:none;border:none;color:var(--text3);cursor:pointer;font-size:13px;padding:0 2px;line-height:1;flex-shrink:0}
+.move-chip-del:hover{color:#dc2626}
+
+/* ── condition checkboxes ── */
+.cond-section{font-size:11px;color:var(--text2);font-weight:600;text-transform:uppercase;letter-spacing:.07em;padding:4px 0 2px}
+.cond-item{display:flex;align-items:center;gap:7px;padding:3px 0;font-size:13px;color:var(--text);cursor:pointer}
+.cond-item input[type=checkbox]{accent-color:#4f46e5;cursor:pointer}
+.cond-item input[type=radio]{accent-color:#4f46e5;cursor:pointer}
+
+/* ── HP bar and damage viz (col 4) ── */
+.defender-block{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:10px}
+.defender-name{font-size:13px;font-weight:600;margin-bottom:6px}
+.hp-track{position:relative;height:20px;background:var(--bg3);border-radius:5px;overflow:hidden;margin-bottom:4px;border:1px solid var(--border)}
+.hp-fill{height:100%;border-radius:5px;transition:width .3s;background:#16a34a}
+.hp-fill.yellow{background:#d97706}
+.hp-fill.red{background:#dc2626}
+.hp-label{position:absolute;right:6px;top:50%;transform:translateY(-50%);font-size:11px;font-weight:600;color:#fff;text-shadow:0 1px 2px rgba(0,0,0,.5)}
+.dmg-bar-wrap{margin:3px 0}
+.dmg-bar-label{font-size:11px;color:var(--text2);margin-bottom:2px;display:flex;justify-content:space-between}
+.dmg-track{position:relative;height:16px;background:var(--bg3);border-radius:4px;overflow:hidden;border:1px solid var(--border)}
+.dmg-range{position:absolute;top:0;height:100%;border-radius:4px;opacity:.85}
+.dmg-val{position:absolute;right:5px;top:50%;transform:translateY(-50%);font-size:11px;font-weight:600;color:#fff;text-shadow:0 1px 2px rgba(0,0,0,.5)}
+.ko-badge{font-size:11px;padding:1px 7px;border-radius:3px;font-weight:600;margin-left:6px}
+.ko-1{background:#fecaca;color:#b91c1c}
+.ko-2{background:#fde68a;color:#92400e}
+.ko-n{background:#e0e7ff;color:#3730a3}
+
+/* ── col 5 power chart ── */
+.power-chart-wrap{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:10px}
+.power-chart-title{font-size:12px;color:var(--text2);margin-bottom:8px;font-weight:600}
+.power-check-row{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:10px}
+.power-check-item{display:flex;align-items:center;gap:5px;font-size:12px;color:var(--text2);cursor:pointer}
+.power-check-item input{accent-color:#4f46e5}
+#atk-slider-wrap{margin-bottom:10px}
+#atk-slider-wrap label{font-size:11px;color:var(--text2);display:flex;justify-content:space-between;margin-bottom:3px}
+#atk-slider{width:100%;accent-color:#4f46e5}
+.power-line{display:flex;align-items:center;gap:6px;margin-bottom:5px}
+.power-line-label{font-size:12px;color:var(--text2);min-width:80px}
+.power-line-bar{flex:1;height:10px;background:var(--bg3);border-radius:4px;overflow:hidden;border:1px solid var(--border)}
+.power-line-fill{height:100%;border-radius:4px}
+.power-line-val{font-size:12px;font-weight:600;min-width:38px;text-align:right}
+
+/* ── coverage tab ── */
+#view-cov{display:none;flex-direction:column;flex:1;overflow-y:auto;min-height:0}
+.cov-left{width:310px;flex-shrink:0;padding:12px;border-right:1px solid var(--border);overflow-y:auto;display:flex;flex-direction:column;gap:8px}
+.cov-right{flex:1;padding:14px;overflow-y:auto}
+.cov-section-title{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:var(--text2);margin-bottom:4px}
+.cov-slot{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden}
+.cov-slot-bar{display:flex;align-items:center;gap:6px;padding:5px 8px;background:var(--bg3);border-bottom:1px solid var(--border)}
+.cov-slot-check{accent-color:#4f46e5;width:14px;height:14px;cursor:pointer;flex-shrink:0}
+.cov-slot-num{font-size:11px;color:var(--text3);font-weight:600;min-width:16px}
+.cov-slot-sprite{width:26px;height:26px;object-fit:contain;image-rendering:pixelated;flex-shrink:0}
+.cov-slot-name{font-size:12px;font-weight:600;flex:1;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cov-slot-types{display:flex;gap:3px;flex-shrink:0}
+.cov-slot-body{padding:7px 8px;display:flex;flex-direction:column;gap:5px}
+.cov-slot-search-wrap{position:relative}
+.cov-slot-input{width:100%;background:var(--bg3);border:1px solid var(--border);color:var(--text);padding:4px 7px;border-radius:5px;font-size:12px;outline:none;font-family:var(--font)}
+.cov-slot-input:focus{border-color:#4f46e580}
+.cov-slot-list{position:absolute;top:100%;left:0;right:0;z-index:60;background:#fff;border:1px solid var(--border2);border-radius:5px;max-height:160px;overflow-y:auto;display:none;box-shadow:0 4px 12px rgba(0,0,0,.12)}
+.cov-slot-list.open{display:block}
+.cov-slot-opt{padding:4px 8px;cursor:pointer;font-size:12px;display:flex;align-items:center;gap:5px}
+.cov-slot-opt:hover{background:#f0f0ff}
+.cov-slot-opt img{width:20px;height:20px;object-fit:contain;image-rendering:pixelated}
+.cov-ab-sel{width:100%;background:var(--bg3);border:1px solid var(--border);color:var(--text);padding:3px 6px;border-radius:5px;font-size:12px;outline:none;font-family:var(--font)}
+/* tabs inside coverage */
+.cov-tabs{display:flex;gap:4px;margin-bottom:14px}
+.cov-tab-btn{padding:5px 20px;font-size:13px;font-weight:600;border:1px solid var(--border2);border-radius:5px;background:var(--bg3);cursor:pointer;color:var(--text2);font-family:var(--font);transition:all .15s}
+.cov-tab-btn.active{background:#4f46e5;color:#fff;border-color:#4f46e5}
+/* active team summary row */
+.cov-team-summary{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px;padding-bottom:12px;border-bottom:1px solid var(--border)}
+.cov-mon-pill{display:flex;align-items:center;gap:4px;background:var(--bg2);border:1px solid var(--border);border-radius:20px;padding:2px 10px 2px 3px;font-size:12px;font-weight:600}
+.cov-mon-pill img{width:22px;height:22px;object-fit:contain;image-rendering:pixelated}
+/* offensive grid — one cell per defending type */
+.cov-off-title{font-size:12px;font-weight:700;color:var(--text2);margin-bottom:8px;text-transform:uppercase;letter-spacing:.06em}
+.cov-off-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:5px;margin-bottom:20px}
+.cov-off-cell{border-radius:6px;padding:6px 4px;display:flex;flex-direction:column;align-items:center;gap:3px;border:2px solid transparent;cursor:default}
+.cov-off-cell-type{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.03em;color:#fff}
+.cov-off-cell-eff{font-size:16px;font-weight:800;color:#fff;line-height:1}
+.cov-off-cell-pips{display:flex;gap:2px;flex-wrap:wrap;justify-content:center;min-height:8px}
+.cov-off-pip{width:6px;height:6px;border-radius:50%;background:rgba(255,255,255,.35);flex-shrink:0}
+.cov-off-pip.hit{background:rgba(255,255,255,.9)}
+/* best effectiveness highlight */
+.cov-off-cell.eff-4x{border-color:rgba(255,255,255,.5);box-shadow:0 0 0 1px rgba(255,255,255,.2)}
+.cov-off-cell.eff-immune{opacity:.4}
+/* defensive table */
+.cov-def-title{font-size:12px;font-weight:700;color:var(--text2);margin-bottom:8px;text-transform:uppercase;letter-spacing:.06em}
+.cov-def-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:5px}
+.cov-def-cell{border-radius:6px;padding:6px 4px;display:flex;flex-direction:column;align-items:center;gap:3px;border:2px solid transparent}
+.cov-def-cell-type{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.03em;color:#fff}
+.cov-def-cell-eff{font-size:14px;font-weight:800;color:#fff;line-height:1}
+.cov-def-cell-pips{display:flex;gap:2px;flex-wrap:wrap;justify-content:center;min-height:8px}
+.cov-def-pip{width:6px;height:6px;border-radius:50%;background:rgba(255,255,255,.35);flex-shrink:0}
+.cov-def-pip.weak{background:#ff4444}
+.cov-def-pip.resist{background:#44ff88}
+.cov-def-pip.immune{background:#aaaaff}
+.cov-def-cell.all-immune{opacity:.5}
+.cov-empty-msg{font-size:13px;color:var(--text3);padding:20px 0;text-align:center}
+[data-type=normal]{background:#9da19e}[data-type=fire]{background:#f08030}[data-type=water]{background:#6890f0}
+[data-type=electric]{background:#c8a800}[data-type=grass]{background:#5dac21}[data-type=ice]{background:#3dc5c5}
+[data-type=fighting]{background:#c03028}[data-type=poison]{background:#9040a0}[data-type=ground]{background:#927d44}
+[data-type=flying]{background:#7169c1}[data-type=psychic]{background:#f85888}[data-type=bug]{background:#729f10}
+[data-type=rock]{background:#a38c21}[data-type=ghost]{background:#705898}[data-type=dragon]{background:#5060e1}
+[data-type=dark]{background:#5a5366}[data-type=steel]{background:#8e8ea0}[data-type=fairy]{background:#c585a0}
+
+/* ── collapsible sections inside panels ── */
+.section-head{display:flex;align-items:center;justify-content:space-between;cursor:pointer;padding:3px 0;user-select:none}
+.section-head:hover .section-toggle{color:var(--text)}
+.section-toggle{font-size:11px;color:var(--text3);transition:transform .15s}
+.section-body{display:flex;flex-direction:column;gap:5px;padding-top:4px}
+.section-body.sec-collapsed{display:none}
+
+/* ── manual multiplier ── */
+.mult-row{display:grid;grid-template-columns:1fr 80px;align-items:center;gap:6px;margin-bottom:3px}
+.mult-label{font-size:12px;color:var(--text)}
+.mult-input{background:var(--bg3);border:1px solid var(--border);color:var(--text);padding:3px 6px;border-radius:5px;font-size:12px;font-family:var(--font);outline:none;text-align:right;width:100%}
+.mult-input:focus{border-color:#4f46e580}
+.mult-total{font-size:11px;color:var(--text2);text-align:center;padding:4px;background:var(--bg3);border-radius:4px}
+
+.no-defenders{font-size:13px;color:var(--text3);text-align:center;padding:24px 0}
+.divider{height:1px;background:var(--border);margin:4px 0}
+
+/* ── collapse ── */
+.panel-body.collapsed{display:none}
+.collapse-btn{background:none;border:none;color:var(--text3);cursor:pointer;font-size:14px;width:20px;height:20px;display:flex;align-items:center;justify-content:center;border-radius:4px;transition:all .15s;flex-shrink:0}
+.collapse-btn:hover{background:var(--bg3);color:var(--text)}
+
+/* ── live stat rows ── */
+.stat-row{display:grid;grid-template-columns:34px 1fr 36px 36px;align-items:center;gap:5px}
+.stat-name{font-size:10px;color:var(--text2);text-transform:uppercase;letter-spacing:.04em}
+.stat-bar-bg{height:6px;background:var(--bg3);border-radius:3px;overflow:hidden;border:1px solid var(--border)}
+.stat-bar{height:100%;border-radius:3px;transition:width .25s}
+.stat-val{font-size:11px;text-align:right;color:var(--text);font-weight:600}
+.stat-calc{font-size:10px;text-align:right;color:var(--text2)}
+
+/* ── ability tooltip ── */
+.ability-row{position:relative;display:flex;align-items:center;gap:6px}
+.ability-row select{flex:1}
+.ability-icon{width:18px;height:18px;border-radius:3px;display:flex;align-items:center;justify-content:center;font-size:11px;flex-shrink:0;cursor:help}
+.ab-tooltip{position:absolute;bottom:calc(100% + 6px);left:0;right:0;z-index:200;background:#1a1d24;color:#e8eaf0;font-size:11px;line-height:1.5;padding:7px 9px;border-radius:6px;pointer-events:none;display:none;box-shadow:0 4px 14px rgba(0,0,0,.25)}
+.ability-row:hover .ab-tooltip{display:block}
+
+/* ── tabs ── */
+#tab-bar{display:flex;gap:2px;padding:6px 14px 0;background:var(--bg2);border-bottom:1px solid var(--border);flex-shrink:0}
+.tab-btn{padding:6px 16px;font-size:13px;font-weight:600;border:none;background:none;cursor:pointer;color:var(--text2);border-bottom:2px solid transparent;margin-bottom:-1px;transition:all .15s}
+.tab-btn.active{color:#4f46e5;border-bottom-color:#4f46e5}
+.tab-btn:hover:not(.active){color:var(--text)}
+#view-calc{display:flex;flex-direction:column;flex:1;overflow:hidden;min-height:0}
+#view-dex{display:none;flex-direction:column;flex:1;overflow:hidden;min-height:0;padding:12px}
+
+/* ── pokedex table ── */
+#dex-controls{margin-bottom:10px}
+#dex-move-filters{display:none}
+.move-filter-tag{display:flex;align-items:center;gap:4px;background:var(--bg3);border:1px solid var(--border);border-radius:4px;padding:2px 8px;font-size:12px;color:var(--text)}
+.move-filter-tag button{background:none;border:none;color:var(--text2);cursor:pointer;font-size:13px;padding:0;line-height:1}
+.move-filter-tag button:hover{color:var(--text)}
+#dex-move-input{background:var(--bg3);border:1px solid var(--border);color:var(--text);padding:5px 10px;border-radius:5px;font-size:13px;outline:none;font-family:var(--font);width:180px}
+#dex-move-suggestions{position:absolute;background:var(--bg2);border:1px solid var(--border);border-radius:5px;z-index:50;max-height:200px;overflow-y:auto;min-width:200px}
+#dex-move-suggestions div{padding:5px 10px;font-size:12px;cursor:pointer;color:var(--text)}
+#dex-move-suggestions div:hover{background:var(--bg3)}
+.move-filter-wrap{position:relative}
+.dex-abilities{font-size:11px;color:var(--text2);line-height:1.5}
+#dex-search{width:220px;background:var(--bg3);border:1px solid var(--border);color:var(--text);padding:5px 10px;border-radius:5px;font-size:13px;outline:none;font-family:var(--font)}
+#dex-type-filter{background:var(--bg3);border:1px solid var(--border);color:var(--text);padding:5px 8px;border-radius:5px;font-size:13px;outline:none;font-family:var(--font)}
+#dex-mega-filter{background:var(--bg3);border:1px solid var(--border);color:var(--text);padding:5px 8px;border-radius:5px;font-size:13px;outline:none;font-family:var(--font)}
+#dex-sort{background:var(--bg3);border:1px solid var(--border);color:var(--text);padding:5px 8px;border-radius:5px;font-size:13px;outline:none;font-family:var(--font)}
+#dex-table-wrap{flex:1;overflow:auto;border:1px solid var(--border);border-radius:var(--radius);background:var(--bg2)}
+#dex-table{width:100%;border-collapse:collapse;font-size:12px}
+#dex-table th{position:sticky;top:0;background:var(--bg3);padding:8px 10px;text-align:left;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.07em;color:var(--text2);border-bottom:1px solid var(--border);cursor:pointer;white-space:nowrap;user-select:none}
+#dex-table th:hover{color:var(--text)}
+#dex-table th.sorted{color:#4f46e5}
+#dex-table td{padding:6px 10px;border-bottom:1px solid var(--border);vertical-align:middle}
+#dex-table tr:last-child td{border-bottom:none}
+#dex-table tr:hover td{background:#f8f8ff}
+.dex-num{font-size:11px;color:var(--text3);font-weight:600}
+.dex-name{font-weight:600;font-size:13px}
+.dex-mega{font-size:10px;color:var(--text2);font-style:italic}
+.stat-cell{text-align:center}
+.stat-base{font-size:13px;font-weight:600;color:var(--text)}
+.stat-range{font-size:10px;color:var(--text3);margin-top:1px}
+.bst-cell{text-align:center;font-size:13px;font-weight:700}
+.type-cell{display:flex;gap:3px;flex-wrap:wrap}
+
+/* ── custom nature dropdown ── */
+.nature-wrap{position:relative}
+.nature-display{width:100%;background:var(--bg3);border:1px solid var(--border);color:var(--text);padding:4px 28px 4px 7px;border-radius:5px;font-size:13px;cursor:pointer;display:flex;align-items:center;gap:6px;user-select:none}
+.nature-display:after{content:'▾';position:absolute;right:8px;top:50%;transform:translateY(-50%);color:var(--text2);pointer-events:none;font-size:11px}
+.nature-menu{position:absolute;top:100%;left:0;right:0;z-index:100;background:#fff;border:1px solid var(--border2);border-radius:5px;max-height:220px;overflow-y:auto;display:none;box-shadow:0 4px 12px rgba(0,0,0,0.1)}
+.nature-menu.open{display:block}
+.nature-opt{padding:5px 10px;cursor:pointer;font-size:13px;display:flex;align-items:center;gap:6px}
+.nature-opt:hover{background:#f0f0ff}
+.nature-opt.selected{background:#eef}
+.nat-name{flex:1}
+.nat-up{color:#dc2626;font-weight:700;font-size:11px;min-width:36px}
+.nat-dn{color:#2563eb;font-weight:700;font-size:11px;min-width:36px}
+</style>
+</head>
+<body>
+
+<div id="hdr">
+  <div class="dot"></div>
+  <h1>Champions Calc</h1>
+  <div id="data-status">Loading data…</div>
+</div>
+
+<div id="tab-bar">
+  <button class="tab-btn active" id="tab-calc" onclick="switchTab('calc')">Calculator</button>
+  <button class="tab-btn" id="tab-dex" onclick="switchTab('dex')">Pokédex</button>
+  <button class="tab-btn" id="tab-cov" onclick="switchTab('cov')">Type Chart</button>
+</div>
+
+<div id="view-calc">
+<div id="main">
+  <div class="col" id="col-atk">
+    <div class="col-head">
+      <h2>Attackers</h2>
+      <button class="add-btn" id="add-atk" title="Add attacker">+</button>
+    </div>
+    <div class="col-body" id="atk-body"></div>
+  </div>
+  <div class="col" id="col-cond">
+    <div class="col-head"><h2>Conditions</h2></div>
+    <div class="col-body" id="cond-body"></div>
+  </div>
+  <div class="col" id="col-def">
+    <div class="col-head">
+      <h2>Defenders</h2>
+      <button class="add-btn" id="add-def" title="Add defender">+</button>
+    </div>
+    <div class="col-body" id="def-body"></div>
+  </div>
+  <div class="col" id="col-plot">
+    <div class="col-head"><h2>Damage Plots</h2></div>
+    <div class="col-body" id="plot-body"><div class="no-defenders">Add attackers and defenders to see damage.</div></div>
+  </div>
+  <div class="col" id="col-power">
+    <div class="col-head"><h2>Atk Needed → OHKO</h2></div>
+    <div class="col-body" id="power-body"></div>
+  </div>
+</div>
+</div>
+
+<div id="view-dex">
+  <div id="dex-controls" style="display:flex;flex-direction:column;gap:6px;margin-bottom:10px">
+    <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+      <input id="dex-search" type="text" placeholder="Search Pokémon…" style="width:200px">
+      <select id="dex-type-filter" style="width:120px"><option value="">All types</option></select>
+      <select id="dex-mega-filter" style="width:110px">
+        <option value="">All forms</option>
+        <option value="mega">Megas only</option>
+        <option value="base">No Megas</option>
+      </select>
+      <select id="dex-ability-filter" style="width:170px"><option value="">All abilities</option></select>
+      <div class="move-filter-wrap" style="position:relative">
+        <input id="dex-move-input" type="text" placeholder="Filter by move…" autocomplete="off" style="width:160px">
+        <div id="dex-move-suggestions"></div>
+      </div>
+      <div id="dex-move-tags" style="display:flex;gap:5px;flex-wrap:wrap"></div>
+      <div style="margin-left:auto;display:flex;align-items:center;gap:8px">
+        <label style="font-size:11px;color:var(--text2);white-space:nowrap">Sort by</label>
+        <select id="dex-sort" style="width:100px">
+          <option value="dex">Dex #</option>
+          <option value="name">Name</option>
+          <option value="bst">BST</option>
+          <option value="hp">HP</option>
+          <option value="attack">Atk</option>
+          <option value="defense">Def</option>
+          <option value="special-attack">SpA</option>
+          <option value="special-defense">SpD</option>
+          <option value="speed">Spe</option>
+        </select>
+        <span id="dex-count" style="font-size:12px;color:var(--text2);white-space:nowrap"></span>
+      </div>
+    </div>
+  </div>
+  <div id="dex-table-wrap">
+    <table id="dex-table">
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Pokémon</th>
+          <th>Types</th>
+          <th>Abilities</th>
+          <th class="stat-cell">HP</th>
+          <th class="stat-cell">Atk</th>
+          <th class="stat-cell">Def</th>
+          <th class="stat-cell">SpA</th>
+          <th class="stat-cell">SpD</th>
+          <th class="stat-cell">Spe</th>
+          <th class="stat-cell">BST</th>
+        </tr>
+      </thead>
+      <tbody id="dex-tbody"></tbody>
+    </table>
+  </div>
+</div>
+
+<div id="view-cov">
+
+  <!-- top: type picker + coverage side by side -->
+  <div style="display:grid;grid-template-columns:1fr 1fr;border-bottom:1px solid var(--border)">
+
+    <div style="padding:14px;border-right:1px solid var(--border);display:flex;flex-direction:column;gap:10px">
+      <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:var(--text2)">Attack types</div>
+      <div id="tc-attack-grid" style="display:grid;grid-template-columns:repeat(6,1fr);gap:5px"></div>
+      <button onclick="tcClearAll()" style="font-size:11px;color:var(--text2);background:none;border:1px solid var(--border2);border-radius:5px;padding:4px 10px;cursor:pointer;font-family:var(--font);align-self:flex-start">Clear all</button>
+    </div>
+
+    <div style="padding:14px;display:flex;flex-direction:column;gap:10px">
+      <div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap">
+        <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:var(--text2)">Super effective against</div>
+        <div style="display:flex;gap:10px;flex-wrap:wrap">
+          <div style="display:flex;align-items:center;gap:5px;font-size:11px;color:var(--text2)"><div style="width:10px;height:10px;border-radius:2px;background:#d1fae5;border:1px solid #2e7d4f"></div>1 type</div>
+          <div style="display:flex;align-items:center;gap:5px;font-size:11px;color:var(--text2)"><div style="width:10px;height:10px;border-radius:2px;background:#86efac;border:1px solid #2e7d4f"></div>2 types</div>
+          <div style="display:flex;align-items:center;gap:5px;font-size:11px;color:var(--text2)"><div style="width:10px;height:10px;border-radius:2px;background:#4ade80;border:1px solid #166534"></div>3+</div>
+          <div style="display:flex;align-items:center;gap:5px;font-size:11px;color:var(--text2)"><div style="width:10px;height:10px;border-radius:2px;background:var(--bg3);border:1px solid var(--border2)"></div>not covered</div>
+        </div>
+      </div>
+      <div id="tc-results-grid" style="display:grid;grid-template-columns:repeat(6,1fr);gap:5px"></div>
+      <div style="font-size:11px;color:var(--text2)">Red badge = overlap count. Hover a chip to see which types hit it.</div>
+    </div>
+
+  </div>
+
+  <!-- bottom: move optimizer -->
+  <div style="border-top:1px solid var(--border);display:grid;grid-template-columns:220px 1fr;min-height:0">
+
+    <!-- left: compact controls -->
+    <div style="padding:14px;border-right:1px solid var(--border);background:var(--bg3);display:flex;flex-direction:column;gap:10px">
+      <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:var(--text2)">Move Optimizer</div>
+
+      <div>
+        <label class="lbl">Pokemon</label>
+        <div style="position:relative">
+          <input type="text" id="opt-poke-input" placeholder="Search..." autocomplete="off" oninput="optPokeSearch(this.value)" style="width:100%;padding-right:28px">
+          <img id="opt-poke-sprite" src="" style="position:absolute;right:4px;top:50%;transform:translateY(-50%);width:22px;height:22px;object-fit:contain;image-rendering:pixelated;display:none">
+          <div id="opt-poke-list" class="poke-list"></div>
+        </div>
+      </div>
+
+      <div>
+        <label class="lbl">Move slots</label>
+        <div style="display:flex;gap:5px">
+          <button id="opt-slots-1" class="opt-slot-btn" onclick="optSetSlots(1)">1</button>
+          <button id="opt-slots-2" class="opt-slot-btn" onclick="optSetSlots(2)">2</button>
+          <button id="opt-slots-3" class="opt-slot-btn opt-slot-active" onclick="optSetSlots(3)">3</button>
+          <button id="opt-slots-4" class="opt-slot-btn" onclick="optSetSlots(4)">4</button>
+        </div>
+      </div>
+
+      <div>
+        <label class="lbl">Move category</label>
+        <div style="display:flex;gap:5px;flex-wrap:wrap">
+          <button id="opt-cat-all" class="opt-slot-btn opt-slot-active" onclick="optSetCat('all')">All</button>
+          <button id="opt-cat-physical" class="opt-slot-btn" onclick="optSetCat('physical')">⚔ Phys</button>
+          <button id="opt-cat-special" class="opt-slot-btn" onclick="optSetCat('special')">✦ Spec</button>
+        </div>
+      </div>
+
+      <button onclick="optRun()" style="margin-top:auto;padding:7px 0;background:#4f46e5;color:#fff;border:none;border-radius:5px;font-size:13px;font-weight:600;cursor:pointer;font-family:var(--font)">Find best combos</button>
+    </div>
+
+    <!-- right: priority filters + results -->
+    <div style="padding:14px;display:flex;flex-direction:column;gap:12px;overflow-y:auto">
+
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px">
+        <div>
+          <label class="lbl">Prioritize attack types</label>
+          <div id="opt-atk-priority" style="display:grid;grid-template-columns:repeat(6,1fr);gap:4px;margin-top:4px"></div>
+        </div>
+        <div>
+          <label class="lbl">Must-cover enemy types</label>
+          <div id="opt-enemy-priority" style="display:grid;grid-template-columns:repeat(6,1fr);gap:4px;margin-top:4px"></div>
+        </div>
+        <div>
+          <label class="lbl" style="color:#dc2626">Exclude attack types</label>
+          <div id="opt-exclude-atk" style="display:grid;grid-template-columns:repeat(6,1fr);gap:4px;margin-top:4px"></div>
+        </div>
+      </div>
+
+      <div id="opt-results" style="display:grid;grid-template-columns:repeat(5,1fr);gap:8px"></div>
+    </div>
+
+  </div>
+
+</div>
+
+<style>
+.opt-slot-btn{padding:4px 12px;font-size:13px;font-weight:600;border:1px solid var(--border2);border-radius:5px;background:var(--bg2);color:var(--text2);cursor:pointer;font-family:var(--font)}
+.opt-slot-active{background:#4f46e5;color:#fff;border-color:#4f46e5}
+.opt-type-pill{display:flex;align-items:center;gap:4px;padding:3px 6px;border-radius:4px;font-size:11px;font-weight:600;border:1px solid var(--border);background:var(--bg2);color:var(--text2);cursor:pointer;transition:all .1s;font-family:var(--font)}
+.opt-result-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:8px;display:flex;flex-direction:column;gap:5px}
+.opt-result-rank{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--text3)}
+.opt-move-row{display:flex;align-items:center;gap:5px;font-size:12px;font-weight:600;color:var(--text)}
+.opt-move-type{font-size:10px;padding:1px 6px;border-radius:3px;color:#fff;font-weight:700}
+.opt-covered-row{display:flex;flex-wrap:wrap;gap:3px;margin-top:2px}
+.opt-covered-chip{font-size:10px;padding:1px 6px;border-radius:3px;color:#fff;font-weight:600}
+.opt-score-row{display:flex;justify-content:space-between;align-items:center;margin-top:2px}
+.opt-score{font-size:11px;color:var(--text2)}
+.opt-overlap-warn{font-size:10px;color:#d97706;font-weight:600}
+.opt-priority-hit{font-size:10px;color:#7c3aed;font-weight:600}
+</style>
+
+<script>
+// ─────────────────────────────────────────────────────────
+// DATA LOADING
+// ─────────────────────────────────────────────────────────
+let DB = { pokemon:{}, moves:{}, meta:{} };
+let loaded = false;
+
+async function loadJSON(path) {
+  const r = await fetch(path);
+  if (!r.ok) throw new Error(`${path}: ${r.status}`);
+  return r.json();
+}
+
+async function init() {
+  try {
+    const [p, m, meta] = await Promise.all([
+      loadJSON('data/pokemon.json'),
+      loadJSON('data/moves.json'),
+      loadJSON('data/meta.json'),
+    ]);
+    DB.pokemon = p.pokemon;
+    DB.moves   = m.moves;
+    DB.meta    = meta;
+    loaded = true;
+    const gen = p.generated ? p.generated.slice(0,10) : '?';
+    document.getElementById('data-status').innerHTML =
+      `Data: <span>${Object.keys(DB.pokemon).length} Pokémon · ${Object.keys(DB.moves).length} moves · updated ${gen}</span>`;
+    buildConditions();
+    buildPowerPanel();
+    initDex();
+    recalc();
+  } catch(e) {
+    document.getElementById('data-status').textContent = 'Error loading data — run generate_data.py first.';
+    console.error(e);
+  }
+}
+
+// ─────────────────────────────────────────────────────────
+// STATE
+// ─────────────────────────────────────────────────────────
+const COLORS = ['#e53e3e','#3182ce','#38a169','#d69e2e','#805ad5','#dd6b20','#00897b','#d63384'];
+let atkPanels = [];
+let defPanels = [];
+let atkCounter = 0, defCounter = 0;
+
+// Condition state
+const conds = {
+  weather: 'none',
+  terrain: 'none',
+  stealth_rock_atk: false,
+  spikes_atk: 0,
+  tspikes_atk: 0,
+  stealth_rock_def: false,
+  spikes_def: 0,
+  tspikes_def: 0,
+  multAtkItem: 1,
+  multAtkOther: 1,
+  multDefItem: 1,
+  multDefOther: 1,
+};
+
+// Power panel state
+const powerOpts = { raw:true, stab:true, se:true, stab_se:true };
+let atkStatSlider = 100;
+
+// ─────────────────────────────────────────────────────────
+// TYPE HELPERS
+// ─────────────────────────────────────────────────────────
+function getTypeEff(moveType, defTypes) {
+  const chart = DB.meta.type_chart || {};
+  let mult = 1;
+  for (const dt of defTypes) {
+    const row = chart[moveType] || {};
+    if (row[dt] !== undefined) mult *= row[dt];
+  }
+  return mult;
+}
+
+function getTypeColor(t) {
+  const map = {
+    normal:'#9da19e',fire:'#f08030',water:'#6890f0',electric:'#c8a800',grass:'#5dac21',
+    ice:'#3dc5c5',fighting:'#c03028',poison:'#9040a0',ground:'#927d44',flying:'#7169c1',
+    psychic:'#f85888',bug:'#729f10',rock:'#a38c21',ghost:'#705898',dragon:'#5060e1',
+    dark:'#5a5366',steel:'#8e8ea0',fairy:'#c585a0'
+  };
+  return map[t] || '#555';
+}
+
+// ─────────────────────────────────────────────────────────
+// STAT CALC
+// ─────────────────────────────────────────────────────────
+function calcStat(base, ev, iv=31, level=50, natureMult=1) {
+  if (base === undefined) return 0;
+  return Math.floor((Math.floor((2*base + iv + Math.floor(ev/4)) * level/100) + 5) * natureMult);
+}
+function calcHP(base, ev, iv=31, level=50) {
+  return Math.floor((2*base + iv + Math.floor(ev/4)) * level/100) + level + 10;
+}
+function getNatureMult(natureName, statName) {
+  const natures = (DB.meta.natures || []);
+  const n = natures.find(x => x.name === natureName);
+  if (!n) return 1;
+  if (n.boost === statName) return 1.1;
+  if (n.drop === statName) return 0.9;
+  return 1;
+}
+function getStatMults(panel) {
+  const statBoosts = [1,1.5,2,2.5,3,3.5,4,0.25,0.28,0.33,0.4,0.5,0.67];
+  const atkStage = parseInt(panel.atkStage)||0;
+  const defStage = parseInt(panel.defStage)||0;
+  return {
+    atk: atkStage >= 0 ? (1 + atkStage*0.5) : 1/(1 + Math.abs(atkStage)*0.5),
+    def: defStage >= 0 ? (1 + defStage*0.5) : 1/(1 + Math.abs(defStage)*0.5),
+  };
+}
+
+// ─────────────────────────────────────────────────────────
+// DAMAGE FORMULA (Gen IX)
+// ─────────────────────────────────────────────────────────
+function calcDamage(atker, defer, moveKey) {
+  const atkPoke = DB.pokemon[atker.poke];
+  const defPoke = DB.pokemon[defer.poke];
+  const move    = DB.moves[moveKey];
+  if (!atkPoke || !defPoke || !move) return null;
+  if (move.category === 'status') return null;
+
+  const LEVEL = 50;
+  const isPhys = move.category === 'physical';
+
+  // Nature
+  const atkNatStat = isPhys ? 'attack' : 'special-attack';
+  const defNatStat = isPhys ? 'defense' : 'special-defense';
+  const atkNatMult = getNatureMult(atker.nature, atkNatStat);
+  const defNatMult = getNatureMult(defer.nature, defNatStat);
+
+  // Base stats
+  const atkBase = isPhys ? atkPoke.stats.attack : atkPoke.stats['special-attack'];
+  const defBase = isPhys ? defPoke.stats.defense : defPoke.stats['special-defense'];
+
+  // EVs
+  const atkEV  = isPhys ? (atker.evAtk||0) : (atker.evSpAtk||0);
+  const defEV  = isPhys ? (defer.evDef||0)  : (defer.evSpDef||0);
+  const atkSpeEV = atker.evSpe||0;
+  const defSpeEV = defer.evSpe||0;
+
+  // Calc stats
+  let A = calcStat(atkBase, atkEV, 31, LEVEL, atkNatMult);
+  let D = calcStat(defBase, defEV, 31, LEVEL, defNatMult);
+  const atkSpe = calcStat(atkPoke.stats.speed, atkSpeEV, 31, LEVEL, getNatureMult(atker.nature,'speed'));
+  const defSpe = calcStat(defPoke.stats.speed, defSpeEV, 31, LEVEL, getNatureMult(defer.nature,'speed'));
+  const defHP  = calcHP(defPoke.stats.hp, defer.evHP||0, 31, LEVEL);
+
+  // ── Ability effects on A ──
+  const atkAbility = (atker.ability||'').toLowerCase();
+  const defAbility = (defer.ability||'').toLowerCase();
+
+  // Huge Power / Pure Power doubles Attack
+  if (isPhys && (atkAbility === 'huge-power' || atkAbility === 'pure-power')) A *= 2;
+  // Gorilla Tactics (choice band equivalent on attack)
+  if (isPhys && atkAbility === 'gorilla-tactics') A = Math.floor(A * 1.5);
+  // Guts: +50% Atk when statused (assume active if selected)
+  if (isPhys && atkAbility === 'guts') A = Math.floor(A * 1.5);
+  // Hustle: +50% Atk physical
+  if (isPhys && atkAbility === 'hustle') A = Math.floor(A * 1.5);
+  // Defiant / Competitive: situational, skip
+  // Solar Power: +50% SpAtk in sun
+  if (!isPhys && atkAbility === 'solar-power' && conds.weather === 'sun') A = Math.floor(A * 1.5);
+  // Assault Vest on defender (SpDef)
+  if (!isPhys && defer.item === 'assault-vest') D = Math.floor(D * 1.5);
+  // Marvel Scale: +50% Def when statused
+  // Mold Breaker / Teravolt / Turboblaze: ignore defender abilities
+  const moldBreaker = atkAbility === 'mold-breaker' || atkAbility === 'teravolt' || atkAbility === 'turboblaze';
+
+  if (!moldBreaker && isPhys && defAbility === 'marvel-scale') D = Math.floor(D * 1.5);
+  // Fur Coat: double Def
+  if (!moldBreaker && isPhys && defAbility === 'fur-coat') D = Math.floor(D * 2);
+  // Fluffy: halves contact physical, doubles fire
+  if (!moldBreaker && isPhys && defAbility === 'fluffy') D = Math.floor(D * 2);
+  // Filter / Solid Rock / Prism Armor: reduce SE damage by 25%
+  const filterActive = !moldBreaker && (defAbility === 'filter' || defAbility === 'solid-rock' || defAbility === 'prism-armor');
+
+  // ── Absorption / immunity abilities (return 0 damage) ──
+  if (!moldBreaker && defAbility === 'volt-absorb' && move.type === 'electric') return { min:0, max:0, avg:0, typeEff:0, defHP, absorbed:true };
+  if (!moldBreaker && defAbility === 'water-absorb' && move.type === 'water')   return { min:0, max:0, avg:0, typeEff:0, defHP, absorbed:true };
+  if (!moldBreaker && defAbility === 'flash-fire'   && move.type === 'fire')    return { min:0, max:0, avg:0, typeEff:0, defHP, absorbed:true };
+  if (!moldBreaker && defAbility === 'sap-sipper'   && move.type === 'grass')   return { min:0, max:0, avg:0, typeEff:0, defHP, absorbed:true };
+  if (!moldBreaker && defAbility === 'storm-drain'  && move.type === 'water')   return { min:0, max:0, avg:0, typeEff:0, defHP, absorbed:true };
+  if (!moldBreaker && defAbility === 'lightning-rod'&& move.type === 'electric')return { min:0, max:0, avg:0, typeEff:0, defHP, absorbed:true };
+  if (!moldBreaker && defAbility === 'motor-drive'  && move.type === 'electric')return { min:0, max:0, avg:0, typeEff:0, defHP, absorbed:true };
+  if (!moldBreaker && defAbility === 'dry-skin'     && move.type === 'water')   return { min:0, max:0, avg:0, typeEff:0, defHP, absorbed:true };
+  if (!moldBreaker && defAbility === 'earth-eater'  && move.type === 'ground')  return { min:0, max:0, avg:0, typeEff:0, defHP, absorbed:true };
+  if (!moldBreaker && defAbility === 'well-baked-body' && move.type === 'fire') return { min:0, max:0, avg:0, typeEff:0, defHP, absorbed:true };
+
+  // Thick Fat: halves Fire and Ice damage
+  let thickFatMult = 1;
+  if (!moldBreaker && defAbility === 'thick-fat' && (move.type === 'fire' || move.type === 'ice')) thickFatMult = 0.5;
+
+  // Heatproof: halves Fire damage
+  let heatproofMult = 1;
+  if (!moldBreaker && defAbility === 'heatproof' && move.type === 'fire') heatproofMult = 0.5;
+
+  // Dry Skin: Fire does 25% more
+  let drySkinMult = 1;
+  if (!moldBreaker && defAbility === 'dry-skin' && move.type === 'fire') drySkinMult = 1.25;
+
+
+
+  // Multiscale / Shadow Shield: halves damage at full HP (assume full HP)
+  let multiscaleMult = 1;
+  if (!moldBreaker && (defAbility === 'multiscale' || defAbility === 'shadow-shield')) multiscaleMult = 0.5;
+
+  // Ice Scales: halves special damage
+  let iceScalesMult = 1;
+  if (defAbility === 'ice-scales' && !isPhys) iceScalesMult = 0.5;
+
+  // Purifying Salt: halves Ghost damage
+  let purifyingSaltMult = 1;
+  if (defAbility === 'purifying-salt' && move.type === 'ghost') purifyingSaltMult = 0.5;
+
+  // Stage boosts
+  const stageMults = getStatMults(atker);
+  const defStageMults = getStatMults(defer);
+  A = Math.floor(A * stageMults.atk);
+  D = Math.floor(D * defStageMults.def);
+
+  // Items on A
+  if (isPhys  && atker.item === 'choice-band')  A = Math.floor(A * 1.5);
+  if (!isPhys && atker.item === 'choice-specs')  A = Math.floor(A * 1.5);
+  if (atker.item === 'life-orb') A = Math.floor(A * 1.3);
+  if (isPhys  && atker.item === 'punching-glove') A = Math.floor(A * 1.1);
+
+  // ── Variable power moves ──
+  let power = move.power || 0;
+  if (power === 0) return null;
+
+  const moveName = move.name;
+  // Gyro Ball: 25 * defSpe / atkSpe, capped at 150
+  if (moveName === 'gyro-ball') power = Math.min(150, Math.floor(25 * defSpe / Math.max(1, atkSpe)));
+  // Electro Ball: based on speed ratio
+  if (moveName === 'electro-ball') {
+    const ratio = Math.floor(atkSpe / Math.max(1, defSpe));
+    power = ratio >= 4 ? 150 : ratio >= 3 ? 120 : ratio >= 2 ? 80 : ratio >= 1 ? 60 : 40;
+  }
+  // Low Kick / Grass Knot: based on defender weight
+  if (moveName === 'low-kick' || moveName === 'grass-knot') {
+    const w = defPoke.weight || 0;
+    power = w >= 2000 ? 120 : w >= 1000 ? 100 : w >= 500 ? 80 : w >= 250 ? 60 : w >= 100 ? 40 : 20;
+  }
+  // Hex: doubles if defender is statused (assume active = 130)
+  if (moveName === 'hex') power = 130;
+  // Facade: doubles if statused
+  if (moveName === 'facade') power = 140;
+  // Stored Power: base 20, assume +1 stage applied = 40 (user can adjust stages)
+  // (already fine as-is from the data)
+  // Weather Ball: doubles power in any weather, changes type to match
+  if (moveName === 'weather-ball' && effectiveWeather !== 'none') {
+    power = 100;
+    const weatherTypes = { sun:'fire', rain:'water', sand:'rock', hail:'ice', snow:'ice' };
+    if (weatherTypes[effectiveWeather]) typeOverride = weatherTypes[effectiveWeather];
+  }
+
+  // Power item mods
+  if (isPhys  && atker.item === 'muscle-band')  power = Math.floor(power * 1.1);
+  if (!isPhys && atker.item === 'wise-glasses') power = Math.floor(power * 1.1);
+
+  // ── Ability effects on power ──
+  // Technician: moves 60bp or less get 1.5x
+  if (power <= 60 && atkAbility === 'technician') power = Math.floor(power * 1.5);
+  // Sheer Force: rough 1.3x on moves with secondary effects (approximate)
+  if (atkAbility === 'sheer-force' && move.effect && move.effect.length > 10) power = Math.floor(power * 1.3);
+  // Tough Claws: contact moves +30%
+  if (atkAbility === 'tough-claws' && isPhys) power = Math.floor(power * 1.3);
+  // Adaptability: STAB becomes 2x (handled in stab below)
+  // Iron Fist: punching moves +20%
+  const punchMoves = ['ice-punch','fire-punch','thunder-punch','mach-punch','drain-punch','bullet-punch','focus-punch','shadow-punch','sky-uppercut','comet-punch','meteor-mash','plasma-fists','surging-strikes','wicked-blow'];
+  if (atkAbility === 'iron-fist' && punchMoves.includes(moveName)) power = Math.floor(power * 1.2);
+  // Strong Jaw: biting moves +50%
+  const biteMoves = ['bite','crunch','fire-fang','ice-fang','thunder-fang','poison-fang','psychic-fangs','hyper-fang','fishious-rend','jaw-lock','pluck','leech-life'];
+  if (atkAbility === 'strong-jaw' && biteMoves.includes(moveName)) power = Math.floor(power * 1.5);
+  // Reckless: recoil moves +20%
+  const recoilMoves = ['double-edge','brave-bird','flare-blitz','wild-charge','head-smash','volt-tackle','take-down','submission','jump-kick','high-jump-kick','wood-hammer','head-charge','light-of-ruin','chloroblast'];
+  if (atkAbility === 'reckless' && recoilMoves.includes(moveName)) power = Math.floor(power * 1.2);
+  // Punk Rock: sound moves +30%
+  const soundMoves = ['boomburst','hyper-voice','sparkling-aria','clanging-scales','clangorous-soul','overdrive','disarming-voice','echoed-voice','round','snore','uproar','chatter','bug-buzz','metal-sound','screech','growl','roar','sing','supersonic','perish-song','noble-roar','torch-song','alluring-voice'];
+  if (atkAbility === 'punk-rock' && soundMoves.includes(moveName)) power = Math.floor(power * 1.3);
+  // Liquid Voice: sound moves become Water type
+  if (atkAbility === 'liquid-voice' && soundMoves.includes(moveName) && !typeOverride) typeOverride = 'water';
+  // Steely Spirit: Steel moves +50%
+  if (atkAbility === 'steely-spirit' && move.type === 'steel') power = Math.floor(power * 1.5);
+  // Transistor: Electric moves +50%
+  if (atkAbility === 'transistor' && move.type === 'electric') power = Math.floor(power * 1.5);
+  // Dragon's Maw: Dragon moves +50%
+  if ((atkAbility === 'dragons-maw' || atkAbility === "dragon's-maw") && move.type === 'dragon') power = Math.floor(power * 1.5);
+  // Rocky Payload: Rock moves +50%
+  if (atkAbility === 'rocky-payload' && move.type === 'rock') power = Math.floor(power * 1.5);
+  // Analytic: +30% (assume moving last)
+  if (atkAbility === 'analytic') power = Math.floor(power * 1.3);
+  // Sand Force: Rock/Ground/Steel +30% in sandstorm
+  if (atkAbility === 'sand-force' && conds.weather === 'sand' && ['rock','ground','steel'].includes(move.type)) power = Math.floor(power * 1.3);
+  // Orichalcum Pulse: treat as sun active, boost Atk in sun (physical)
+  if (atkAbility === 'orichalcum-pulse' && isPhys) A = Math.floor(A * (4/3));
+  // Hadron Engine: treat as electric terrain active, boost SpAtk
+  if (atkAbility === 'hadron-engine' && !isPhys) A = Math.floor(A * (4/3));
+  // Pixilate / Refrigerate / Aerilate / Galvanize: type change + 1.2x (simplified: apply 1.2 if applicable)
+  const typeChangeAbilities = { pixilate:'fairy', refrigerate:'ice', aerilate:'flying', galvanize:'electric' };
+  let typeOverride = null;
+  if (typeChangeAbilities[atkAbility] && move.type === 'normal') {
+    typeOverride = typeChangeAbilities[atkAbility];
+    power = Math.floor(power * 1.2);
+  }
+  // Mega Launcher: pulse moves +50%
+  const pulseMoves = ['aura-sphere','dark-pulse','dragon-pulse','heal-pulse','origin-pulse','water-pulse'];
+  if (atkAbility === 'mega-launcher' && pulseMoves.includes(moveName)) power = Math.floor(power * 1.5);
+
+  // ── Weather ──
+  // Mega Sol: attacker's moves behave as if sun is active, regardless of actual weather
+  const effectiveWeather = (atkAbility === 'mega-sol' || atkAbility === 'orichalcum-pulse') ? 'sun' : conds.weather;
+  let weather = 1;
+  if (effectiveWeather === 'rain') {
+    if (move.type === 'water') weather = 1.5;
+    if (move.type === 'fire')  weather = 0.5;
+  } else if (effectiveWeather === 'sun') {
+    if (move.type === 'fire')  weather = 1.5;
+    if (move.type === 'water') weather = 0.5;
+  }
+
+  // ── Terrain ──
+  let terrain = 1;
+  const effectiveTerrain = (atkAbility === 'hadron-engine') ? 'electric' : conds.terrain;
+  if (effectiveTerrain === 'electric' && move.type === 'electric') terrain = 1.3;
+  if (effectiveTerrain === 'grassy'   && move.type === 'grass')    terrain = 1.3;
+  if (effectiveTerrain === 'psychic'  && move.type === 'psychic')  terrain = 1.3;
+  if (effectiveTerrain === 'misty'    && move.type === 'dragon')   terrain = 0.5;
+
+  // ── STAB ──
+  const moveType = typeOverride || move.type;
+  const atkTypes = atkPoke.types || [];
+  let stab = atkTypes.includes(moveType) ? (atkAbility === 'adaptability' ? 2 : 1.5) : 1;
+
+  // ── Type effectiveness ──
+  const typeEff = getTypeEff(moveType, defPoke.types || []);
+  if (typeEff === 0) return { min:0, max:0, avg:0, typeEff:0, defHP };
+
+  // Filter / Solid Rock
+  const filterMult = (filterActive && typeEff > 1) ? 0.75 : 1;
+
+  // Expert belt
+  const expertMult = (atker.item === 'expert-belt' && typeEff > 1) ? 1.2 : 1;
+  // Tinted Lens: doubles NVE damage
+  const tintedLensMult = (atkAbility === 'tinted-lens' && typeEff < 1) ? 2 : 1;
+  // Neuroforce: SE moves +25%
+  const neuroforceMult = (atkAbility === 'neuroforce' && typeEff > 1) ? 1.25 : 1;
+  // Supreme Overlord: +10% per fainted ally
+  const supremeMult = (atkAbility === 'supreme-overlord') ? (1 + 0.1 * (atker.faintedAllies||0)) : 1;
+  // Rivalry: same gender +25%, opposite −25%
+  const rivalryMult = (atkAbility === 'rivalry') ? (atker.gender === 'same' ? 1.25 : atker.gender === 'opposite' ? 0.75 : 1) : 1;
+
+  // ── Resist berries on defender ──
+  // Each berry halves damage from a supereffective hit of its type
+  // Chilan Berry is special: halves Normal damage always (not just SE)
+  const RESIST_BERRIES = {
+    'occa-berry':'fire','passho-berry':'water','wacan-berry':'electric','rindo-berry':'grass',
+    'yache-berry':'ice','chople-berry':'fighting','kebia-berry':'poison','shuca-berry':'ground',
+    'coba-berry':'flying','payapa-berry':'psychic','tanga-berry':'bug','charti-berry':'rock',
+    'kasib-berry':'ghost','haban-berry':'dragon','colbur-berry':'dark','babiri-berry':'steel',
+    'roseli-berry':'fairy',
+  };
+  let berryMult = 1;
+  if (defer.item === 'chilan-berry' && moveType === 'normal') {
+    berryMult = 0.5;
+  } else if (RESIST_BERRIES[defer.item] && RESIST_BERRIES[defer.item] === moveType && typeEff > 1) {
+    berryMult = 0.5;
+  }
+
+  // ── Attacker held item type boosts ──
+  const TYPE_ITEMS = {
+    'fire':'charcoal','water':'mystic-water','grass':'miracle-seed','electric':'magnet',
+    'ice':'never-melt-ice','fighting':'black-belt','poison':'poison-barb','ground':'soft-sand',
+    'flying':'sharp-beak','psychic':'twisted-spoon','bug':'silverpowder','rock':'hard-stone',
+    'ghost':'spell-tag','dragon':'dragon-fang','dark':'black-glasses','steel':'metal-coat',
+    'fairy':'fairy-feather','normal':'silk-scarf'
+  };
+  const typeItemMult = (TYPE_ITEMS[moveType] === atker.item) ? 1.2 : 1;
+
+  // ── Manual multipliers from conditions panel ──
+  const manualMult = (conds.multAtkItem||1) * (conds.multAtkOther||1) / ((conds.multDefItem||1) * (conds.multDefOther||1));
+
+  // Combined defender ability multiplier
+  const defAbilMult = thickFatMult * heatproofMult * drySkinMult * multiscaleMult * iceScalesMult * purifyingSaltMult;
+
+  // ── Base damage ──
+  const base = Math.floor(Math.floor((Math.floor(2*LEVEL/5+2) * power * A / D) / 50) + 2);
+  const preMult = base * weather * terrain;
+
+  const min = Math.floor(Math.floor(Math.floor(preMult * 85/100) * stab * typeEff * filterMult * expertMult * tintedLensMult * neuroforceMult * typeItemMult) * defAbilMult * berryMult * supremeMult * rivalryMult * manualMult);
+  const max = Math.floor(Math.floor(Math.floor(preMult * 100/100) * stab * typeEff * filterMult * expertMult * tintedLensMult * neuroforceMult * typeItemMult) * defAbilMult * berryMult * supremeMult * rivalryMult * manualMult);
+  const avg = Math.floor((min+max)/2);
+
+  return { min, max, avg, typeEff, defHP, stab, A, D, power, berryMult };
+}
+
+// Hazard damage per turn in a 2-turn KO scenario
+function hazardDamagePerTurn(hazard, defPoke, turns) {
+  if (!defPoke) return 0;
+  const defHP = calcHP(defPoke.stats.hp, 0, 31, 50);
+  let total = 0;
+  // Stealth rock: once on entry
+  if (hazard === 'sr') {
+    const types = defPoke.types || [];
+    let mult = 1;
+    const chart = DB.meta.type_chart || {};
+    for (const t of types) {
+      const row = chart['rock'] || {};
+      if (row[t] !== undefined) mult *= row[t];
+    }
+    total += Math.floor(defHP * 0.125 * mult);
+  }
+  // Spikes: on entry
+  if (hazard === 'spikes1') total += Math.floor(defHP * 0.125);
+  if (hazard === 'spikes2') total += Math.floor(defHP * 0.1667);
+  if (hazard === 'spikes3') total += Math.floor(defHP * 0.25);
+  // Toxic: each turn (turn 1=1/16, turn2=2/16)
+  if (hazard === 'toxic') {
+    for (let i=1; i<=turns; i++) total += Math.floor(defHP * i/16);
+  }
+  // Poison: flat 1/8 per turn
+  if (hazard === 'poison') {
+    total += Math.floor(defHP * 0.125) * turns;
+  }
+  return total;
+}
+
+// ─────────────────────────────────────────────────────────
+// PANEL BUILDERS
+// ─────────────────────────────────────────────────────────
+function pokeOptions() {
+  return Object.values(DB.pokemon).sort((a,b) => {
+    if (a.is_mega !== b.is_mega) return a.is_mega ? 1 : -1;
+    return (a.dex_id||0) - (b.dex_id||0);
+  });
+}
+
+function buildPokeSearch(containerId, panelId, isAtk) {
+  const wrap = document.createElement('div');
+  wrap.className = 'poke-wrap';
+
+  const input = document.createElement('input');
+  input.type = 'text';
+  input.className = 'poke-input';
+  input.placeholder = 'Search Pokémon…';
+  input.autocomplete = 'off';
+
+  const sprite = document.createElement('img');
+  sprite.className = 'poke-sprite';
+  sprite.style.display = 'none';
+
+  const list = document.createElement('div');
+  list.className = 'poke-list';
+
+  wrap.appendChild(input);
+  wrap.appendChild(sprite);
+  wrap.appendChild(list);
+
+  const allPokes = pokeOptions();
+
+  function renderList(filter) {
+    list.innerHTML = '';
+    // If no pokemon selected yet, filter by moves already added to this panel
+    const panels = isAtk ? atkPanels : defPanels;
+    const panel = panels.find(x => x.id === panelId);
+    const selectedMoveNames = (panel && !panel.poke && panel.moves && panel.moves.length > 0)
+      ? panel.moves.map(m => m.name)
+      : [];
+    let results = allPokes;
+    if (selectedMoveNames.length > 0) {
+      results = results.filter(p =>
+        selectedMoveNames.every(mn => (p.moves || []).includes(mn))
+      );
+    }
+    if (filter) {
+      results = results.filter(p => p.display.toLowerCase().includes(filter.toLowerCase()));
+    }
+    if (selectedMoveNames.length > 0 && results.length === 0) {
+      const msg = document.createElement('div');
+      msg.style.cssText = 'padding:8px;font-size:12px;color:var(--text2);text-align:center;';
+      msg.textContent = 'No Pokémon can learn all selected moves';
+      list.appendChild(msg);
+      list.classList.add('open');
+      return;
+    }
+    results.slice(0, 80).forEach(p => {
+      const el = document.createElement('div');
+      el.className = 'poke-opt';
+      const img = document.createElement('img');
+      img.src = `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${p.dex_id}.png`;
+      img.onerror = () => img.style.display='none';
+      const name = document.createElement('span');
+      name.textContent = p.display;
+      el.appendChild(img);
+      el.appendChild(name);
+      (p.types||[]).forEach(t => {
+        const pip = document.createElement('span');
+        pip.className = 'type-pip';
+        pip.textContent = t;
+        pip.setAttribute('data-type', t);
+        pip.style.background = getTypeColor(t);
+        el.appendChild(pip);
+      });
+      el.addEventListener('mousedown', () => {
+        selectPoke(p, input, sprite, list, containerId, panelId, isAtk);
+      });
+      list.appendChild(el);
+    });
+    list.classList.toggle('open', results.length > 0);
+  }
+
+  input.addEventListener('focus', () => renderList(input.value));
+  input.addEventListener('input', () => renderList(input.value));
+  input.addEventListener('blur', () => setTimeout(() => list.classList.remove('open'), 150));
+
+  return wrap;
+}
+
+function updateAbilityTooltip(tipId, abilityName) {
+  const tip = document.getElementById(tipId);
+  if (!tip || !abilityName) return;
+  const info = getAbilityInfo(abilityName);
+  tip.textContent = `${info.icon} ${info.desc}`;
+}
+
+function updateAbilityExtras(panelId, panel) {
+  const wrap = document.getElementById(`ability-extras-${panelId}`);
+  if (!wrap) return;
+  wrap.innerHTML = '';
+  const ab = panel.ability;
+  if (ab === 'supreme-overlord') {
+    wrap.innerHTML = `<div class="divider"></div>
+      <label class="lbl">Fainted Allies (Supreme Overlord)</label>
+      <select id="fainted-${panelId}">
+        <option value="0">0 fainted</option>
+        <option value="1">1 fainted (+10%)</option>
+        <option value="2">2 fainted (+20%)</option>
+        <option value="3">3 fainted (+30%)</option>
+        <option value="4">4 fainted (+40%)</option>
+        <option value="5">5 fainted (+50%)</option>
+      </select>`;
+    document.getElementById(`fainted-${panelId}`).addEventListener('change', e => {
+      panel.faintedAllies = parseInt(e.target.value)||0; recalc();
+    });
+  } else if (ab === 'rivalry') {
+    wrap.innerHTML = `<div class="divider"></div>
+      <label class="lbl">Gender Match (Rivalry)</label>
+      <select id="gender-${panelId}">
+        <option value="none">Unknown / Genderless</option>
+        <option value="same">Same gender (+25%)</option>
+        <option value="opposite">Opposite gender (−25%)</option>
+      </select>`;
+    document.getElementById(`gender-${panelId}`).addEventListener('change', e => {
+      panel.gender = e.target.value; recalc();
+    });
+  }
+}
+
+function selectPoke(p, input, sprite, list, containerId, panelId, isAtk) {
+  input.value = p.display;
+  sprite.src = `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${p.dex_id}.png`;
+  sprite.style.display = 'block';
+  list.classList.remove('open');
+
+  const panels = isAtk ? atkPanels : defPanels;
+  const panel = panels.find(x => x.id === panelId);
+  if (panel) {
+    panel.poke = p.name;
+    panel.ability = (p.abilities||[])[0] || '';
+
+    // Update panel title
+    const titleEl = document.getElementById(`${isAtk?'atk':'def'}-title-${panelId}`);
+    if (titleEl) titleEl.textContent = p.display;
+
+    const typeRow = document.getElementById(`types-${isAtk?'atk-':'def-'}${panelId}`);
+    if (typeRow) {
+      typeRow.innerHTML = '';
+      (p.types||[]).forEach(t => {
+        const b = document.createElement('span');
+        b.className = 'type-badge';
+        b.style.background = getTypeColor(t);
+        b.textContent = t;
+        typeRow.appendChild(b);
+      });
+    }
+
+    // Populate ability dropdown with icons
+    const abSel = document.getElementById(`ability-${isAtk?'atk':'def'}-${panelId}`);
+    if (abSel) {
+      abSel.innerHTML = (p.abilities||[]).map(a => {
+        const info = getAbilityInfo(a);
+        const label = a.replace(/-/g,' ').replace(/\b\w/g,c=>c.toUpperCase());
+        return `<option value="${a}">${info.icon} ${label}</option>`;
+      }).join('');
+      panel.ability = (p.abilities||[])[0] || '';
+      updateAbilityTooltip(`abtip-${isAtk?'atk':'def'}-${panelId}`, panel.ability);
+    }
+
+    updateStatsDisplay(panelId, p, isAtk);
+    if (isAtk) updateMoveSelect(panelId, p);
+    recalc();
+  }
+}
+
+// ── Ability descriptions and icons ──
+const ABILITY_INFO = {
+  'overgrow':       {icon:'🌿',desc:'Boosts Grass moves by 1.5× when HP is below 1/3.'},
+  'blaze':          {icon:'🔥',desc:'Boosts Fire moves by 1.5× when HP is below 1/3.'},
+  'torrent':        {icon:'💧',desc:'Boosts Water moves by 1.5× when HP is below 1/3.'},
+  'swarm':          {icon:'🐛',desc:'Boosts Bug moves by 1.5× when HP is below 1/3.'},
+  'chlorophyll':    {icon:'☀️',desc:'Doubles Speed in harsh sunlight.'},
+  'solar-power':    {icon:'☀️',desc:'Boosts Sp. Atk by 1.5× in harsh sunlight, but loses 1/8 HP each turn.'},
+  'drought':        {icon:'☀️',desc:'Summons harsh sunlight when entering battle.'},
+  'mega-sol':       {icon:'🌞',desc:'Mega Sol: The Pokémon\'s moves act as if harsh sunlight is in effect, regardless of actual weather. Does not change the weather.'},
+  'drizzle':        {icon:'🌧',desc:'Summons rain when entering battle.'},
+  'sand-stream':    {icon:'🌪',desc:'Summons a sandstorm when entering battle.'},
+  'snow-warning':   {icon:'❄️',desc:'Summons snow when entering battle.'},
+  'intimidate':     {icon:'👁',desc:'Lowers the opposing Pokémon\'s Attack by 1 stage on entry.'},
+  'levitate':       {icon:'🌀',desc:'Immune to Ground-type moves.'},
+  'adaptability':   {icon:'⭐',desc:'STAB bonus increases from 1.5× to 2×.'},
+  'technician':     {icon:'⚙️',desc:'Moves with 60 base power or less get a 1.5× boost.'},
+  'huge-power':     {icon:'💪',desc:'Doubles the Pokémon\'s Attack stat.'},
+  'pure-power':     {icon:'💪',desc:'Doubles the Pokémon\'s Attack stat.'},
+  'guts':           {icon:'🔥',desc:'Boosts Attack by 1.5× when afflicted with a status condition.'},
+  'hustle':         {icon:'⚡',desc:'Boosts Attack by 1.5× but physical move accuracy is 80%.'},
+  'marvel-scale':   {icon:'🐉',desc:'Boosts Defense by 1.5× when afflicted with a status condition.'},
+  'fur-coat':       {icon:'🛡',desc:'Doubles the Pokémon\'s Defense stat.'},
+  'rough-skin':     {icon:'⚡',desc:'Damages the attacker for 1/8 of their max HP on contact.'},
+  'rocky-helmet':   {icon:'🪨',desc:'Damages the attacker for 1/6 of their max HP on contact.'},
+  'filter':         {icon:'🛡',desc:'Reduces damage from super effective moves by 25%.'},
+  'solid-rock':     {icon:'🪨',desc:'Reduces damage from super effective moves by 25%.'},
+  'prism-armor':    {icon:'💎',desc:'Reduces damage from super effective moves by 25%.'},
+  'multiscale':     {icon:'🐉',desc:'Halves damage when at full HP.'},
+  'magic-guard':    {icon:'✨',desc:'Only takes damage from direct attacks.'},
+  'regenerator':    {icon:'💚',desc:'Restores 1/3 of max HP when switching out.'},
+  'magic-bounce':   {icon:'🔮',desc:'Reflects status moves back at the user.'},
+  'protean':        {icon:'🌈',desc:'Changes type to match the move being used before attacking.'},
+  'libero':         {icon:'🌈',desc:'Changes type to match the move being used before attacking.'},
+  'tough-claws':    {icon:'🐾',desc:'Boosts contact moves by 1.3×.'},
+  'sheer-force':    {icon:'💥',desc:'Removes secondary effects of moves but boosts their power by 1.3×.'},
+  'iron-fist':      {icon:'👊',desc:'Boosts punching moves by 1.2×.'},
+  'mega-launcher':  {icon:'💫',desc:'Boosts pulse moves by 1.5×.'},
+  'pixilate':       {icon:'🧚',desc:'Normal moves become Fairy-type and gain a 1.2× power boost.'},
+  'refrigerate':    {icon:'❄️',desc:'Normal moves become Ice-type and gain a 1.2× power boost.'},
+  'aerilate':       {icon:'🌬',desc:'Normal moves become Flying-type and gain a 1.2× power boost.'},
+  'galvanize':      {icon:'⚡',desc:'Normal moves become Electric-type and gain a 1.2× power boost.'},
+  'sand-rush':      {icon:'🌪',desc:'Doubles Speed during a sandstorm. Immune to sandstorm damage.'},
+  'sand-force':     {icon:'🌪',desc:'Boosts Rock, Ground, and Steel moves by 1.3× during sandstorm.'},
+  'mold-breaker':   {icon:'🔨',desc:'Moves can be used regardless of the target\'s abilities.'},
+  'stance-change':  {icon:'⚔️',desc:'Changes between Shield Forme and Blade Forme based on moves used.'},
+  'disguise':       {icon:'👻',desc:'Blocks one hit and takes 1/8 max HP damage instead, then loses the disguise.'},
+  'unaware':        {icon:'😶',desc:'Ignores the target\'s stat changes when attacking or defending.'},
+  'compound-eyes':  {icon:'👀',desc:'Raises the accuracy of moves by 1.3×.'},
+  'speed-boost':    {icon:'⚡',desc:'Raises Speed by 1 stage at the end of each turn.'},
+  'poison-heal':    {icon:'💜',desc:'Restores 1/8 of max HP each turn when poisoned instead of losing HP.'},
+  'gale-wings':     {icon:'🌬',desc:'Gives priority to Flying-type moves when at full HP.'},
+  'contrary':       {icon:'🔄',desc:'Stat changes are reversed — boosts become drops and vice versa.'},
+  'prankster':      {icon:'🎭',desc:'Gives priority to status moves.'},
+  'parental-bond':  {icon:'👨‍👧',desc:'Allows the user to attack twice. Second hit does 25% damage.'},
+  'gorilla-tactics':{icon:'🦍',desc:'Boosts Attack by 1.5× but only allows the use of the first move selected.'},
+  'zero-to-hero':   {icon:'🦸',desc:'Transforms into Hero Form when switching out.'},
+  'purifying-salt': {icon:'🧂',desc:'Immune to status conditions and reduces Ghost-type damage by 50%.'},
+  'sharpness':      {icon:'⚔️',desc:'Boosts slicing moves by 1.5×.'},
+  'stamina':        {icon:'🛡',desc:'Raises Defense by 1 stage when hit by an attack.'},
+  'clear-body':     {icon:'💠',desc:'Prevents other Pokémon from lowering its stats.'},
+  'bulletproof':    {icon:'🛡',desc:'Immune to ball and bomb moves.'},
+  'soundproof':     {icon:'🔇',desc:'Immune to sound-based moves.'},
+  'rain-dish':      {icon:'🌧',desc:'Restores 1/16 of max HP each turn during rain.'},
+  'ice-body':       {icon:'❄️',desc:'Restores 1/16 of max HP each turn during hail or snow.'},
+  'thick-fat':      {icon:'🛡',desc:'Halves damage from Fire and Ice-type moves.'},
+  'natural-cure':   {icon:'💚',desc:'Cures status conditions when switching out.'},
+  'synchronize':    {icon:'🔗',desc:'Passes burn, paralysis, or poison to the attacker.'},
+  'inner-focus':    {icon:'🎯',desc:'Cannot flinch. Immune to Intimidate.'},
+  'justified':      {icon:'⚔️',desc:'Raises Attack by 1 stage when hit by a Dark-type move.'},
+  'moxie':          {icon:'💪',desc:'Raises Attack by 1 stage after knocking out a Pokémon.'},
+  'competitive':    {icon:'📈',desc:'Raises Sp. Atk by 2 stages when a stat is lowered by an opponent.'},
+  'defiant':        {icon:'📈',desc:'Raises Attack by 2 stages when a stat is lowered by an opponent.'},
+  'surge-surfer':   {icon:'⚡',desc:'Doubles Speed on Electric Terrain.'},
+  'battle-bond':    {icon:'💧',desc:'After KOing a foe, transforms into Ash-Greninja and boosts Water Shuriken.'},
+  'volt-absorb':    {icon:'⚡',desc:'Absorbs Electric moves, restoring 25% HP instead of taking damage.'},
+  'water-absorb':   {icon:'💧',desc:'Absorbs Water moves, restoring 25% HP instead of taking damage.'},
+  'flash-fire':     {icon:'🔥',desc:'Absorbs Fire moves and boosts Fire-type move power by 1.5× when hit.'},
+  'scrappy':        {icon:'👊',desc:'Normal and Fighting moves can hit Ghost-type Pokémon.'},
+  'skill-link':     {icon:'🔗',desc:'Multi-hit moves always hit the maximum number of times.'},
+  'rock-head':      {icon:'🪨',desc:'No recoil damage from recoil moves.'},
+  'reckless':       {icon:'💥',desc:'Boosts recoil moves by 1.2×.'},
+  'iron-barbs':     {icon:'⚡',desc:'Damages the attacker for 1/8 of their max HP on contact.'},
+  'own-tempo':      {icon:'😌',desc:'Cannot be confused. Immune to Intimidate.'},
+  'shell-armor':    {icon:'🛡',desc:'Cannot receive critical hits.'},
+  'sturdy':         {icon:'🛡',desc:'Cannot be KO\'d in one hit from full HP. Immune to OHKO moves.'},
+  'pressure':       {icon:'👁',desc:'The opposing Pokémon uses 2 PP per move instead of 1.'},
+  'infiltrator':    {icon:'👤',desc:'Bypasses Reflect, Light Screen, Safeguard, Mist, and Aurora Veil.'},
+  'cursed-body':    {icon:'👻',desc:'Has a 30% chance to disable the move that hit the Pokémon.'},
+  'anticipation':   {icon:'⚠️',desc:'Shudders when an opponent has a super effective or OHKO move.'},
+  'telepathy':      {icon:'🔮',desc:'Avoids moves used by its allies in Double and Triple Battles.'},
+  'unnerve':        {icon:'😨',desc:'Prevents the opposing Pokémon from eating Berries.'},
+  'oblivious':      {icon:'😶',desc:'Immune to Attract, Taunt, and Captivate.'},
+  'cute-charm':     {icon:'💕',desc:'30% chance of infatuating opponents that make contact.'},
+  'pickup':         {icon:'🎁',desc:'May pick up items after battle.'},
+  'trace':          {icon:'🔄',desc:'Copies the opponent\'s ability on entry.'},
+  'early-bird':     {icon:'🐦',desc:'Wakes up from sleep twice as fast.'},
+  'shed-shell':     {icon:'🐚',desc:'Allows the holder to switch out even when trapped.'},
+  'mirror-armor':   {icon:'🪞',desc:'Reflects stat-lowering effects back at the opponent.'},
+  'super-sweet-syrup':{icon:'🍯',desc:'Lowers the opponent\'s evasiveness by 1 stage on entry.'},
+  'sticky-hold':    {icon:'🍯',desc:'Prevents the held item from being taken or moved.'},
+  'armor-tail':     {icon:'🦎',desc:'Prevents opponents from using priority moves.'},
+  'reckless':       {icon:'💥',desc:'Boosts recoil moves by 1.2×.'},
+  'punk-rock':      {icon:'🎸',desc:'Boosts sound-based moves by 1.3×. Also halves damage from sound moves.'},
+  'liquid-voice':   {icon:'💧',desc:'All sound-based moves become Water-type.'},
+  'steely-spirit':  {icon:'⚔️',desc:'Boosts Steel-type move power by 1.5×.'},
+  'tinted-lens':    {icon:'🔍',desc:'Not-very-effective moves deal double damage (0.5× → 1×, 0.25× → 0.5×).'},
+  'analytic':       {icon:'🧪',desc:'Boosts move power by 1.3× when moving last.'},
+  'sand-force':     {icon:'🌪',desc:'Boosts Rock, Ground, and Steel moves by 1.3× during sandstorm.'},
+  'transistor':     {icon:'⚡',desc:'Boosts Electric-type moves by 1.5×.'},
+  'dragons-maw':    {icon:'🐉',desc:'Boosts Dragon-type moves by 1.5×.'},
+  'rocky-payload':  {icon:'🪨',desc:'Boosts Rock-type moves by 1.5×.'},
+  'orichalcum-pulse':{icon:'☀️',desc:'Summons harsh sun on entry. Boosts Attack in harsh sun.'},
+  'hadron-engine':  {icon:'⚡',desc:'Summons Electric Terrain on entry. Boosts Sp. Atk in Electric Terrain.'},
+  'neuroforce':     {icon:'🧠',desc:'Boosts super-effective moves by 1.25×.'},
+  'supreme-overlord':{icon:'👑',desc:'Boosts Atk/SpAtk by 10% for each fainted ally (max 5).'},
+  'rivalry':        {icon:'⚔️',desc:'+25% damage vs same gender, −25% vs opposite gender.'},
+  'innards-out':    {icon:'💀',desc:'When knocked out, deals damage to the attacker equal to this Pokémon\'s remaining HP before the hit.'},
+  'dragonize':      {icon:'🐉',desc:'Dragonize: Normal-type moves become Dragon-type and gain a 1.2× power boost. Mega Feraligatr signature.'},
+  'piercing-drill': {icon:'🔩',desc:'Piercing Drill: Contact moves hit through protection moves like Protect and Detect for 25% of normal damage. Mega Excadrill signature.'},
+  'unseen-fist':    {icon:'👁',desc:'Contact moves bypass protection moves like Protect and Detect entirely.'},
+  'fairy-aura':     {icon:'🧚',desc:'Powers up Fairy-type moves for all Pokémon in battle by 1.33×.'},
+  'spicy-spray':    {icon:'🌶️',desc:'Spicy Spray: Burns any Pokémon that hits this Pokémon with a damaging move. Mega Scovillain signature.'},
+  'aftermath':      {icon:'💥',desc:'Damages the attacker for 1/4 of their max HP when knocked out by a contact move.'},
+  'anger-point':    {icon:'😡',desc:'Maxes out Attack after taking a critical hit.'},
+  'aroma-veil':     {icon:'💐',desc:'Protects itself and allies from moves that target the mind.'},
+  'berserk':        {icon:'😤',desc:'Raises Sp. Atk by 1 stage when HP drops below half.'},
+  'big-pecks':      {icon:'🐦',desc:'Prevents the Defense stat from being lowered.'},
+  'cheek-pouch':    {icon:'🐹',desc:'Restores HP in addition to the effect of any Berry consumed.'},
+  'cloud-nine':     {icon:'☁️',desc:'Eliminates the effects of weather while in battle.'},
+  'corrosion':      {icon:'☠️',desc:'Can inflict poison on Steel- and Poison-type Pokémon.'},
+  'cud-chew':       {icon:'🌿',desc:'Eats a held Berry at the end of the next turn after consuming it.'},
+  'curious-medicine':{icon:'💊',desc:'Resets ally stat changes on entry.'},
+  'damp':           {icon:'💧',desc:'Prevents all Pokémon from using Self-Destruct or Explosion.'},
+  'dry-skin':       {icon:'🌵',desc:'Restores HP in rain; loses HP in sun. Absorbs Water moves; weak to Fire.'},
+  'earth-eater':    {icon:'🌍',desc:'Absorbs Ground-type moves to restore 25% HP instead of taking damage.'},
+  'electromorphosis':{icon:'⚡',desc:'Becomes charged after taking damage, powering up the next Electric move.'},
+  'flame-body':     {icon:'🔥',desc:'30% chance to burn opponents that make contact.'},
+  'flower-veil':    {icon:'🌸',desc:'Prevents status conditions and stat drops on Grass-type allies.'},
+  'forecast':       {icon:'🌤',desc:'Changes Castform\'s type to match the current weather.'},
+  'friend-guard':   {icon:'🤝',desc:'Reduces damage dealt to allies by 25% in Double Battles.'},
+  'frisk':          {icon:'🔍',desc:'Reveals the opponent\'s held item on entry.'},
+  'gluttony':       {icon:'😋',desc:'Eats held Berries at 50% HP instead of 25%.'},
+  'gooey':          {icon:'💦',desc:'Lowers the Speed of Pokémon that make contact by 1 stage.'},
+  'harvest':        {icon:'🌾',desc:'50% chance (100% in sun) to restore a used Berry at the end of each turn.'},
+  'healer':         {icon:'💚',desc:'30% chance to cure an ally\'s status condition each turn in Double Battles.'},
+  'heatproof':      {icon:'🔥',desc:'Halves damage from Fire-type moves and burn damage.'},
+  'heavy-metal':    {icon:'⚙️',desc:'Doubles the Pokémon\'s weight.'},
+  'hospitality':    {icon:'🫖',desc:'Restores 25% HP of an ally switching in.'},
+  'hunger-switch':  {icon:'🔄',desc:'Morpeko alternates between Full Belly and Hangry Mode each turn.'},
+  'hydration':      {icon:'💧',desc:'Cures status conditions at the end of each turn during rain.'},
+  'hyper-cutter':   {icon:'✂️',desc:'Prevents the Attack stat from being lowered by opponents.'},
+  'illuminate':     {icon:'💡',desc:'Raises the likelihood of encountering wild Pokémon. No battle effect.'},
+  'illusion':       {icon:'🎭',desc:'Enters battle disguised as the last Pokémon in the party.'},
+  'immunity':       {icon:'🛡',desc:'Cannot be poisoned.'},
+  'imposter':       {icon:'👥',desc:'Transforms into the opposing Pokémon on entry.'},
+  'insomnia':       {icon:'😴',desc:'Cannot be put to sleep.'},
+  'keen-eye':       {icon:'👁',desc:'Accuracy cannot be lowered. Ignores evasion boosts of the target.'},
+  'klutz':          {icon:'🤦',desc:'Cannot use held items. Items that affect Stats and Evasion still work.'},
+  'leaf-guard':     {icon:'🍃',desc:'Prevents status conditions during harsh sunlight.'},
+  'light-metal':    {icon:'⚙️',desc:'Halves the Pokémon\'s weight.'},
+  'lightning-rod':  {icon:'⚡',desc:'Draws Electric moves to this Pokémon and raises Sp. Atk instead of damage.'},
+  'limber':         {icon:'🤸',desc:'Cannot be paralyzed.'},
+  'long-reach':     {icon:'👋',desc:'All moves are used without making contact.'},
+  'magician':       {icon:'🎩',desc:'Steals the target\'s held item when hitting with a move.'},
+  'magma-armor':    {icon:'🌋',desc:'Cannot be frozen.'},
+  'merciless':      {icon:'🎯',desc:'Moves always land as critical hits against poisoned targets.'},
+  'mimicry':        {icon:'🔄',desc:'Changes type depending on the current terrain in effect.'},
+  'minus':          {icon:'➖',desc:'Boosts Sp. Atk by 1.5× when an ally with Plus or Minus is in battle.'},
+  'moody':          {icon:'🎲',desc:'Randomly sharply raises one stat and lowers another at the end of each turn.'},
+  'motor-drive':    {icon:'⚡',desc:'Absorbs Electric moves and raises Speed by 1 stage instead.'},
+  'mummy':          {icon:'🧟',desc:'Changes the ability of any Pokémon that makes contact with it to Mummy.'},
+  'no-guard':       {icon:'🎯',desc:'All moves used by and against this Pokémon never miss.'},
+  'opportunist':    {icon:'📈',desc:'Copies the opponent\'s stat boosts when they raise their stats.'},
+  'overcoat':       {icon:'🧥',desc:'Immune to weather damage and powder/spore moves.'},
+  'pickpocket':     {icon:'🤏',desc:'Steals the held item of a Pokémon that makes contact with it.'},
+  'plus':           {icon:'➕',desc:'Boosts Sp. Atk by 1.5× when an ally with Plus or Minus is in battle.'},
+  'poison-point':   {icon:'🟣',desc:'30% chance to poison opponents that make contact.'},
+  'poison-touch':   {icon:'🟣',desc:'30% chance to poison the target when using contact moves.'},
+  'queenly-majesty':{icon:'👑',desc:'Prevents opponents from using priority moves.'},
+  'quick-draw':     {icon:'⚡',desc:'30% chance to move first in its priority bracket.'},
+  'quick-feet':     {icon:'👣',desc:'Raises Speed by 1.5× when afflicted with a status condition.'},
+  'receiver':       {icon:'📡',desc:'Inherits the Ability of a fainted ally.'},
+  'ripen':          {icon:'🍎',desc:'Doubles the effect of Berries.'},
+  'sand-spit':      {icon:'🌪',desc:'Summons a sandstorm when hit by an attack.'},
+  'sand-veil':      {icon:'🌪',desc:'Raises evasion by 1.25× during sandstorm. Immune to sandstorm damage.'},
+  'sap-sipper':     {icon:'🌿',desc:'Absorbs Grass moves and raises Attack by 1 stage instead.'},
+  'screen-cleaner': {icon:'🧹',desc:'Removes Reflect, Light Screen, and Aurora Veil when entering battle.'},
+  'shadow-tag':     {icon:'👻',desc:'Prevents the opposing Pokémon from switching out.'},
+  'shed-skin':      {icon:'🐍',desc:'33% chance to cure a status condition at the end of each turn.'},
+  'shield-dust':    {icon:'✨',desc:'Blocks additional effects of moves used against it.'},
+  'slush-rush':     {icon:'❄️',desc:'Doubles Speed during snow or hail.'},
+  'sniper':         {icon:'🎯',desc:'Boosts the damage of critical hits from 1.5× to 2.25×.'},
+  'snow-cloak':     {icon:'❄️',desc:'Raises evasion by 1.25× during snow or hail. Immune to hail damage.'},
+  'stall':          {icon:'🐢',desc:'Always moves last within its priority bracket.'},
+  'stalwart':       {icon:'🛡',desc:'Ignores moves and abilities that draw in moves.'},
+  'static':         {icon:'⚡',desc:'30% chance to paralyze opponents that make contact.'},
+  'steadfast':      {icon:'💪',desc:'Raises Speed by 1 stage whenever the Pokémon flinches.'},
+  'stench':         {icon:'💨',desc:'10% chance to make the target flinch when using a move.'},
+  'strong-jaw':     {icon:'🦷',desc:'Boosts biting moves by 1.5×.'},
+  'super-luck':     {icon:'🍀',desc:'Raises the critical-hit ratio of moves by 1 stage.'},
+  'supersweet-syrup':{icon:'🍯',desc:'Lowers the opponent\'s evasiveness by 1 stage on entry.'},
+  'sweet-veil':     {icon:'🍬',desc:'Prevents itself and allies from falling asleep.'},
+  'swift-swim':     {icon:'🌊',desc:'Doubles Speed during rain.'},
+  'symbiosis':      {icon:'🤝',desc:'Passes its item to an ally in a Double Battle when that ally uses its item.'},
+  'tangled-feet':   {icon:'🌀',desc:'Raises evasion by 1.25× when confused.'},
+  'toxic-debris':   {icon:'☠️',desc:'Scatters Toxic Spikes when hit by physical moves.'},
+  'unburden':       {icon:'💨',desc:'Doubles Speed after consuming or losing its held item.'},
+  'vital-spirit':   {icon:'💪',desc:'Cannot be put to sleep.'},
+  'wandering-spirit':{icon:'👻',desc:'Swaps abilities with a Pokémon that makes contact with it.'},
+  'water-bubble':   {icon:'💧',desc:'Halves damage from Fire moves. Doubles power of Water moves. Cannot be burned.'},
+  'weak-armor':     {icon:'💔',desc:'Physical hits lower Defense by 1 but raise Speed by 2.'},
+  'white-smoke':    {icon:'💨',desc:'Prevents other Pokémon from lowering its stats.'},
+};
+
+function getAbilityInfo(name) {
+  return ABILITY_INFO[name] || { icon:'❓', desc: name.replace(/-/g,' ').replace(/\b\w/g,c=>c.toUpperCase()) };
+}
+
+// ── Multi-hit move info ──
+// Returns null for single-hit moves, or:
+//   { minHits, maxHits, hitPowers }  — hitPowers is an array if power escalates, else null
+// abilityName: attacker ability (Skill Link forces max hits)
+function getMultiHitInfo(move, abilityName, itemName) {
+  if (!move) return null;
+  const name = move.name;
+  const eff  = (move.effect || '').toLowerCase();
+  const skillLink = abilityName && abilityName.toLowerCase() === 'skill-link';
+  const loadedDice = itemName && itemName.toLowerCase() === 'loaded-dice';
+
+  // ── Hardcoded escalating-power moves ──
+  // Triple Axel: 20, 40, 60 — each hit can miss independently
+  if (name === 'triple-axel') return { minHits:1, maxHits:3, hitPowers:[20,40,60], escalating:true };
+  // Triple Kick: 10, 20, 30
+  if (name === 'triple-kick') return { minHits:1, maxHits:3, hitPowers:[10,20,30], escalating:true };
+
+  // ── Hardcoded fixed-hit moves whose effect text doesn't say so ──
+  if (name === 'surging-strikes') return { minHits:3, maxHits:3, hitPowers:null, escalating:false };
+  if (name === 'dual-wingbeat')   return { minHits:2, maxHits:2, hitPowers:null, escalating:false };
+
+  // Population Bomb: 1-10 hits, Skill Link = always 10, Loaded Dice = minimum 4
+  if (name === 'population-bomb') {
+    if (skillLink) return { minHits:10, maxHits:10, hitPowers:null, escalating:false };
+    return { minHits: loadedDice ? 4 : 1, maxHits:10, hitPowers:null, escalating:false };
+  }
+
+  // ── Effect-text based detection ──
+  // Always 2 hits
+  if (/hits twice|hit twice|hits two|hits 2 times in a row|hits twice in the same|hits 2 times in one turn/.test(eff))
+    return { minHits:2, maxHits:2, hitPowers:null, escalating:false };
+
+  // "Hits three times" fixed
+  if (/hits three times|three times in one turn/.test(eff))
+    return { minHits:3, maxHits:3, hitPowers:null, escalating:false };
+
+  // Variable 2–5
+  if (/2.5 times|2-5 times|2 to 5 times|hits 2–5/.test(eff))
+    return { minHits: skillLink ? 5 : loadedDice ? 4 : 2, maxHits:5, hitPowers:null, escalating:false };
+
+  // Variable 3–5
+  if (/3.5 times|3-5 times/.test(eff))
+    return { minHits: skillLink ? 5 : loadedDice ? 4 : 3, maxHits:5, hitPowers:null, escalating:false };
+
+  return null;
+}
+
+// ── Collapse/expand panel ──
+function togglePanel(id, isAtk) {
+  const body = document.getElementById(`panel-body-${isAtk?'atk':'def'}-${id}`);
+  const btn  = document.getElementById(`collapse-btn-${isAtk?'atk':'def'}-${id}`);
+  if (!body) return;
+  const collapsed = body.classList.toggle('collapsed');
+  btn.textContent = collapsed ? '+' : '−';
+}
+
+function updateStatsDisplay(panelId, poke, isAtk) {
+  const container = document.getElementById(`stats-${isAtk?'atk':'def'}-${panelId}`);
+  if (!container || !poke) return;
+
+  const prefix = isAtk ? 'atk' : 'def';
+  const panels = isAtk ? atkPanels : defPanels;
+  const panel  = panels.find(x => x.id === panelId);
+
+  const statMap = [
+    ['HP','hp','#16a34a'],['Atk','attack','#dc2626'],['Def','defense','#2563eb'],
+    ['SpA','special-attack','#9333ea'],['SpD','special-defense','#0891b2'],['Spe','speed','#d97706']
+  ];
+
+  function refresh() {
+    container.innerHTML = '';
+    statMap.forEach(([label, key, color]) => {
+      const base = (poke.stats||{})[key] || 0;
+      const isHP = key === 'hp';
+
+      // Read current EV for this stat
+      const evKey = { hp:'evHP', attack:'evAtk', defense:'evDef', 'special-attack':'evSpAtk', 'special-defense':'evSpDef', speed:'evSpe' }[key];
+      const ev = panel ? (panel[evKey]||0) : 0;
+
+      // Nature mult — color the calced value red if boosted, blue if dropped
+      const natMult = panel ? getNatureMult(panel.nature, key) : 1;
+      const natColor = natMult > 1 ? '#dc2626' : natMult < 1 ? '#2563eb' : 'var(--text2)';
+
+      const calcedVal = isHP ? calcHP(base, ev) : calcStat(base, ev, 31, 50, natMult);
+      const barW = Math.min(100, base/255*100).toFixed(1);
+
+      const row = document.createElement('div');
+      row.className = 'stat-row';
+      row.innerHTML = `
+        <span class="stat-name">${label}</span>
+        <div class="stat-bar-bg"><div class="stat-bar" style="width:${barW}%;background:${color}"></div></div>
+        <span class="stat-val" style="color:${color}">${base}</span>
+        <span class="stat-calc" style="color:${natColor};font-weight:${natMult !== 1 ? '700' : '400'}">${calcedVal}</span>`;
+      container.appendChild(row);
+    });
+  }
+
+  refresh();
+
+  // Store refresh fn so EV sliders can re-trigger it
+  container._refresh = refresh;
+}
+
+// Patch bindEvSlider to also refresh stat display
+function bindEvSlider(id, statKey, prefix, panel, panelKey) {
+  const slider = document.getElementById(`ev-${prefix}-${statKey}-${id}`);
+  const valEl  = document.getElementById(`ev-${prefix}-${statKey}-val-${id}`);
+  if (!slider) return;
+  slider.addEventListener('input', e => {
+    panel[panelKey] = parseInt(e.target.value)||0;
+    valEl.textContent = e.target.value;
+    // Refresh live stat display
+    const container = document.getElementById(`stats-${prefix}-${id}`);
+    if (container && container._refresh) container._refresh();
+    recalc();
+  });
+}
+
+// ── Move tooltip element (shared) ──
+const moveTip = document.createElement('div');
+moveTip.className = 'move-tip';
+document.body.appendChild(moveTip);
+
+function showMoveTip(move, e) {
+  const cat = move.category === 'physical' ? '⚔ Physical' : '✨ Special';
+  const acc = move.accuracy ? `${move.accuracy}%` : '—';
+  moveTip.innerHTML = `<b>${move.display}</b><br>${cat} · ${move.type} · ${move.power}bp · Acc ${acc}<br><span style="color:#aab0c0">${move.effect||''}</span>`;
+  moveTip.style.display = 'block';
+  posMoveTip(e);
+}
+function posMoveTip(e) {
+  moveTip.style.left = Math.min(e.clientX + 12, window.innerWidth - 230) + 'px';
+  moveTip.style.top  = (e.clientY - 10) + 'px';
+}
+function hideMoveTip() { moveTip.style.display = 'none'; }
+
+function buildMovePicker(panelId) {
+  const panel = atkPanels.find(x => x.id === panelId);
+  if (!panel) return;
+
+  // moves is now an array [{name, active}]
+  if (!panel.moves) panel.moves = [];
+  // legacy single move compat
+  panel.move = ''; // keep for calcDamage compat — will use panel.moves instead
+
+  const container = document.getElementById(`move-picker-${panelId}`);
+  if (!container) return;
+  container.innerHTML = '';
+
+  // ── Search input ──
+  const wrap = document.createElement('div');
+  wrap.className = 'move-picker-wrap';
+
+  const input = document.createElement('input');
+  input.type = 'text';
+  input.className = 'move-search-input';
+  input.placeholder = 'Add move…';
+  input.autocomplete = 'off';
+
+  const dropdown = document.createElement('div');
+  dropdown.className = 'move-dropdown';
+
+  wrap.appendChild(input);
+  wrap.appendChild(dropdown);
+
+  // ── Selected moves list ──
+  const list = document.createElement('div');
+  list.className = 'move-list';
+  list.id = `move-list-${panelId}`;
+
+  function renderMoveList() {
+    list.innerHTML = '';
+    panel.moves.forEach((entry, i) => {
+      const move = DB.moves[entry.name];
+      if (!move) return;
+      const chip = document.createElement('div');
+      chip.className = 'move-chip';
+
+      const cb = document.createElement('input');
+      cb.type = 'checkbox';
+      cb.className = 'move-chip-check';
+      cb.checked = entry.active;
+      cb.title = 'Include in damage calc';
+      cb.addEventListener('change', () => { entry.active = cb.checked; recalc(); });
+
+      const nameEl = document.createElement('span');
+      nameEl.className = 'move-chip-name';
+      nameEl.textContent = move.display;
+      nameEl.addEventListener('mousemove', e => showMoveTip(move, e));
+      nameEl.addEventListener('mouseleave', hideMoveTip);
+
+      const typeEl = document.createElement('span');
+      typeEl.className = 'move-chip-type';
+      typeEl.style.background = getTypeColor(move.type);
+      typeEl.textContent = move.type;
+
+      const catEl = document.createElement('span');
+      catEl.className = 'move-cat-icon';
+      catEl.title = move.category;
+      catEl.textContent = move.category === 'physical' ? '⚔' : '✨';
+
+      const bpEl = document.createElement('span');
+      bpEl.className = 'move-bp';
+      bpEl.textContent = `${move.power}bp`;
+
+      const del = document.createElement('button');
+      del.className = 'move-chip-del';
+      del.textContent = '×';
+      del.addEventListener('click', () => {
+        panel.moves.splice(i, 1);
+        renderMoveList();
+        recalc();
+        if (!panel.poke) {
+          const pokeInput = document.querySelector(`#atk-panel-${panelId} .poke-input, #def-panel-${panelId} .poke-input`);
+          if (pokeInput) pokeInput.dispatchEvent(new Event('input'));
+        }
+      });
+
+      chip.appendChild(cb);
+      chip.appendChild(nameEl);
+      chip.appendChild(typeEl);
+      chip.appendChild(catEl);
+      chip.appendChild(bpEl);
+      chip.appendChild(del);
+      list.appendChild(chip);
+    });
+  }
+
+  function renderDropdown(filter) {
+    dropdown.innerHTML = '';
+    if (false) {
+      dropdown.classList.remove('open');
+      return;
+    }
+    const poke = DB.pokemon[panel.poke];
+    const pokeMoves = poke ? (poke.moves || []) : [];
+    const allMoves = Object.values(DB.moves).filter(m =>
+      m.display.toLowerCase().includes(filter.toLowerCase()) &&
+      (pokeMoves.length === 0 || pokeMoves.includes(m.name))
+    ).sort((a,b) => a.display.localeCompare(b.display));
+
+    const results = allMoves;
+
+    results.slice(0, 60).forEach(m => {
+      const already = panel.moves.some(x => x.name === m.name);
+      const el = document.createElement('div');
+      el.className = 'move-opt';
+      if (already) el.style.opacity = '0.4';
+
+      const nameEl = document.createElement('span');
+      nameEl.className = 'move-opt-name';
+      nameEl.textContent = m.display;
+
+      const typeEl = document.createElement('span');
+      typeEl.className = 'type-badge';
+      typeEl.style.background = getTypeColor(m.type);
+      typeEl.style.fontSize = '10px';
+      typeEl.textContent = m.type;
+
+      const catEl = document.createElement('span');
+      catEl.className = 'move-cat-icon';
+      catEl.textContent = m.category === 'physical' ? '⚔' : '✨';
+      catEl.title = m.category;
+
+      const bpEl = document.createElement('span');
+      bpEl.className = 'move-bp';
+      bpEl.textContent = `${m.power}bp`;
+
+      el.appendChild(nameEl);
+      el.appendChild(typeEl);
+      el.appendChild(catEl);
+      el.appendChild(bpEl);
+
+      el.addEventListener('mousemove', e => showMoveTip(m, e));
+      el.addEventListener('mouseleave', hideMoveTip);
+      el.addEventListener('mousedown', e => {
+        e.preventDefault();
+        hideMoveTip();
+        if (!already) {
+          panel.moves.push({ name: m.name, active: true });
+          renderMoveList();
+          recalc();
+          // Refresh pokemon search filter if no pokemon selected yet
+          if (!panel.poke) {
+            const pokeInput = document.querySelector(`#atk-panel-${panelId} .poke-input, #def-panel-${panelId} .poke-input`);
+            if (pokeInput) pokeInput.dispatchEvent(new Event('input'));
+          }
+        }
+        input.value = '';
+        dropdown.classList.remove('open');
+      });
+
+      dropdown.appendChild(el);
+    });
+
+    dropdown.classList.toggle('open', results.length > 0 && (filter.length > 0 || document.activeElement === input));
+  }
+
+  input.addEventListener('focus', () => renderDropdown(input.value));
+  input.addEventListener('input', () => renderDropdown(input.value));
+  input.addEventListener('blur', () => setTimeout(() => { dropdown.classList.remove('open'); hideMoveTip(); }, 160));
+
+  container.appendChild(wrap);
+  container.appendChild(list);
+
+  renderMoveList();
+}
+
+function updateMoveSelect(panelId, poke) {
+  // Just rebuild the picker with new poke context
+  buildMovePicker(panelId);
+}
+
+function stageOptions(min=-6, max=6) {
+  let s = '';
+  for (let i=max; i>=min; i--) s += `<option value="${i}" ${i===0?'selected':''}>${i>0?'+'+i:i}</option>`;
+  return s;
+}
+
+function evSliderHTML(id, statKey, label, prefix) {
+  return `<div class="ev-slider-row">
+    <span class="ev-slider-label">${label}</span>
+    <input type="range" id="ev-${prefix}-${statKey}-${id}" min="0" max="252" step="4" value="0">
+    <span class="ev-slider-val" id="ev-${prefix}-${statKey}-val-${id}">0</span>
+  </div>`;
+}
+
+function buildAtkPanel(id) {
+  const color = COLORS[(id-1) % COLORS.length];
+  const panel = { id, poke:'', move:'', item:'none', nature:'Hardy', ability:'',
+    evAtk:0, evSpAtk:0, evSpe:0, evHP:0, evDef:0, evSpDef:0, atkStage:0, color,
+    faintedAllies:0, gender:'none' };
+  atkPanels.push(panel);
+
+  const div = document.createElement('div');
+  div.className = 'panel';
+  div.id = `atk-panel-${id}`;
+  div.innerHTML = `
+    <div class="panel-bar">
+      <div class="panel-stripe" style="background:${color}"></div>
+      <span class="panel-title" id="atk-title-${id}">Attacker ${id}</span>
+      <button class="collapse-btn" id="collapse-btn-atk-${id}" onclick="togglePanel(${id},true)" title="Collapse">−</button>
+      <button class="panel-close" onclick="removePanel(${id},'atk')">×</button>
+    </div>
+    <div class="panel-body" id="panel-body-atk-${id}">
+      <div id="atk-search-${id}"></div>
+      <div class="type-row" id="types-atk-${id}"></div>
+
+      <div class="section-head" onclick="toggleSection('atk-stats-${id}')">
+        <span class="lbl" style="margin:0">Base Stats</span>
+        <span class="section-toggle" id="tog-atk-stats-${id}">▾</span>
+      </div>
+      <div class="section-body" id="atk-stats-${id}">
+        <div id="stats-atk-${id}"></div>
+      </div>
+
+      <div class="divider"></div>
+      <label class="lbl">Ability</label>
+      <div class="ability-row">
+        <select id="ability-atk-${id}"><option value="">— select Pokémon first —</option></select>
+        <div class="ab-tooltip" id="abtip-atk-${id}">Select a Pokémon to see ability info.</div>
+      </div>
+      <label class="lbl">Moves</label>
+      <div id="move-picker-${id}"></div>
+      <div class="divider"></div>
+      <label class="lbl">Held Item</label>
+      <select id="item-atk-${id}">
+        ${Object.values((DB.meta.items)||{}).map(it=>`<option value="${it.name}">${it.display}</option>`).join('')}
+      </select>
+      <label class="lbl">Nature</label>
+      <select id="nature-atk-${id}"></select>
+
+      <div class="section-head" onclick="toggleSection('atk-evs-${id}')">
+        <span class="lbl" style="margin:0">EV Spread</span>
+        <span class="section-toggle" id="tog-atk-evs-${id}">▾</span>
+      </div>
+      <div class="section-body" id="atk-evs-${id}">
+        ${evSliderHTML(id,'hp','HP','atk')}
+        ${evSliderHTML(id,'atk','Atk','atk')}
+        ${evSliderHTML(id,'def','Def','atk')}
+        ${evSliderHTML(id,'spatk','SpA','atk')}
+        ${evSliderHTML(id,'spdef','SpD','atk')}
+        ${evSliderHTML(id,'spe','Spe','atk')}
+      </div>
+
+      <div class="divider"></div>
+      <label class="lbl">Stat Stage</label>
+      <div class="stage-row">
+        <label>Atk/SpA</label>
+        <select id="atkstage-${id}">${stageOptions()}</select>
+      </div>
+      <div id="ability-extras-${id}"></div>
+    </div>`;
+
+  document.getElementById('atk-body').appendChild(div);
+
+  const searchWrap = buildPokeSearch(`atk-search-${id}`, id, true);
+  document.getElementById(`atk-search-${id}`).appendChild(searchWrap);
+
+  buildNatureDropdown(`nature-atk-${id}`, panel);
+  buildMovePicker(id);
+
+  document.getElementById(`ability-atk-${id}`).addEventListener('change', e => {
+    panel.ability = e.target.value;
+    updateAbilityTooltip(`abtip-atk-${id}`, e.target.value);
+    updateAbilityExtras(id, panel);
+    recalc();
+  });
+  document.getElementById(`item-atk-${id}`).addEventListener('change', e => { panel.item = e.target.value; recalc(); });
+  document.getElementById(`atkstage-${id}`).addEventListener('change', e => { panel.atkStage = parseInt(e.target.value)||0; recalc(); });
+
+  bindEvSlider(id,'hp',  'atk', panel, 'evHP');
+  bindEvSlider(id,'atk', 'atk', panel, 'evAtk');
+  bindEvSlider(id,'def', 'atk', panel, 'evDef');
+  bindEvSlider(id,'spatk','atk',panel, 'evSpAtk');
+  bindEvSlider(id,'spdef','atk',panel, 'evSpDef');
+  bindEvSlider(id,'spe', 'atk', panel, 'evSpe');
+}
+
+function buildDefPanel(id) {
+  const panel = { id, poke:'', item:'none', nature:'Hardy', ability:'',
+    evHP:0, evAtk:0, evDef:0, evSpAtk:0, evSpDef:0, evSpe:0, defStage:0 };
+  defPanels.push(panel);
+
+  const div = document.createElement('div');
+  div.className = 'panel';
+  div.id = `def-panel-${id}`;
+  div.innerHTML = `
+    <div class="panel-bar">
+      <div class="panel-stripe" style="background:#9ca3af"></div>
+      <span class="panel-title" id="def-title-${id}">Defender ${id}</span>
+      <button class="collapse-btn" id="collapse-btn-def-${id}" onclick="togglePanel(${id},false)" title="Collapse">−</button>
+      <button class="panel-close" onclick="removePanel(${id},'def')">×</button>
+    </div>
+    <div class="panel-body" id="panel-body-def-${id}">
+      <div id="def-search-${id}"></div>
+      <div class="type-row" id="types-def-${id}"></div>
+
+      <div class="section-head" onclick="toggleSection('def-stats-${id}')">
+        <span class="lbl" style="margin:0">Base Stats</span>
+        <span class="section-toggle" id="tog-def-stats-${id}">▾</span>
+      </div>
+      <div class="section-body" id="def-stats-${id}">
+        <div id="stats-def-${id}"></div>
+      </div>
+
+      <div class="divider"></div>
+      <label class="lbl">Ability</label>
+      <div class="ability-row">
+        <select id="ability-def-${id}"><option value="">— select Pokémon first —</option></select>
+        <div class="ab-tooltip" id="abtip-def-${id}">Select a Pokémon to see ability info.</div>
+      </div>
+      <label class="lbl">Held Item</label>
+      <select id="item-def-${id}">
+        ${Object.values((DB.meta.items)||{}).map(it=>`<option value="${it.name}">${it.display}</option>`).join('')}
+      </select>
+      <label class="lbl">Nature</label>
+      <select id="nature-def-${id}"></select>
+
+      <div class="section-head" onclick="toggleSection('def-evs-${id}')">
+        <span class="lbl" style="margin:0">EV Spread</span>
+        <span class="section-toggle" id="tog-def-evs-${id}">▾</span>
+      </div>
+      <div class="section-body" id="def-evs-${id}">
+        ${evSliderHTML(id,'hp','HP','def')}
+        ${evSliderHTML(id,'atk','Atk','def')}
+        ${evSliderHTML(id,'def','Def','def')}
+        ${evSliderHTML(id,'spatk','SpA','def')}
+        ${evSliderHTML(id,'spdef','SpD','def')}
+        ${evSliderHTML(id,'spe','Spe','def')}
+      </div>
+
+      <div class="divider"></div>
+      <label class="lbl">Def Stage</label>
+      <div class="stage-row">
+        <label>Def/SpD</label>
+        <select id="defstage-${id}">${stageOptions()}</select>
+      </div>
+    </div>`;
+
+  document.getElementById('def-body').appendChild(div);
+
+  const searchWrap = buildPokeSearch(`def-search-${id}`, id, false);
+  document.getElementById(`def-search-${id}`).appendChild(searchWrap);
+
+  buildNatureDropdown(`nature-def-${id}`, panel);
+
+  document.getElementById(`ability-def-${id}`).addEventListener('change', e => {
+    panel.ability = e.target.value;
+    updateAbilityTooltip(`abtip-def-${id}`, e.target.value);
+    recalc();
+  });
+  document.getElementById(`item-def-${id}`).addEventListener('change', e => { panel.item = e.target.value; recalc(); });
+  document.getElementById(`defstage-${id}`).addEventListener('change', e => { panel.defStage = parseInt(e.target.value)||0; recalc(); });
+
+  bindEvSlider(id,'hp',  'def', panel, 'evHP');
+  bindEvSlider(id,'atk', 'def', panel, 'evAtk');
+  bindEvSlider(id,'def', 'def', panel, 'evDef');
+  bindEvSlider(id,'spatk','def',panel, 'evSpAtk');
+  bindEvSlider(id,'spdef','def',panel, 'evSpDef');
+  bindEvSlider(id,'spe', 'def', panel, 'evSpe');
+}
+
+function removePanel(id, type) {
+  if (type === 'atk') {
+    atkPanels = atkPanels.filter(p => p.id !== id);
+    const el = document.getElementById(`atk-panel-${id}`);
+    if (el) el.remove();
+  } else {
+    defPanels = defPanels.filter(p => p.id !== id);
+    const el = document.getElementById(`def-panel-${id}`);
+    if (el) el.remove();
+  }
+  recalc();
+}
+
+// ─────────────────────────────────────────────────────────
+// CONDITIONS PANEL
+// ─────────────────────────────────────────────────────────
+function buildConditions() {
+  const body = document.getElementById('cond-body');
+  body.innerHTML = `
+    <div class="panel">
+      <div class="panel-body">
+
+        <div class="section-head" onclick="toggleSection('sec-weather')">
+          <span class="cond-section" style="margin:0">☀ Weather</span>
+          <span class="section-toggle" id="tog-sec-weather">▾</span>
+        </div>
+        <div class="section-body" id="sec-weather">
+          ${['none','sun','rain','sand','hail','snow'].map(w=>`
+            <label class="cond-item">
+              <input type="radio" name="weather" value="${w}" ${w==='none'?'checked':''}>
+              ${{none:'— None',sun:'☀ Harsh Sun',rain:'🌧 Rain',sand:'🌪 Sandstorm',hail:'❄ Hail',snow:'🌨 Snow'}[w]}
+            </label>`).join('')}
+        </div>
+
+        <div class="divider"></div>
+        <div class="section-head" onclick="toggleSection('sec-terrain')">
+          <span class="cond-section" style="margin:0">⚡ Terrain</span>
+          <span class="section-toggle" id="tog-sec-terrain">▾</span>
+        </div>
+        <div class="section-body" id="sec-terrain">
+          ${['none','electric','grassy','misty','psychic'].map(t=>`
+            <label class="cond-item">
+              <input type="radio" name="terrain" value="${t}" ${t==='none'?'checked':''}>
+              ${{none:'— None',electric:'⚡ Electric',grassy:'🌿 Grassy',misty:'🌫 Misty',psychic:'🔮 Psychic'}[t]}
+            </label>`).join('')}
+        </div>
+
+        <div class="divider"></div>
+        <div class="section-head" onclick="toggleSection('sec-hazards')">
+          <span class="cond-section" style="margin:0">🪨 Hazards</span>
+          <span class="section-toggle" id="tog-sec-hazards">▾</span>
+        </div>
+        <div class="section-body" id="sec-hazards">
+          <label class="cond-item"><input type="checkbox" id="hz-sr"> Stealth Rock</label>
+          <label class="cond-item"><input type="checkbox" id="hz-sp1"> Spikes (1 layer)</label>
+          <label class="cond-item"><input type="checkbox" id="hz-sp2"> Spikes (2 layers)</label>
+          <label class="cond-item"><input type="checkbox" id="hz-sp3"> Spikes (3 layers)</label>
+          <label class="cond-item"><input type="checkbox" id="hz-tsp"> Toxic Spikes (poison)</label>
+          <label class="cond-item"><input type="checkbox" id="hz-tsp2"> Toxic Spikes (toxic)</label>
+        </div>
+
+        <div class="divider"></div>
+        <div class="section-head" onclick="toggleSection('sec-multip')">
+          <span class="cond-section" style="margin:0">✖ Extra Multipliers</span>
+          <span class="section-toggle" id="tog-sec-multip">▾</span>
+        </div>
+        <div class="section-body" id="sec-multip">
+          <div style="font-size:11px;color:var(--text2);line-height:1.6;margin-bottom:6px">
+            Use these for effects not covered by the item or ability dropdowns.
+            Type-boosting held items (Charcoal, Soft Sand, etc.) are now in the item list and calculated automatically.
+            Use this section for: <b>Gems (×1.3)</b>, <b>Screens/Reflect/Light Screen (×0.5 singles · ×0.66 doubles)</b>, or any other manual override.
+          </div>
+          <div class="mult-row">
+            <span class="mult-label">Attacker extra ×</span>
+            <input class="mult-input" type="number" id="mult-atk-item" min="0.1" max="4" step="0.05" value="1" placeholder="1.0">
+          </div>
+          <div style="font-size:10px;color:var(--text3);margin:-2px 0 5px;padding-left:2px">e.g. Gem=1.3 · Helping Hand=1.5 · Battery=1.3</div>
+          <div class="mult-row">
+            <span class="mult-label">Attacker other ×</span>
+            <input class="mult-input" type="number" id="mult-atk-other" min="0.1" max="4" step="0.05" value="1" placeholder="1.0">
+          </div>
+          <div class="divider"></div>
+          <div class="mult-row">
+            <span class="mult-label">Defender screen ×</span>
+            <input class="mult-input" type="number" id="mult-def-item" min="0.1" max="2" step="0.05" value="1" placeholder="1.0">
+          </div>
+          <div style="font-size:10px;color:var(--text3);margin:-2px 0 5px;padding-left:2px">Reflect/Light Screen: singles=0.5 · doubles=0.66</div>
+          <div class="mult-row">
+            <span class="mult-label">Defender other ×</span>
+            <input class="mult-input" type="number" id="mult-def-other" min="0.1" max="4" step="0.05" value="1" placeholder="1.0">
+          </div>
+          <div class="mult-total" id="mult-total-display">Net damage multiplier: ×1.00</div>
+        </div>
+
+      </div>
+    </div>`;
+
+  body.querySelectorAll('input[name=weather]').forEach(r =>
+    r.addEventListener('change', e => { conds.weather = e.target.value; recalc(); }));
+  body.querySelectorAll('input[name=terrain]').forEach(r =>
+    r.addEventListener('change', e => { conds.terrain = e.target.value; recalc(); }));
+  ['sr','sp1','sp2','sp3','tsp','tsp2'].forEach(h => {
+    document.getElementById(`hz-${h}`).addEventListener('change', e => {
+      conds[`hz_${h}`] = e.target.checked;
+      recalc();
+    });
+  });
+  ['mult-atk-item','mult-atk-other','mult-def-item','mult-def-other'].forEach(id => {
+    document.getElementById(id).addEventListener('input', () => {
+      conds.multAtkItem  = parseFloat(document.getElementById('mult-atk-item').value)||1;
+      conds.multAtkOther = parseFloat(document.getElementById('mult-atk-other').value)||1;
+      conds.multDefItem  = parseFloat(document.getElementById('mult-def-item').value)||1;
+      conds.multDefOther = parseFloat(document.getElementById('mult-def-other').value)||1;
+      const net = (conds.multAtkItem * conds.multAtkOther) / (conds.multDefItem * conds.multDefOther);
+      document.getElementById('mult-total-display').textContent = `Net: ×${net.toFixed(2)}`;
+      recalc();
+    });
+  });
+}
+
+// ─────────────────────────────────────────────────────────
+// PLOT RENDERING
+// ─────────────────────────────────────────────────────────
+function renderPlots() {
+  const body = document.getElementById('plot-body');
+  body.innerHTML = '';
+
+  if (defPanels.length === 0 || atkPanels.length === 0) {
+    body.innerHTML = '<div class="no-defenders">Add attackers and defenders to see damage.</div>';
+    return;
+  }
+
+  defPanels.forEach(def => {
+    const defPoke = DB.pokemon[def.poke];
+    const block = document.createElement('div');
+    block.className = 'defender-block';
+    const defHP = defPoke ? calcHP(defPoke.stats.hp, parseInt(def.evHP)||0, 31, 50) : 0;
+    block.innerHTML = `<div class="defender-name">${defPoke ? defPoke.display : 'No Pokémon'}</div>`;
+
+    if (!defPoke) { body.appendChild(block); return; }
+
+    // HP bar (show remaining after all damage from first attacker's move – for display)
+    const hpBarWrap = document.createElement('div');
+    hpBarWrap.className = 'hp-track';
+    hpBarWrap.innerHTML = `<div class="hp-fill" id="hpfill-${def.id}" style="width:100%"></div><div class="hp-label">${defHP} HP</div>`;
+    block.appendChild(hpBarWrap);
+
+    // ── Calculate one-time entry hazard damage ──
+    let entryHazardDmg = 0;
+    if (conds.hz_sr)  entryHazardDmg += hazardDamagePerTurn('sr',     defPoke, 1);
+    if (conds.hz_sp1) entryHazardDmg += hazardDamagePerTurn('spikes1', defPoke, 1);
+    if (conds.hz_sp2) entryHazardDmg += hazardDamagePerTurn('spikes2', defPoke, 1);
+    if (conds.hz_sp3) entryHazardDmg += hazardDamagePerTurn('spikes3', defPoke, 1);
+
+    let cumulativeAvg = entryHazardDmg;
+
+    // Show hazard bar if any entry hazards active
+    if (entryHazardDmg > 0) {
+      const hPct = Math.min(100, entryHazardDmg / defHP * 100);
+      const hw = document.createElement('div');
+      hw.className = 'dmg-bar-wrap';
+      hw.innerHTML = `<div class="dmg-bar-label">
+        <span style="display:flex;align-items:center;gap:4px">
+          <span style="width:8px;height:8px;border-radius:50%;background:#6b7280;display:inline-block;flex-shrink:0"></span>
+          <b>Entry Hazards</b>
+        </span>
+        <span>${hPct.toFixed(1)}%</span></div>
+        <div class="dmg-track" style="background:var(--bg3);border-radius:4px;height:16px;position:relative;overflow:hidden;border:1px solid var(--border)">
+          <div class="dmg-range" style="position:absolute;top:0;height:100%;left:0;width:${hPct.toFixed(1)}%;background:#6b7280;opacity:.7;border-radius:4px"></div>
+          <div class="dmg-val" style="position:absolute;right:5px;top:50%;transform:translateY(-50%);font-size:11px;font-weight:600;color:#fff;text-shadow:0 1px 2px rgba(0,0,0,.5)">${entryHazardDmg}</div>
+        </div>`;
+      block.appendChild(hw);
+    }
+    atkPanels.forEach(atk => {
+      const atkPoke = DB.pokemon[atk.poke];
+      if (!atkPoke) return;
+      const activeMoves = (atk.moves || []).filter(m => m.active);
+      if (activeMoves.length === 0) return;
+
+      activeMoves.forEach(entry => {
+        const dmg = calcDamage(atk, def, entry.name);
+        if (!dmg) return;
+
+        if (dmg.typeEff === 0 || dmg.absorbed) {
+          const wrap = document.createElement('div');
+          wrap.className = 'dmg-bar-wrap';
+          const move = DB.moves[entry.name];
+          wrap.innerHTML = `<div class="dmg-bar-label"><span style="display:flex;align-items:center;gap:5px"><span style="width:8px;height:8px;border-radius:50%;background:${atk.color};display:inline-block"></span>${atkPoke.display} · ${move?.display||entry.name}</span><span style="color:var(--text3);font-size:11px">${dmg.absorbed ? '🛡 Absorbed' : '✗ Immune'}</span></div>`;
+          block.appendChild(wrap);
+          return;
+        }
+
+        const move = DB.moves[entry.name];
+        const mhi = getMultiHitInfo(move, atk.ability, atk.item);
+
+        // ── Detect Multiscale/Shadow Shield on defender ──
+        // For multi-hit moves: hit 1 is halved (Multiscale active), hits 2+ are full damage
+        const defAbilityName = (def.ability || '').toLowerCase();
+        const hasMultiscale = defAbilityName === 'multiscale' || defAbilityName === 'shadow-shield';
+
+        // ── Detect resist berry on defender ──
+        // Berry is consumed on hit 1 — hits 2+ don't get the reduction
+        const hasBerry = dmg.berryMult < 1;
+
+        // Helper: calc one hit's min/max given a base power and whether Multiscale/berry are active
+        function oneHit(hitPow, multiscaleActive, berryActive) {
+          const msMult = multiscaleActive ? 0.5 : 1;
+          const bMult  = berryActive ? 0.5 : 1;
+          const msUndo  = hasMultiscale ? 2 : 1;
+          const berryUndo = hasBerry ? 2 : 1;
+          const ratio = hitPow / dmg.power;
+          const hMin = Math.floor(dmg.min * msUndo * berryUndo * msMult * bMult * ratio);
+          const hMax = Math.floor(dmg.max * msUndo * berryUndo * msMult * bMult * ratio);
+          return { min: hMin, max: hMax, avg: Math.floor((hMin + hMax) / 2) };
+        }
+
+        // ── Compute total damage accounting for multi-hit ──
+        let totalMin, totalMax, totalAvg, hitLabel = '';
+        let perHitDmg = []; // array of { min, max, avg } per hit slot (index = hit number 0-based)
+
+        if (mhi) {
+          if (mhi.escalating && mhi.hitPowers) {
+            // Triple Axel / Triple Kick: escalating power, can miss each hit
+            // Hit 1: Multiscale active (if applicable). Hit 2+: Multiscale broken.
+            const hits = mhi.hitPowers.map((hp, i) => oneHit(hp, hasMultiscale && i === 0, hasBerry && i === 0));
+            perHitDmg = hits;
+            // Min = only hit 1 lands (miss on hit 2)
+            // Max = all hits land
+            totalMin = hits[0].min;
+            totalMax = hits.reduce((s, h) => s + h.max, 0);
+            // Avg: each subsequent hit requires all previous to hit (acc^n), 90% acc
+            const acc = move.accuracy ? move.accuracy / 100 : 1;
+            let avgSum = 0;
+            let pAll = 1;
+            hits.forEach(h => { pAll *= acc; avgSum += h.avg * pAll; });
+            totalAvg = Math.floor(avgSum);
+            hitLabel = ` <span style="font-size:10px;color:var(--text2)">(×1–${mhi.maxHits} esc.${hasMultiscale ? ' · MS' : ''}${hasBerry ? ' · berry' : ''})</span>`;
+          } else {
+            // Standard multi-hit: same power per hit
+            // Hit 1 may be vs Multiscale, rest are not
+            const h1 = oneHit(move.power, hasMultiscale, hasBerry);
+            const hRest = oneHit(move.power, false, false);
+            perHitDmg = [];
+            for (let i = 0; i < mhi.maxHits; i++) perHitDmg.push(i === 0 ? h1 : hRest);
+            totalMin = h1.min * mhi.minHits;
+            // Max: hit 1 at h1.max, remaining hits at hRest.max
+            totalMax = h1.max + hRest.max * (mhi.maxHits - 1);
+            const avgHits = (mhi.minHits + mhi.maxHits) / 2;
+            totalAvg = Math.floor(h1.avg + hRest.avg * (avgHits - 1));
+            if (mhi.minHits === mhi.maxHits) {
+              hitLabel = ` <span style="font-size:10px;color:var(--text2)">(×${mhi.minHits}${hasMultiscale ? ' · MS' : ''}${hasBerry ? ' · berry' : ''})</span>`;
+            } else {
+              hitLabel = ` <span style="font-size:10px;color:var(--text2)">(×${mhi.minHits}–${mhi.maxHits}${hasMultiscale ? ' · MS' : ''}${hasBerry ? ' · berry' : ''})</span>`;
+            }
+          }
+        } else {
+          totalMin = dmg.min;
+          totalMax = dmg.max;
+          totalAvg = dmg.avg;
+          perHitDmg = [{ min: dmg.min, max: dmg.max, avg: dmg.avg }];
+        }
+
+        const minPct = Math.min(100, (totalMin / defHP * 100));
+        const maxPct = Math.min(100, (totalMax / defHP * 100));
+
+        cumulativeAvg += totalAvg;
+
+        // KO calc
+        const hitsToKO = totalAvg > 0 ? Math.ceil((defHP - entryHazardDmg) / totalAvg) : 999;
+        let toxicDmg = 0;
+        if (conds.hz_tsp2) {
+          for (let t = 1; t <= hitsToKO; t++) toxicDmg += Math.floor(defHP * t / 16);
+        } else if (conds.hz_tsp) {
+          toxicDmg = Math.floor(defHP * 0.125) * hitsToKO;
+        }
+
+        const totalWithHazards = cumulativeAvg + toxicDmg;
+
+        let koText = '';
+        if (totalMin + entryHazardDmg >= defHP) koText = '<span class="ko-badge ko-1">OHKO</span>';
+        else if (totalMax + totalAvg + entryHazardDmg + toxicDmg >= defHP) koText = '<span class="ko-badge ko-2">~2HKO</span>';
+        else if (totalWithHazards >= defHP) {
+          const h = Math.ceil((defHP - entryHazardDmg - toxicDmg) / totalAvg);
+          koText = `<span class="ko-badge ko-2">${h}HKO+haz</span>`;
+        } else {
+          koText = `<span class="ko-badge ko-n">${hitsToKO}HKO</span>`;
+        }
+
+        const wrap = document.createElement('div');
+        wrap.className = 'dmg-bar-wrap';
+
+        const moveTypeBadge = move ? `<span class="type-badge" style="background:${getTypeColor(move.type)};font-size:9px;padding:1px 4px">${move.type}</span>` : '';
+        const catIcon = move ? (move.category === 'physical' ? '⚔' : '✨') : '';
+
+        const label = document.createElement('div');
+        label.className = 'dmg-bar-label';
+        label.innerHTML = `<span style="display:flex;align-items:center;gap:4px"><span style="width:8px;height:8px;border-radius:50%;background:${atk.color};display:inline-block;flex-shrink:0"></span><b>${atkPoke.display}</b>${moveTypeBadge}${catIcon} ${move ? move.display : entry.name}${hitLabel}</span><span>${minPct.toFixed(1)}–${maxPct.toFixed(1)}% ${koText}</span>`;
+
+        const track = document.createElement('div');
+        track.className = 'dmg-track';
+
+        // ── Draw bar: segments for each hit (multi-hit) or single range ──
+        if (mhi && !mhi.escalating) {
+          // Stacked segments left-to-right, one per hit slot
+          // Hit 1 may be dimmer (Multiscale halved it), subsequent hits full brightness
+          let cursor = 0;
+          for (let i = 0; i < mhi.maxHits; i++) {
+            const h = perHitDmg[i] || perHitDmg[perHitDmg.length - 1];
+            const segMinPct = Math.min(100 - cursor, h.min / defHP * 100);
+            const segMaxPct = Math.min(100 - cursor, h.max / defHP * 100);
+            const seg = document.createElement('div');
+            seg.style.cssText = `position:absolute;top:0;height:100%;border-radius:2px;`;
+            seg.style.left  = `${cursor + segMinPct}%`;
+            seg.style.width = `${Math.max(0.3, segMaxPct - segMinPct)}%`;
+            seg.style.background = atk.color;
+            // Hit 1 vs Multiscale: show as dimmer to signal it's the shield-breaker
+            const isOptional = i >= mhi.minHits;
+            seg.style.opacity = isOptional ? '0.35' : (i === 0 && hasMultiscale ? '0.5' : '0.85');
+            track.appendChild(seg);
+            cursor += segMinPct;
+          }
+        } else if (mhi && mhi.escalating) {
+          // Escalating hits: draw each hit's range at its cumulative position
+          let cursor = 0;
+          perHitDmg.forEach((h, i) => {
+            const segMinPct = Math.min(100 - cursor, h.min / defHP * 100);
+            const segMaxPct = Math.min(100 - cursor, h.max / defHP * 100);
+            const seg = document.createElement('div');
+            seg.style.cssText = `position:absolute;top:0;height:100%;border-radius:2px;`;
+            seg.style.left  = `${cursor + segMinPct}%`;
+            seg.style.width = `${Math.max(0.3, segMaxPct - segMinPct)}%`;
+            seg.style.background = atk.color;
+            // Hit 1 vs Multiscale is dimmer; hits grow brighter as power escalates
+            seg.style.opacity = i === 0 && hasMultiscale ? '0.45' : String(0.65 + i * 0.1);
+            track.appendChild(seg);
+            cursor += segMinPct;
+          });
+        } else {
+          // Single hit
+          const bar = document.createElement('div');
+          bar.className = 'dmg-range';
+          bar.style.left = `${minPct}%`;
+          bar.style.width = `${Math.max(0.5, maxPct - minPct)}%`;
+          bar.style.background = atk.color;
+          track.appendChild(bar);
+        }
+
+        const val = document.createElement('div');
+        val.className = 'dmg-val';
+        val.textContent = `${totalAvg}`;
+
+        track.appendChild(val);
+        wrap.appendChild(label);
+        wrap.appendChild(track);
+        block.appendChild(wrap);
+      }); // end activeMoves.forEach
+    }); // end atkPanels.forEach
+
+    // Update HP bar color
+    const hpFill = document.getElementById(`hpfill-${def.id}`);
+    if (hpFill) {
+      const remaining = Math.max(0, 100 - (cumulativeAvg / defHP * 100));
+      hpFill.style.width = remaining + '%';
+      hpFill.className = 'hp-fill' + (remaining > 50 ? '' : remaining > 25 ? ' yellow' : ' red');
+    }
+
+    body.appendChild(block);
+  });
+}
+
+// ─────────────────────────────────────────────────────────
+// POWER NEEDED PANEL
+// ─────────────────────────────────────────────────────────
+function buildPowerPanel() {
+  const body = document.getElementById('power-body');
+  body.innerHTML = `
+    <div class="power-chart-wrap">
+      <div class="power-chart-title">Min Attack Stat to OHKO</div>
+      <label class="lbl" style="margin-bottom:4px">Modifiers</label>
+      <div style="display:flex;flex-direction:column;gap:3px;margin-bottom:10px">
+        <label class="cond-item" style="padding:2px 0"><input type="checkbox" id="pw-stab" style="accent-color:#4f46e5"> STAB ×1.5</label>
+        <div style="height:1px;background:var(--border);margin:3px 0"></div>
+        <label class="cond-item" style="padding:2px 0"><input type="radio" name="pw-se" id="pw-se-none" value="1" checked style="accent-color:#6b7280"> No SE</label>
+        <label class="cond-item" style="padding:2px 0"><input type="radio" name="pw-se" id="pw-se-2x" value="2" style="accent-color:#d97706"> SE 2×</label>
+        <label class="cond-item" style="padding:2px 0"><input type="radio" name="pw-se" id="pw-se-4x" value="4" style="accent-color:#dc2626"> SE 4×</label>
+      </div>
+      <label class="lbl">Move Power</label>
+      <div style="display:grid;grid-template-columns:1fr 40px;align-items:center;gap:6px;margin-bottom:3px">
+        <input type="range" id="pw-power" min="40" max="200" step="5" value="80" style="accent-color:#4f46e5">
+        <span id="pw-power-val" style="font-size:13px;font-weight:600;text-align:right">80</span>
+      </div>
+      <div style="font-size:10px;color:var(--text3);margin-bottom:10px">bp</div>
+      <label class="lbl">Extra multiplier</label>
+      <div style="display:grid;grid-template-columns:1fr 44px;align-items:center;gap:6px;margin-bottom:2px">
+        <input type="range" id="pw-mult" min="0.5" max="3" step="0.05" value="1" style="accent-color:#4f46e5">
+        <span id="pw-mult-val" style="font-size:13px;font-weight:600;text-align:right">×1</span>
+      </div>
+      <div style="font-size:10px;color:var(--text3);margin-bottom:12px">Life Orb=1.3 · Band/Specs=1.5 · STAB+Band=2.25</div>
+      <div id="power-results"></div>
+    </div>`;
+
+  ['pw-stab','pw-se-none','pw-se-2x','pw-se-4x'].forEach(id => {
+    document.getElementById(id).addEventListener('change', renderPowerPanel);
+  });
+  document.getElementById('pw-power').addEventListener('input', e => {
+    document.getElementById('pw-power-val').textContent = e.target.value;
+    renderPowerPanel();
+  });
+  document.getElementById('pw-mult').addEventListener('input', e => {
+    const v = parseFloat(e.target.value);
+    document.getElementById('pw-mult-val').textContent = '×' + v.toFixed(2).replace(/\.?0+$/,'');
+    renderPowerPanel();
+  });
+}
+
+function renderPowerPanel() {
+  const body = document.getElementById('power-results');
+  if (!body) return;
+  body.innerHTML = '';
+  if (defPanels.length === 0) {
+    body.innerHTML = '<div style="font-size:11px;color:var(--text3);padding:8px 0">Add a defender to see this.</div>';
+    return;
+  }
+
+  const LEVEL = 50;
+  const power     = parseInt(document.getElementById('pw-power')?.value||80);
+  const extraMult = parseFloat(document.getElementById('pw-mult')?.value||1);
+  const useStab   = document.getElementById('pw-stab')?.checked;
+  const seMult    = parseFloat(document.querySelector('input[name="pw-se"]:checked')?.value||1);
+  const totalMult = (useStab ? 1.5 : 1) * seMult * extraMult;
+
+  // Label and color based on selection
+  const stabStr = useStab ? 'STAB' : '';
+  const seStr   = seMult === 4 ? 'SE 4×' : seMult === 2 ? 'SE 2×' : '';
+  const label   = [stabStr, seStr].filter(Boolean).join(' + ') || 'Raw';
+  const color   = seMult === 4 ? '#dc2626' : seMult === 2 ? '#d97706' : useStab ? '#4f46e5' : '#6b7280';
+
+  defPanels.forEach(def => {
+    const defPoke = DB.pokemon[def.poke];
+    if (!defPoke) return;
+
+    const defHP  = calcHP(defPoke.stats.hp, def.evHP||0);
+    const D_phys = calcStat(defPoke.stats.defense,            def.evDef||0,   31, LEVEL, getNatureMult(def.nature,'defense'));
+    const D_spec = calcStat(defPoke.stats['special-defense'], def.evSpDef||0, 31, LEVEL, getNatureMult(def.nature,'special-defense'));
+
+    function minAtk(D) {
+      return Math.max(1, Math.ceil((defHP - 2) * 50 * D / (22 * power * totalMult)));
+    }
+
+    const p = minAtk(D_phys);
+    const s = minAtk(D_spec);
+
+    const title = document.createElement('div');
+    title.style.cssText = 'font-size:12px;font-weight:700;color:var(--text);margin-bottom:8px;padding-bottom:4px;border-bottom:1px solid var(--border)';
+    title.textContent = defPoke.display;
+    body.appendChild(title);
+
+    // Scenario label
+    const scenLabel = document.createElement('div');
+    scenLabel.style.cssText = `font-size:11px;font-weight:600;color:${color};margin-bottom:6px`;
+    scenLabel.textContent = `Scenario: ${label}  (×${totalMult.toFixed(2).replace(/\.?0+$/, '')})`;
+    body.appendChild(scenLabel);
+
+    // Column headers
+    const hdr = document.createElement('div');
+    hdr.style.cssText = 'display:grid;grid-template-columns:1fr 50px 50px;gap:4px;font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px';
+    hdr.innerHTML = '<span></span><span style="text-align:right">Phys</span><span style="text-align:right">Spec</span>';
+    body.appendChild(hdr);
+
+    // Single result row
+    const barMax = Math.max(p, s, 1);
+    const row = document.createElement('div');
+    row.style.cssText = 'display:grid;grid-template-columns:1fr 50px 50px;align-items:center;gap:4px;margin-bottom:6px';
+
+    const barWrap = document.createElement('div');
+    barWrap.style.cssText = 'height:8px;background:var(--bg3);border-radius:4px;overflow:hidden;border:1px solid var(--border)';
+    const barFill = document.createElement('div');
+    barFill.style.cssText = `height:100%;border-radius:4px;background:${color};width:${Math.min(100, p/barMax*100).toFixed(1)}%`;
+    barWrap.appendChild(barFill);
+
+    const physVal = document.createElement('span');
+    physVal.style.cssText = 'font-size:13px;font-weight:700;text-align:right';
+    physVal.textContent = p;
+
+    const specVal = document.createElement('span');
+    specVal.style.cssText = 'font-size:13px;font-weight:700;text-align:right;color:var(--text2)';
+    specVal.textContent = s;
+
+    row.appendChild(barWrap);
+    row.appendChild(physVal);
+    row.appendChild(specVal);
+    body.appendChild(row);
+
+    // Context note
+    const note = document.createElement('div');
+    note.style.cssText = 'font-size:10px;color:var(--text3);margin-bottom:14px';
+    note.textContent = `${defPoke.display}: ${defHP} HP · ${D_phys} Def · ${D_spec} SpD`;
+    body.appendChild(note);
+  });
+}
+
+// ─────────────────────────────────────────────────────────
+// TABS
+// ─────────────────────────────────────────────────────────
+function toggleSection(id) {
+  const body = document.getElementById(id);
+  const tog  = document.getElementById('tog-' + id);
+  if (!body) return;
+  const collapsed = body.classList.toggle('sec-collapsed');
+  if (tog) tog.textContent = collapsed ? '▸' : '▾';
+}
+
+function switchTab(tab) {
+  document.getElementById('view-calc').style.display = tab === 'calc' ? 'flex' : 'none';
+  document.getElementById('view-dex').style.display  = tab === 'dex'  ? 'flex' : 'none';
+  document.getElementById('view-cov').style.display  = tab === 'cov'  ? 'block' : 'none';
+  document.getElementById('tab-calc').classList.toggle('active', tab === 'calc');
+  document.getElementById('tab-dex').classList.toggle('active',  tab === 'dex');
+  document.getElementById('tab-cov').classList.toggle('active',  tab === 'cov');
+  if (tab === 'dex') renderDex();
+  if (tab === 'cov') { tcRender(); optInitPills(); }
+}
+
+// ─────────────────────────────────────────────────────────
+// CUSTOM NATURE DROPDOWN
+// ─────────────────────────────────────────────────────────
+const statLabel = { attack:'Atk', defense:'Def', 'special-attack':'SpA', 'special-defense':'SpD', speed:'Spe' };
+
+function buildNatureDropdown(selectId, panel) {
+  const orig = document.getElementById(selectId);
+  if (!orig) return;
+  const natures = DB.meta.natures || [];
+
+  const wrap = document.createElement('div');
+  wrap.className = 'nature-wrap';
+
+  const display = document.createElement('div');
+  display.className = 'nature-display';
+  display.tabIndex = 0;
+  display.id = selectId + '-display';
+
+  const menu = document.createElement('div');
+  menu.className = 'nature-menu';
+
+  function setNature(n) {
+    panel.nature = n.name;
+    display.innerHTML = '';
+    const nm = document.createElement('span');
+    nm.className = 'nat-name';
+    nm.textContent = n.name;
+    display.appendChild(nm);
+    if (n.boost) {
+      const up = document.createElement('span');
+      up.className = 'nat-up';
+      up.textContent = '▲' + statLabel[n.boost];
+      display.appendChild(up);
+    }
+    if (n.drop) {
+      const dn = document.createElement('span');
+      dn.className = 'nat-dn';
+      dn.textContent = '▼' + statLabel[n.drop];
+      display.appendChild(dn);
+    }
+    menu.querySelectorAll('.nature-opt').forEach(o => o.classList.toggle('selected', o.dataset.name === n.name));
+    menu.classList.remove('open');
+    // Refresh live stat display when nature changes
+    const isAtk = selectId.startsWith('nature-atk-');
+    const pid = parseInt(selectId.replace('nature-atk-','').replace('nature-def-',''));
+    const statContainer = document.getElementById(`stats-${isAtk?'atk':'def'}-${pid}`);
+    if (statContainer && statContainer._refresh) statContainer._refresh();
+    recalc();
+  }
+
+  natures.forEach(n => {
+    const opt = document.createElement('div');
+    opt.className = 'nature-opt';
+    opt.dataset.name = n.name;
+    const nm = document.createElement('span'); nm.className = 'nat-name'; nm.textContent = n.name;
+    const up = document.createElement('span'); up.className = 'nat-up'; up.textContent = n.boost ? '▲'+statLabel[n.boost] : '';
+    const dn = document.createElement('span'); dn.className = 'nat-dn'; dn.textContent = n.drop  ? '▼'+statLabel[n.drop]  : '';
+    opt.appendChild(nm); opt.appendChild(up); opt.appendChild(dn);
+    opt.addEventListener('mousedown', e => { e.preventDefault(); setNature(n); });
+    menu.appendChild(opt);
+  });
+
+  display.addEventListener('click', () => menu.classList.toggle('open'));
+  display.addEventListener('blur',  () => setTimeout(() => menu.classList.remove('open'), 150));
+
+  wrap.appendChild(display);
+  wrap.appendChild(menu);
+
+  orig.replaceWith(wrap);
+  setNature(natures[0]);
+}
+
+// ─────────────────────────────────────────────────────────
+// POKÉDEX TABLE
+// ─────────────────────────────────────────────────────────
+let dexSortKey = 'dex';
+let dexSortDir = 1;
+
+function statRange(base, isHP) {
+  const min = isHP ? calcHP(base, 0)   : calcStat(base, 0,  31, 50, 0.9);
+  const max = isHP ? calcHP(base, 252) : calcStat(base, 252, 31, 50, 1.1);
+  return `${min}–${max}`;
+}
+
+let dexMoveFilters = [];
+
+function renderDex() {
+  const search = (document.getElementById('dex-search').value||'').toLowerCase();
+  const typeF  = document.getElementById('dex-type-filter').value;
+  const megaF  = document.getElementById('dex-mega-filter').value;
+  const abilF  = document.getElementById('dex-ability-filter').value;
+  const sort   = document.getElementById('dex-sort').value;
+
+  let rows = Object.values(DB.pokemon);
+
+  if (search) rows = rows.filter(p => p.display.toLowerCase().includes(search));
+  if (typeF)  rows = rows.filter(p => (p.types||[]).includes(typeF));
+  if (megaF === 'mega') rows = rows.filter(p => p.is_mega);
+  if (megaF === 'base') rows = rows.filter(p => !p.is_mega);
+  if (abilF)  rows = rows.filter(p => (p.abilities||[]).includes(abilF));
+  if (dexMoveFilters.length > 0) {
+    rows = rows.filter(p => dexMoveFilters.every(m => (p.moves||[]).includes(m)));
+  }
+
+  rows.sort((a,b) => {
+    let av, bv;
+    if (sort === 'dex')  { av = a.dex_id; bv = b.dex_id; return av - bv; }
+    else if (sort === 'name') { return a.display.localeCompare(b.display); }
+    else if (sort === 'bst')  { av = Object.values(a.stats||{}).reduce((s,x)=>s+x,0); bv = Object.values(b.stats||{}).reduce((s,x)=>s+x,0); }
+    else { av = (a.stats||{})[sort]||0; bv = (b.stats||{})[sort]||0; }
+    return bv - av;
+  });
+
+  document.getElementById('dex-count').textContent = `${rows.length} Pokémon`;
+
+  const tbody = document.getElementById('dex-tbody');
+  tbody.innerHTML = '';
+
+  const STATS = ['hp','attack','defense','special-attack','special-defense','speed'];
+  const COLORS_STAT = ['#16a34a','#dc2626','#2563eb','#9333ea','#0891b2','#d97706'];
+
+  rows.forEach(p => {
+    const stats = p.stats || {};
+    const bst = STATS.reduce((s,k) => s+(stats[k]||0), 0);
+    const tr = document.createElement('tr');
+
+    const bstColor = bst >= 600 ? '#dc2626' : bst >= 500 ? '#d97706' : bst >= 400 ? '#16a34a' : '#5a6075';
+
+    tr.innerHTML = `
+      <td><span class="dex-num">#${String(p.dex_id).padStart(4,'0')}</span></td>
+      <td>
+        <div style="display:flex;align-items:center;gap:6px">
+          <img src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${p.dex_id}.png"
+               style="width:32px;height:32px;image-rendering:pixelated;object-fit:contain" onerror="this.style.display='none'">
+          <div>
+            <div class="dex-name">${p.display}</div>
+            ${p.is_mega ? '<div class="dex-mega">Mega</div>' : ''}
+          </div>
+        </div>
+      </td>
+      <td><div class="type-cell">${(p.types||[]).map(t=>`<span class="type-badge" style="background:${getTypeColor(t)}">${t}</span>`).join('')}</div></td>
+      <td><div class="dex-abilities">${(p.abilities||[]).map(a => {const info = getAbilityInfo(a); return `<div title="${info.desc}">${info.icon} ${a.replace(/-/g,' ').replace(/\b\w/g,c=>c.toUpperCase())}</div>`;}).join('')}</div></td>
+      ${STATS.map((k,i) => {
+        const base = stats[k]||0;
+        const isHP = k==='hp';
+        const barW = Math.round(base/255*100);
+        return `<td class="stat-cell">
+          <div class="stat-base" style="color:${COLORS_STAT[i]}">${base}</div>
+          <div class="stat-range">${statRange(base,isHP)}</div>
+        </td>`;
+      }).join('')}
+      <td class="bst-cell" style="color:${bstColor}">${bst}</td>`;
+
+    tbody.appendChild(tr);
+  });
+}
+
+function initDex() {
+  // Populate type filter options via JS so template literals work correctly
+  const typeSelect = document.getElementById('dex-type-filter');
+  ['normal','fire','water','electric','grass','ice','fighting','poison','ground','flying','psychic','bug','rock','ghost','dragon','dark','steel','fairy'].forEach(t => {
+    const opt = document.createElement('option');
+    opt.value = t;
+    opt.textContent = t.charAt(0).toUpperCase() + t.slice(1);
+    typeSelect.appendChild(opt);
+  });
+
+  // Populate ability filter
+  const abilSelect = document.getElementById('dex-ability-filter');
+  const allAbils = new Set();
+  Object.values(DB.pokemon).forEach(p => (p.abilities||[]).forEach(a => allAbils.add(a)));
+  [...allAbils].sort().forEach(a => {
+    const opt = document.createElement('option');
+    opt.value = a;
+    opt.textContent = a.replace(/-/g,' ').replace(/\b\w/g,c=>c.toUpperCase());
+    abilSelect.appendChild(opt);
+  });
+  abilSelect.addEventListener('change', renderDex);
+
+  document.getElementById('dex-search').addEventListener('input', renderDex);
+  document.getElementById('dex-type-filter').addEventListener('change', renderDex);
+  document.getElementById('dex-mega-filter').addEventListener('change', renderDex);
+  document.getElementById('dex-sort').addEventListener('change', e => { dexSortKey = e.target.value; renderDex(); });
+
+  // Move filter
+  const moveInput = document.getElementById('dex-move-input');
+  const moveSugg  = document.getElementById('dex-move-suggestions');
+  const moveTags  = document.getElementById('dex-move-tags');
+
+  function addMoveFilter(key) {
+    if (!key || dexMoveFilters.includes(key)) { moveSugg.innerHTML=''; moveInput.value=''; return; }
+    dexMoveFilters.push(key);
+    moveInput.value = '';
+    moveSugg.innerHTML = '';
+    renderMoveTags();
+    renderDex();
+  }
+
+  function renderMoveTags() {
+    moveTags.innerHTML = '';
+    dexMoveFilters.forEach(key => {
+      const move = DB.moves[key];
+      const tag = document.createElement('div');
+      tag.className = 'move-filter-tag';
+      tag.innerHTML = `<span>${move ? move.display : key}</span><button onclick="">×</button>`;
+      tag.querySelector('button').addEventListener('click', () => {
+        dexMoveFilters = dexMoveFilters.filter(m => m !== key);
+        renderMoveTags();
+        renderDex();
+      });
+      moveTags.appendChild(tag);
+    });
+  }
+
+  moveInput.addEventListener('input', () => {
+    const q = moveInput.value.toLowerCase().trim();
+    moveSugg.innerHTML = '';
+    if (!q) return;
+    const matches = Object.values(DB.moves)
+      .filter(m => m.display && m.display.toLowerCase().includes(q) && m.category !== 'status' || 
+                   m.display && m.display.toLowerCase().includes(q))
+      .slice(0, 12);
+    matches.forEach(m => {
+      const d = document.createElement('div');
+      d.textContent = m.display;
+      d.addEventListener('mousedown', e => { e.preventDefault(); addMoveFilter(m.name); });
+      moveSugg.appendChild(d);
+    });
+  });
+
+  moveInput.addEventListener('keydown', e => {
+    if (e.key === 'Enter') {
+      const q = moveInput.value.toLowerCase().trim().replace(/ /g,'-');
+      if (DB.moves[q]) addMoveFilter(q);
+    }
+    if (e.key === 'Escape') { moveSugg.innerHTML = ''; moveInput.value = ''; }
+  });
+
+  moveInput.addEventListener('blur', () => setTimeout(() => { moveSugg.innerHTML = ''; }, 150));
+}
+function recalc() {
+  if (!loaded) return;
+  renderPlots();
+  renderPowerPanel();
+}
+
+// ─────────────────────────────────────────────────────────
+// INIT EVENTS
+// ─────────────────────────────────────────────────────────
+document.getElementById('add-atk').addEventListener('click', () => {
+  if (!loaded) return;
+  atkCounter++;
+  buildAtkPanel(atkCounter);
+});
+document.getElementById('add-def').addEventListener('click', () => {
+  if (!loaded) return;
+  defCounter++;
+  buildDefPanel(defCounter);
+});
+
+// ─────────────────────────────────────────────────────────
+// COVERAGE TAB
+// ─────────────────────────────────────────────────────────
+const ALL_TYPES = ['normal','fire','water','electric','grass','ice','fighting','poison','ground','flying','psychic','bug','rock','ghost','dragon','dark','steel','fairy'];
+const NUM_SLOTS = 6;
+let covSlots = Array.from({length: NUM_SLOTS}, () => ({ poke: null, ability: '', active: true }));
+let covTab = 'off';
+let covSlotsBuilt = false;
+
+function setCovTab(t) {
+  covTab = t;
+  document.getElementById('cov-tab-off').classList.toggle('active', t === 'off');
+  document.getElementById('cov-tab-def').classList.toggle('active', t === 'def');
+  renderCov();
+}
+
+function initCovSlots() {
+  if (covSlotsBuilt) return;
+  covSlotsBuilt = true;
+  const container = document.getElementById('cov-slots');
+  container.innerHTML = '';
+  covSlots.forEach((slot, i) => buildCovSlot(slot, i, container));
+}
+
+function buildCovSlot(slot, i, container) {
+  const wrap = document.createElement('div');
+  wrap.className = 'cov-slot';
+  wrap.id = `cov-slot-${i}`;
+
+  // Bar (header)
+  const bar = document.createElement('div');
+  bar.className = 'cov-slot-bar';
+
+  const chk = document.createElement('input');
+  chk.type = 'checkbox';
+  chk.className = 'cov-slot-check';
+  chk.checked = slot.active;
+  chk.title = 'Include in analysis';
+  chk.addEventListener('change', () => { slot.active = chk.checked; renderCov(); });
+
+  const num = document.createElement('span');
+  num.className = 'cov-slot-num';
+  num.textContent = i + 1;
+
+  const sprite = document.createElement('img');
+  sprite.className = 'cov-slot-sprite';
+  sprite.style.display = 'none';
+
+  const nameEl = document.createElement('span');
+  nameEl.className = 'cov-slot-name';
+  nameEl.textContent = `Slot ${i+1}`;
+  nameEl.style.color = 'var(--text3)';
+
+  const typeRow = document.createElement('div');
+  typeRow.className = 'cov-slot-types';
+
+  bar.appendChild(chk);
+  bar.appendChild(num);
+  bar.appendChild(sprite);
+  bar.appendChild(nameEl);
+  bar.appendChild(typeRow);
+  wrap.appendChild(bar);
+
+  // Body
+  const body = document.createElement('div');
+  body.className = 'cov-slot-body';
+
+  // Pokemon search
+  const searchWrap = document.createElement('div');
+  searchWrap.className = 'cov-slot-search-wrap';
+  const input = document.createElement('input');
+  input.type = 'text';
+  input.className = 'cov-slot-input';
+  input.placeholder = 'Search Pokémon…';
+  input.autocomplete = 'off';
+  const dropdown = document.createElement('div');
+  dropdown.className = 'cov-slot-list';
+
+  function renderDropdown(filter) {
+    dropdown.innerHTML = '';
+    const results = Object.values(DB.pokemon)
+      .filter(p => p.display.toLowerCase().includes(filter.toLowerCase()))
+      .sort((a,b) => { if (a.is_mega !== b.is_mega) return a.is_mega ? 1 : -1; return (a.dex_id||0)-(b.dex_id||0); })
+      .slice(0, 60);
+    results.forEach(p => {
+      const opt = document.createElement('div');
+      opt.className = 'cov-slot-opt';
+      const img = document.createElement('img');
+      img.src = `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${p.dex_id}.png`;
+      img.onerror = () => img.style.display='none';
+      const nm = document.createElement('span');
+      nm.textContent = p.display;
+      opt.appendChild(img);
+      opt.appendChild(nm);
+      (p.types||[]).forEach(t => {
+        const pip = document.createElement('span');
+        pip.className = 'type-badge';
+        pip.style.cssText = `background:${getTypeColor(t)};font-size:9px;padding:1px 4px`;
+        pip.textContent = t;
+        opt.appendChild(pip);
+      });
+      opt.addEventListener('mousedown', () => {
+        selectCovPoke(p, i, input, sprite, nameEl, typeRow);
+        dropdown.classList.remove('open');
+      });
+      dropdown.appendChild(opt);
+    });
+    dropdown.classList.toggle('open', results.length > 0 && filter.length > 0);
+  }
+
+  input.addEventListener('focus', () => { if (input.value) renderDropdown(input.value); });
+  input.addEventListener('input', () => renderDropdown(input.value));
+  input.addEventListener('blur', () => setTimeout(() => dropdown.classList.remove('open'), 160));
+
+  searchWrap.appendChild(input);
+  searchWrap.appendChild(dropdown);
+
+  // Ability selector
+  const abSel = document.createElement('select');
+  abSel.className = 'cov-ab-sel';
+  abSel.innerHTML = '<option value="">— select Pokémon first —</option>';
+  abSel.addEventListener('change', () => { slot.ability = abSel.value; renderCov(); });
+
+  // Clear button
+  const clearBtn = document.createElement('button');
+  clearBtn.style.cssText = 'background:none;border:none;color:var(--text3);font-size:11px;cursor:pointer;text-align:left;padding:0;font-family:var(--font)';
+  clearBtn.textContent = '× Clear slot';
+  clearBtn.addEventListener('click', () => {
+    slot.poke = null; slot.ability = '';
+    input.value = ''; sprite.style.display='none';
+    nameEl.textContent = `Slot ${i+1}`; nameEl.style.color='var(--text3)';
+    typeRow.innerHTML = '';
+    abSel.innerHTML = '<option value="">— select Pokémon first —</option>';
+    renderCov();
+  });
+
+  body.appendChild(searchWrap);
+  body.appendChild(abSel);
+  body.appendChild(clearBtn);
+  wrap.appendChild(body);
+  container.appendChild(wrap);
+
+  // Store refs on slot for updates
+  slot._abSel = abSel;
+}
+
+function selectCovPoke(p, i, input, sprite, nameEl, typeRow) {
+  const slot = covSlots[i];
+  slot.poke = p.name;
+  slot.ability = (p.abilities||[])[0] || '';
+  input.value = p.display;
+  sprite.src = `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${p.dex_id}.png`;
+  sprite.style.display = 'block';
+  nameEl.textContent = p.display;
+  nameEl.style.color = 'var(--text)';
+  typeRow.innerHTML = '';
+  (p.types||[]).forEach(t => {
+    const b = document.createElement('span');
+    b.className = 'type-badge';
+    b.style.cssText = `background:${getTypeColor(t)};font-size:9px;padding:1px 4px`;
+    b.textContent = t;
+    typeRow.appendChild(b);
+  });
+  const abSel = slot._abSel;
+  if (abSel) {
+    abSel.innerHTML = (p.abilities||[]).map(a => {
+      const label = a.replace(/-/g,' ').replace(/\b\w/g,c=>c.toUpperCase());
+      return `<option value="${a}">${label}</option>`;
+    }).join('');
+    slot.ability = (p.abilities||[])[0] || '';
+  }
+  renderCov();
+}
+
+// Get best effectiveness a set of attacking types can achieve vs a defending type combo
+function bestOffEff(atkTypes, defTypes) {
+  let best = 0;
+  let bestType = null;
+  for (const atkType of atkTypes) {
+    const eff = getTypeEff(atkType, defTypes);
+    if (eff > best) { best = eff; bestType = atkType; }
+  }
+  return { eff: best, type: bestType };
+}
+
+// Get all types the mon is weak/resist/immune to
+function getDefProfile(defTypes, ability) {
+  const ab = (ability || '').toLowerCase();
+  const result = {};
+  for (const atkType of ALL_TYPES) {
+    let eff = getTypeEff(atkType, defTypes);
+    // Levitate: immune to ground
+    if (ab === 'levitate' && atkType === 'ground') eff = 0;
+    // Thick Fat: halve fire/ice
+    if (ab === 'thick-fat' && (atkType === 'fire' || atkType === 'ice')) eff *= 0.5;
+    // Water Absorb, Volt Absorb, Flash Fire, Sap Sipper, Storm Drain, Lightning Rod, Motor Drive, Dry Skin, Earth Eater, Well Baked Body
+    const absorb = {
+      'water-absorb':'water','volt-absorb':'electric','flash-fire':'fire',
+      'sap-sipper':'grass','storm-drain':'water','lightning-rod':'electric',
+      'motor-drive':'electric','dry-skin':'water','earth-eater':'ground','well-baked-body':'fire'
+    };
+    if (absorb[ab] === atkType) eff = 0;
+    result[atkType] = eff;
+  }
+  return result;
+}
+
+function renderCov() {
+  if (!loaded) return;
+  const content = document.getElementById('cov-content');
+  if (!content) return;
+  content.innerHTML = '';
+
+  const activeSlots = covSlots.filter(s => s.active && s.poke);
+
+  // Active team summary pills
+  if (activeSlots.length > 0) {
+    const summary = document.createElement('div');
+    summary.className = 'cov-team-summary';
+    activeSlots.forEach(s => {
+      const p = DB.pokemon[s.poke];
+      if (!p) return;
+      const pill = document.createElement('div');
+      pill.className = 'cov-mon-pill';
+      const img = document.createElement('img');
+      img.src = `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${p.dex_id}.png`;
+      img.onerror = () => img.style.display='none';
+      const nm = document.createElement('span');
+      nm.textContent = p.display;
+      pill.appendChild(img);
+      pill.appendChild(nm);
+      summary.appendChild(pill);
+    });
+    content.appendChild(summary);
+  }
+
+  if (activeSlots.length === 0) {
+    content.innerHTML += '<div class="cov-empty-msg">Select Pokémon in the team slots and check them to see coverage.</div>';
+    return;
+  }
+
+  if (covTab === 'off') renderOffensive(content, activeSlots);
+  else renderDefensive(content, activeSlots);
+}
+
+function renderOffensive(content, activeSlots) {
+  // For each defending type, find the best effectiveness any active mon can hit it with
+  const title = document.createElement('div');
+  title.className = 'cov-off-title';
+  title.textContent = 'Offensive Coverage — Best effectiveness vs each defending type';
+  content.appendChild(title);
+
+  // Each mon contributes its STAB types + we check all their move types
+  // For simplicity: use the mon's types as attacking types (STAB coverage)
+  // User can interpret as "what can this team STAB into"
+  // Group by effectiveness
+  const groups = { '4': [], '2': [], '1': [], '0.5': [], '0.25': [], '0': [] };
+
+  const grid = document.createElement('div');
+  grid.className = 'cov-off-grid';
+
+  ALL_TYPES.forEach(defType => {
+    // For each active slot, get best eff against this single type
+    // (treating each pokemon's types as its attacking types)
+    let bestEff = 0;
+    let bestMon = null;
+    let monsWithSE = [];
+
+    activeSlots.forEach(s => {
+      const p = DB.pokemon[s.poke];
+      if (!p) return;
+      const atkTypes = p.types || [];
+      for (const atkType of atkTypes) {
+        const eff = getTypeEff(atkType, [defType]);
+        if (eff > bestEff) { bestEff = eff; bestMon = p; }
+        if (eff >= 2) monsWithSE.push(s);
+      }
+    });
+
+    const cell = document.createElement('div');
+    cell.className = 'cov-off-cell';
+    const bg = getTypeColor(defType);
+    cell.style.background = bg;
+
+    if (bestEff === 0) cell.classList.add('eff-immune');
+    if (bestEff >= 4) cell.classList.add('eff-4x');
+
+    const typeName = document.createElement('div');
+    typeName.className = 'cov-off-cell-type';
+    typeName.textContent = defType;
+
+    const effEl = document.createElement('div');
+    effEl.className = 'cov-off-cell-eff';
+    effEl.textContent = bestEff === 0 ? '✗' : bestEff >= 4 ? '4×' : bestEff >= 2 ? '2×' : bestEff >= 1 ? '1×' : bestEff > 0 ? '½×' : '✗';
+
+    // Pips: one per active mon, lit if they can hit SE
+    const pips = document.createElement('div');
+    pips.className = 'cov-off-cell-pips';
+    activeSlots.forEach(s => {
+      const p = DB.pokemon[s.poke];
+      if (!p) return;
+      const atkTypes = p.types || [];
+      const canSE = atkTypes.some(t => getTypeEff(t, [defType]) >= 2);
+      const pip = document.createElement('div');
+      pip.className = 'cov-off-pip' + (canSE ? ' hit' : '');
+      pip.title = p.display;
+      pips.appendChild(pip);
+    });
+
+    cell.appendChild(typeName);
+    cell.appendChild(effEl);
+    cell.appendChild(pips);
+    grid.appendChild(cell);
+  });
+
+  content.appendChild(grid);
+}
+
+function renderDefensive(content, activeSlots) {
+  const title = document.createElement('div');
+  title.className = 'cov-def-title';
+  title.textContent = 'Defensive Profile — Weaknesses & resistances per mon';
+  content.appendChild(title);
+
+  const grid = document.createElement('div');
+  grid.className = 'cov-def-grid';
+
+  // For each attacking type, show how each active mon takes it
+  ALL_TYPES.forEach(atkType => {
+    const cell = document.createElement('div');
+    cell.className = 'cov-def-cell';
+    cell.style.background = getTypeColor(atkType);
+
+    const typeName = document.createElement('div');
+    typeName.className = 'cov-def-cell-type';
+    typeName.textContent = atkType;
+
+    // Best/worst summary: how many mons are weak vs resist
+    let weakCount = 0, resistCount = 0, immuneCount = 0;
+    const pips = document.createElement('div');
+    pips.className = 'cov-def-cell-pips';
+
+    activeSlots.forEach(s => {
+      const p = DB.pokemon[s.poke];
+      if (!p) return;
+      const profile = getDefProfile(p.types || [], s.ability);
+      const eff = profile[atkType] ?? 1;
+      const pip = document.createElement('div');
+      pip.className = 'cov-def-pip';
+      pip.title = `${p.display}: ${eff}×`;
+      if (eff === 0) { pip.classList.add('immune'); immuneCount++; }
+      else if (eff >= 2) { pip.classList.add('weak'); weakCount++; }
+      else if (eff < 1) { pip.classList.add('resist'); resistCount++; }
+      pips.appendChild(pip);
+    });
+
+    // Worst case eff label
+    const effs = activeSlots.map(s => {
+      const p = DB.pokemon[s.poke]; if (!p) return 1;
+      return getDefProfile(p.types||[], s.ability)[atkType] ?? 1;
+    });
+    const maxEff = Math.max(...effs);
+    const effEl = document.createElement('div');
+    effEl.className = 'cov-def-cell-eff';
+    effEl.textContent = maxEff === 0 ? '✗' : maxEff >= 4 ? '4×' : maxEff >= 2 ? '2×' : maxEff >= 1 ? '1×' : '½×';
+
+    cell.appendChild(typeName);
+    cell.appendChild(effEl);
+    cell.appendChild(pips);
+    grid.appendChild(cell);
+  });
+
+  content.appendChild(grid);
+}
+
+// ─────────────────────────────────────────────────────────
+// TYPE CHART OVERLAP TAB
+// ─────────────────────────────────────────────────────────
+const TC_TYPES = ['Normal','Fire','Water','Electric','Grass','Ice','Fighting','Poison','Ground','Flying','Psychic','Bug','Rock','Ghost','Dragon','Dark','Steel','Fairy'];
+const TC_SE = {
+  Normal:[],Fire:['Grass','Ice','Bug','Steel'],Water:['Fire','Ground','Rock'],
+  Electric:['Water','Flying'],Grass:['Water','Ground','Rock'],
+  Ice:['Grass','Ground','Flying','Dragon'],Fighting:['Normal','Ice','Rock','Dark','Steel'],
+  Poison:['Grass','Fairy'],Ground:['Fire','Electric','Poison','Rock','Steel'],
+  Flying:['Grass','Fighting','Bug'],Psychic:['Fighting','Poison'],Bug:['Grass','Psychic','Dark'],
+  Rock:['Fire','Ice','Flying','Bug'],Ghost:['Psychic','Ghost'],Dragon:['Dragon'],
+  Dark:['Psychic','Ghost'],Steel:['Ice','Rock','Fairy'],Fairy:['Fighting','Dragon','Dark']
+};
+let tcSelected = new Set();
+
+function tcRender() {
+  const ag = document.getElementById('tc-attack-grid');
+  const rg = document.getElementById('tc-results-grid');
+  if (!ag || !rg) return;
+  ag.innerHTML = '';
+  rg.innerHTML = '';
+
+  TC_TYPES.forEach(t => {
+    const col = getTypeColor(t.toLowerCase());
+    const btn = document.createElement('button');
+    btn.style.cssText = `display:flex;align-items:center;gap:6px;padding:5px 7px;border-radius:5px;cursor:pointer;font-size:12px;font-weight:600;font-family:var(--font);border:1px solid ${tcSelected.has(t) ? col : 'var(--border)'};background:${tcSelected.has(t) ? col+'22' : 'var(--bg2)'};color:var(--text);opacity:${tcSelected.has(t) ? '1' : '0.5'};transition:all .1s`;
+    const dot = document.createElement('span');
+    dot.style.cssText = `width:10px;height:10px;border-radius:50%;background:${col};flex-shrink:0`;
+    btn.appendChild(dot);
+    btn.appendChild(document.createTextNode(t));
+    btn.onclick = () => { tcSelected.has(t) ? tcSelected.delete(t) : tcSelected.add(t); tcRender(); };
+    ag.appendChild(btn);
+  });
+
+  const coverage = {};
+  TC_TYPES.forEach(def => { coverage[def] = []; });
+  tcSelected.forEach(atk => { (TC_SE[atk]||[]).forEach(def => coverage[def].push(atk)); });
+
+  TC_TYPES.forEach(def => {
+    const col = getTypeColor(def.toLowerCase());
+    const hitters = coverage[def];
+    const count = hitters.length;
+    let bg, border, textColor;
+    if (tcSelected.size === 0 || count === 0) { bg='var(--bg3)'; border='var(--border)'; textColor='var(--text2)'; }
+    else if (count === 1) { bg='#d1fae5'; border='#2e7d4f'; textColor='#14532d'; }
+    else if (count === 2) { bg='#86efac'; border='#2e7d4f'; textColor='#14532d'; }
+    else { bg='#4ade80'; border='#166534'; textColor='#14532d'; }
+    const chip = document.createElement('div');
+    chip.style.cssText = `display:flex;align-items:center;gap:5px;padding:5px 7px;border-radius:5px;font-size:12px;font-weight:600;border:1px solid ${border};background:${bg};color:${textColor};position:relative;cursor:default`;
+    chip.title = count > 0 ? 'Hit by: ' + hitters.join(', ') : 'Not covered';
+    const dot = document.createElement('span');
+    dot.style.cssText = `width:10px;height:10px;border-radius:50%;background:${col};flex-shrink:0`;
+    chip.appendChild(dot);
+    chip.appendChild(document.createTextNode(def));
+    if (count >= 2) {
+      const badge = document.createElement('div');
+      badge.textContent = count;
+      badge.style.cssText = 'position:absolute;top:-5px;right:-5px;background:#dc2626;color:#fff;font-size:9px;border-radius:50%;width:14px;height:14px;display:flex;align-items:center;justify-content:center;font-weight:700';
+      chip.appendChild(badge);
+    }
+    rg.appendChild(chip);
+  });
+}
+
+function tcClearAll() { tcSelected.clear(); tcRender(); }
+
+// ─────────────────────────────────────────────────────────
+// MOVE OPTIMIZER
+// ─────────────────────────────────────────────────────────
+let optPoke = null;   // api_name string
+let optSlots = 3;
+let optCategory = 'all'; // 'all' | 'physical' | 'special'
+let optAtkPriority = new Set();   // attack type strings (capitalized)
+let optEnemyPriority = new Set(); // enemy type strings (capitalized)
+let optExcludeAtk = new Set();    // attack types to hard-exclude from move pool
+
+function optInitPills() {
+  const atkEl = document.getElementById('opt-atk-priority');
+  const eneEl = document.getElementById('opt-enemy-priority');
+  const excEl = document.getElementById('opt-exclude-atk');
+  if (!atkEl || !eneEl || !excEl) return;
+  atkEl.innerHTML = '';
+  eneEl.innerHTML = '';
+  excEl.innerHTML = '';
+  TC_TYPES.forEach(t => {
+    const col = getTypeColor(t.toLowerCase());
+    [
+      { el: atkEl, set: optAtkPriority, activeColor: col },
+      { el: eneEl, set: optEnemyPriority, activeColor: col },
+      { el: excEl, set: optExcludeAtk, activeColor: '#dc2626' }
+    ].forEach(({ el, set, activeColor }) => {
+      const pill = document.createElement('button');
+      const isActive = set.has(t);
+      pill.className = 'opt-type-pill' + (isActive ? ' active' : '');
+      if (isActive) { pill.style.background = activeColor; pill.style.borderColor = activeColor; }
+      const dot = document.createElement('span');
+      dot.style.cssText = `width:8px;height:8px;border-radius:50%;background:${isActive && el === excEl ? '#fff' : col};flex-shrink:0`;
+      pill.appendChild(dot);
+      pill.appendChild(document.createTextNode(t));
+      pill.onclick = () => {
+        set.has(t) ? set.delete(t) : set.add(t);
+        optInitPills();
+      };
+      el.appendChild(pill);
+    });
+  });
+}
+
+function optSetSlots(n) {
+  optSlots = n;
+  [1,2,3,4].forEach(i => {
+    const b = document.getElementById('opt-slots-' + i);
+    if (b) { b.classList.toggle('opt-slot-active', i === n); }
+  });
+}
+
+function optSetCat(cat) {
+  optCategory = cat;
+  ['all','physical','special'].forEach(c => {
+    const b = document.getElementById('opt-cat-' + c);
+    if (b) b.classList.toggle('opt-slot-active', c === cat);
+  });
+}
+
+function optPokeSearch(q) {
+  const list = document.getElementById('opt-poke-list');
+  const sprite = document.getElementById('opt-poke-sprite');
+  if (!loaded || !q.trim()) { list.style.display = 'none'; return; }
+  const ql = q.toLowerCase();
+  const matches = Object.entries(DB.pokemon)
+    .filter(([k, v]) => v.display.toLowerCase().includes(ql) || k.includes(ql))
+    .slice(0, 20);
+  list.innerHTML = '';
+  if (!matches.length) { list.style.display = 'none'; return; }
+  matches.forEach(([key, poke]) => {
+    const opt = document.createElement('div');
+    opt.className = 'poke-opt';
+    const img = document.createElement('img');
+    img.src = poke.sprite || '';
+    img.style.cssText = 'width:20px;height:20px;object-fit:contain;image-rendering:pixelated';
+    const name = document.createElement('span');
+    name.textContent = poke.display;
+    opt.appendChild(img);
+    opt.appendChild(name);
+    opt.onclick = () => {
+      optPoke = key;
+      document.getElementById('opt-poke-input').value = poke.display;
+      sprite.src = poke.sprite || '';
+      sprite.style.display = poke.sprite ? 'block' : 'none';
+      list.style.display = 'none';
+    };
+    list.appendChild(opt);
+  });
+  list.style.display = 'block';
+}
+
+// Enumerate combinations of size k from array
+function combinations(arr, k) {
+  if (k === 0) return [[]];
+  if (arr.length < k) return [];
+  const [first, ...rest] = arr;
+  return [
+    ...combinations(rest, k-1).map(c => [first, ...c]),
+    ...combinations(rest, k)
+  ];
+}
+
+function optScoreCombo(moveKeys) {
+  // Collect unique attack types in this combo
+  const atkTypes = [...new Set(moveKeys.map(mk => {
+    const m = DB.moves[mk];
+    return m ? (m.type.charAt(0).toUpperCase() + m.type.slice(1)) : null;
+  }).filter(Boolean))];
+
+  // Which enemy types are hit SE by at least one move in combo
+  const coveredEnemy = new Set();
+  // Overlap: how many attack types cover the same enemy type
+  const hitsPerEnemy = {};
+  atkTypes.forEach(at => {
+    (TC_SE[at] || []).forEach(et => {
+      coveredEnemy.add(et);
+      hitsPerEnemy[et] = (hitsPerEnemy[et] || 0) + 1;
+    });
+  });
+
+  // Base score: unique enemy types covered
+  let score = coveredEnemy.size * 10;
+
+  // Bonus: priority enemy types covered
+  let priorityHits = 0;
+  optEnemyPriority.forEach(et => {
+    if (coveredEnemy.has(et)) { score += 15; priorityHits++; }
+    else score -= 5; // penalty for missing a must-cover
+  });
+
+  // Bonus: priority attack types used
+  let atkPriorityUsed = 0;
+  optAtkPriority.forEach(at => {
+    if (atkTypes.includes(at)) { score += 8; atkPriorityUsed++; }
+  });
+
+  // Penalty: overlap (each extra hit on same enemy beyond the first)
+  let overlapCount = 0;
+  Object.values(hitsPerEnemy).forEach(n => { if (n > 1) overlapCount += (n - 1); });
+  score -= overlapCount * 3;
+
+  return { score, coveredEnemy, overlapCount, priorityHits, atkPriorityUsed, atkTypes };
+}
+
+function optRun() {
+  const resultsEl = document.getElementById('opt-results');
+  resultsEl.innerHTML = '';
+
+  if (!optPoke) {
+    resultsEl.innerHTML = '<div style="font-size:12px;color:var(--text2)">Select a Pokemon first.</div>';
+    return;
+  }
+  const poke = DB.pokemon[optPoke];
+  if (!poke) return;
+
+  // Get all damaging moves this pokemon knows that exist in DB
+  const pokeMovesRaw = (poke.moves || []).filter(mk => {
+    const m = DB.moves[mk];
+    if (!m || m.category === 'status' || m.power <= 0) return false;
+    if (optCategory === 'physical') return m.category === 'physical';
+    if (optCategory === 'special') return m.category === 'special';
+    return true;
+  }).filter(mk => {
+    const m = DB.moves[mk];
+    const t = m.type.charAt(0).toUpperCase() + m.type.slice(1);
+    return !optExcludeAtk.has(t);
+  });
+
+  if (!pokeMovesRaw.length) {
+    resultsEl.innerHTML = `<div style="font-size:12px;color:var(--text2)">No ${optCategory === 'all' ? 'damaging' : optCategory} moves found for this Pokemon.</div>`;
+    return;
+  }
+
+  // Deduplicate by type — keep highest power per type to reduce combo space
+  const bestByType = {};
+  pokeMovesRaw.forEach(mk => {
+    const m = DB.moves[mk];
+    const t = m.type;
+    if (!bestByType[t] || m.power > DB.moves[bestByType[t]].power) bestByType[t] = mk;
+  });
+  const dedupedMoves = Object.values(bestByType);
+
+  // If slots >= available unique types, just return them all
+  const k = Math.min(optSlots, dedupedMoves.length);
+
+  let combos;
+  if (dedupedMoves.length <= k) {
+    combos = [dedupedMoves];
+  } else {
+    combos = combinations(dedupedMoves, k);
+  }
+
+  // Score all combos
+  const scored = combos.map(combo => {
+    const s = optScoreCombo(combo);
+    return { combo, ...s };
+  });
+
+  scored.sort((a, b) => b.score - a.score);
+  const top5 = scored.slice(0, 5);
+
+  // Render results
+  top5.forEach((result, i) => {
+    const card = document.createElement('div');
+    card.className = 'opt-result-card';
+    if (i > 0) card.style.marginTop = '6px';
+
+    const rank = document.createElement('div');
+    rank.className = 'opt-result-rank';
+    rank.textContent = i === 0 ? '#1 — Best combo' : `#${i+1}`;
+    card.appendChild(rank);
+
+    // Moves
+    result.combo.forEach(mk => {
+      const m = DB.moves[mk];
+      if (!m) return;
+      const row = document.createElement('div');
+      row.className = 'opt-move-row';
+      const typeCol = getTypeColor(m.type);
+      const typeBadge = document.createElement('span');
+      typeBadge.className = 'opt-move-type';
+      typeBadge.style.background = typeCol;
+      typeBadge.textContent = m.type.toUpperCase();
+      const catIcon = document.createElement('span');
+      catIcon.style.cssText = 'font-size:10px;color:var(--text2)';
+      catIcon.textContent = m.category === 'physical' ? '⚔' : '✦';
+      const moveName = document.createElement('span');
+      moveName.textContent = m.display || mk;
+      const bp = document.createElement('span');
+      bp.style.cssText = 'font-size:11px;color:var(--text2);margin-left:auto';
+      bp.textContent = m.power + ' BP';
+      row.appendChild(typeBadge);
+      row.appendChild(catIcon);
+      row.appendChild(moveName);
+      row.appendChild(bp);
+      card.appendChild(row);
+    });
+
+    // Covered types row
+    const covLabel = document.createElement('div');
+    covLabel.style.cssText = 'font-size:10px;color:var(--text2);margin-top:2px';
+    covLabel.textContent = `Covers ${result.coveredEnemy.size} types:`;
+    card.appendChild(covLabel);
+
+    const covRow = document.createElement('div');
+    covRow.className = 'opt-covered-row';
+    [...result.coveredEnemy].forEach(et => {
+      const chip = document.createElement('span');
+      chip.className = 'opt-covered-chip';
+      const isPriority = optEnemyPriority.has(et);
+      chip.style.background = isPriority ? '#7c3aed' : getTypeColor(et.toLowerCase());
+      chip.title = isPriority ? 'Priority target!' : '';
+      chip.textContent = et;
+      covRow.appendChild(chip);
+    });
+    card.appendChild(covRow);
+
+    // Score row
+    const scoreRow = document.createElement('div');
+    scoreRow.className = 'opt-score-row';
+    const scoreEl = document.createElement('span');
+    scoreEl.className = 'opt-score';
+    scoreEl.textContent = `Score: ${result.score}`;
+    scoreRow.appendChild(scoreEl);
+
+    const flags = document.createElement('div');
+    flags.style.cssText = 'display:flex;gap:6px;align-items:center';
+    if (result.overlapCount > 0) {
+      const ow = document.createElement('span');
+      ow.className = 'opt-overlap-warn';
+      ow.textContent = `${result.overlapCount} overlap`;
+      flags.appendChild(ow);
+    }
+    if (result.priorityHits > 0) {
+      const ph = document.createElement('span');
+      ph.className = 'opt-priority-hit';
+      ph.textContent = `${result.priorityHits} priority hit`;
+      flags.appendChild(ph);
+    }
+    scoreRow.appendChild(flags);
+    card.appendChild(scoreRow);
+
+    resultsEl.appendChild(card);
+  });
+}
+
+init();
+</script>
+</body>
+</html>
