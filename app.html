@@ -595,7 +595,7 @@ const COLORS = ['#e53e3e','#3182ce','#38a169','#d69e2e','#805ad5','#dd6b20','#00
 let atkPanels = [];
 let defPanels = [];
 let atkCounter = 0, defCounter = 100;
-const pwTarget = { poke: '', nature: 'Hardy', evHP:0, evDef:0, evSpDef:0, weather:'none', doubles:false, reflect:false, lightscreen:false, auroraveil:false, weatherMult:1 };
+const pwTarget = { poke: '', nature: 'Hardy', evHP:0, evDef:0, evSpDef:0, evAtk:0, evSpA:0, weather:'none', doubles:false, reflect:false, lightscreen:false, auroraveil:false, weatherMult:1 };
 
 // Condition state
 const conds = {
@@ -2352,7 +2352,6 @@ function buildPowerPanel() {
             <label class="cond-item" style="font-size:12px"><input type="radio" name="pw-weathermult" id="pw-wm-neutral" value="1" checked> Neutral</label>
             <label class="cond-item" style="font-size:12px"><input type="radio" name="pw-weathermult" id="pw-wm-boost" value="1.5"> Boosted ×1.5 <span style="font-size:10px;color:var(--text3)">(Water/Rain, Fire/Sun)</span></label>
             <label class="cond-item" style="font-size:12px;margin-bottom:6px"><input type="radio" name="pw-weathermult" id="pw-wm-weak" value="0.5"> Weakened ×0.5 <span style="font-size:10px;color:var(--text3)">(Fire/Rain, Water/Sun)</span></label>
-            <label class="cond-item" style="font-size:12px;margin-bottom:6px"><input type="checkbox" id="pw-weatherpen"> Move weakened by weather ×0.5</label>
             <div style="font-size:11px;color:var(--text2);font-weight:600;margin-bottom:2px">Screens on defender</div>
             <label class="cond-item" style="font-size:12px;margin-bottom:2px"><input type="checkbox" id="pw-doubles"> Doubles</label>
             <label class="cond-item" style="font-size:12px"><input type="checkbox" id="pw-reflect"> Reflect (phys ÷2)</label>
@@ -2371,14 +2370,33 @@ function buildPowerPanel() {
             <select id="pw-nature" style="width:100%;background:var(--bg3);border:1px solid var(--border);color:var(--text);padding:3px 6px;border-radius:5px;font-size:12px;outline:none;font-family:var(--font)"></select>
           </div>
           <div style="margin-top:10px;border-top:1px solid var(--border);padding-top:8px">
-            <div class="power-chart-title" style="margin-bottom:6px">Defender EVs</div>
-            <div style="display:flex;flex-direction:column;gap:4px">
-              ${[['pw-ev-hp','HP'],['pw-ev-def','Def'],['pw-ev-spd','SpD']].map(([id,label])=>`
-                <div style="display:grid;grid-template-columns:28px 1fr 32px;align-items:center;gap:5px">
-                  <span style="font-size:11px;color:var(--text2)">${label}</span>
-                  <input type="range" id="${id}" min="0" max="252" step="4" value="0" style="accent-color:#4f46e5">
-                  <span id="${id}-val" style="font-size:11px;font-weight:600;text-align:right">0</span>
-                </div>`).join('')}
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+              <div>
+                <div class="power-chart-title" style="margin-bottom:6px">Attacker EVs</div>
+                <div style="display:flex;flex-direction:column;gap:4px">
+                  <div style="display:grid;grid-template-columns:28px 1fr 32px;align-items:center;gap:5px">
+                    <span style="font-size:11px;color:var(--text2)">Atk</span>
+                    <input type="range" id="pw-ev-atk" min="0" max="252" step="4" value="0" style="accent-color:#4f46e5">
+                    <span id="pw-ev-atk-val" style="font-size:11px;font-weight:600;text-align:right">0</span>
+                  </div>
+                  <div style="display:grid;grid-template-columns:28px 1fr 32px;align-items:center;gap:5px">
+                    <span style="font-size:11px;color:var(--text2)">SpA</span>
+                    <input type="range" id="pw-ev-spa" min="0" max="252" step="4" value="0" style="accent-color:#4f46e5">
+                    <span id="pw-ev-spa-val" style="font-size:11px;font-weight:600;text-align:right">0</span>
+                  </div>
+                </div>
+              </div>
+              <div>
+                <div class="power-chart-title" style="margin-bottom:6px">Defender EVs</div>
+                <div style="display:flex;flex-direction:column;gap:4px">
+                  ${[['pw-ev-hp','HP'],['pw-ev-def','Def'],['pw-ev-spd','SpD']].map(([id,label])=>`
+                    <div style="display:grid;grid-template-columns:28px 1fr 32px;align-items:center;gap:5px">
+                      <span style="font-size:11px;color:var(--text2)">${label}</span>
+                      <input type="range" id="${id}" min="0" max="252" step="4" value="0" style="accent-color:#4f46e5">
+                      <span id="${id}-val" style="font-size:11px;font-weight:600;text-align:right">0</span>
+                    </div>`).join('')}
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -2414,7 +2432,7 @@ function buildPowerPanel() {
     document.getElementById('pw-mult-val').textContent = '×' + v.toFixed(2).replace(/\.?0+$/,'');
     renderPowerPanel();
   });
-  [['pw-ev-hp','evHP'],['pw-ev-def','evDef'],['pw-ev-spd','evSpDef']].forEach(([id,key]) => {
+  [['pw-ev-atk','evAtk'],['pw-ev-spa','evSpA'],['pw-ev-hp','evHP'],['pw-ev-def','evDef'],['pw-ev-spd','evSpDef']].forEach(([id,key]) => {
     document.getElementById(id).addEventListener('input', e => {
       pwTarget[key] = parseInt(e.target.value)||0;
       document.getElementById(id+'-val').textContent = e.target.value;
@@ -2429,13 +2447,9 @@ function buildPowerPanel() {
 // Reverse calcStat: given a needed final stat, find the minimum base stat
 // calcStat at lv50, IV31, EV0, neutral nature: floor((2*base+31)*0.5 + 5)
 // So: base = ceil((statVal - 5) * 2 - 31) / 2  → ceil((statVal - 5) * 2 - 31 + 0) / 2
-function statToBase(statVal) {
-  // Invert: statVal = floor((2*base + 31) / 2 + 5)  (at lv50, IV31, EV0, neutral)
-  // 2*base + 31 ≈ (statVal - 5) * 2
-  // base ≈ (statVal - 5) - 15.5
-  // Use ceiling to find minimum base that achieves statVal
+function statToBase(statVal, ev=0) {
   for (let b = 1; b <= 255; b++) {
-    if (calcStat(b, 0, 31, 50, 1) >= statVal) return b;
+    if (calcStat(b, ev, 31, 50, 1) >= statVal) return b;
   }
   return 255;
 }
@@ -2490,10 +2504,12 @@ function renderPowerPanel() {
 
    const p = minAtk(D_phys);
    const s = minAtk(D_spec);
-   const pBase = statToBase(p);
-   const sBase = statToBase(s);
-   const pRange = `${calcStat(pBase,0,31,50,1)}–${calcStat(pBase,252,31,50,1.1)}`;
-   const sRange = `${calcStat(sBase,0,31,50,1)}–${calcStat(sBase,252,31,50,1.1)}`;
+   const atkEV = pwTarget.evAtk || 0;
+   const spaEV = pwTarget.evSpA || 0;
+   const pBase = statToBase(p, atkEV);
+   const sBase = statToBase(s, spaEV);
+   const pRange = `${calcStat(pBase,atkEV,31,50,1)}–${calcStat(pBase,252,31,50,1.1)}`;
+   const sRange = `${calcStat(sBase,spaEV,31,50,1)}–${calcStat(sBase,252,31,50,1.1)}`;
 
    const barMax = Math.max(pBase, sBase, 1);
 
@@ -2535,7 +2551,7 @@ function renderPowerPanel() {
    body.appendChild(note);
 
    // Trigger filter list update
-   renderOhkoList(pBase, sBase, power, totalMult);
+   renderOhkoList(pBase, sBase, power, totalMult, atkEV, spaEV);
 }
 // ─────────────────────────────────────────────────────────
 // TABS
@@ -2544,12 +2560,12 @@ function renderPowerPanel() {
 // OHKO LIST — who can OHKO this target?
 // ─────────────────────────────────────────────────────────
 let _ohkoListTimer = null;
-function renderOhkoList(pBase, sBase, power, totalMult) {
+function renderOhkoList(pBase, sBase, power, totalMult, atkEV=0, spaEV=0) {
   clearTimeout(_ohkoListTimer);
-  _ohkoListTimer = setTimeout(() => _doRenderOhkoList(pBase, sBase, power, totalMult), 80);
+  _ohkoListTimer = setTimeout(() => _doRenderOhkoList(pBase, sBase, power, totalMult, atkEV, spaEV), 80);
 }
 
-function _doRenderOhkoList(pBase, sBase, power, totalMult) {
+function _doRenderOhkoList(pBase, sBase, power, totalMult, atkEV=0, spaEV=0) {
   const body = document.getElementById('ohko-list-body');
   if (!body) return;
 
@@ -2567,15 +2583,16 @@ function _doRenderOhkoList(pBase, sBase, power, totalMult) {
   // What SE multiplier is required?
   const seMult = parseFloat(document.querySelector('input[name="pw-se"]:checked')?.value || 1);
 
-  // First pass: filter by base stat — account for STAB (1.5×) since attacker likely uses STAB moves
-  // A pokemon with base stat * 1.5 >= needed base stat can potentially OHKO with STAB
-  const STAB_FACTOR = 1.5;
+  // First pass: filter by actual stat with given EVs (accounts for STAB)
   const allPoke = Object.values(DB.pokemon);
   const candidates = allPoke.filter(p => {
     if (!p.moves || p.moves.length === 0) return false;
-    // Check if STAB-boosted stat meets threshold (conservative: check raw too)
-    return p.stats.attack >= pBase || p.stats['special-attack'] >= sBase ||
-           p.stats.attack * STAB_FACTOR >= pBase || p.stats['special-attack'] * STAB_FACTOR >= sBase;
+    const physStat = calcStat(p.stats.attack, atkEV, 31, 50, 1);
+    const specStat = calcStat(p.stats['special-attack'], spaEV, 31, 50, 1);
+    const physNeeded = calcStat(pBase, atkEV, 31, 50, 1);
+    const specNeeded = calcStat(sBase, spaEV, 31, 50, 1);
+    return physStat >= physNeeded || specStat >= specNeeded ||
+           physStat * 1.5 >= physNeeded || specStat * 1.5 >= specNeeded;
   });
 
   // Second pass: find qualifying moves
