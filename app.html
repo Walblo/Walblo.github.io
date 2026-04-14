@@ -662,7 +662,9 @@ async function init() {
     });
     ohkoMoveInput.addEventListener('blur', () => setTimeout(() => { ohkoMoveSugg.innerHTML=''; }, 150));
   } catch(e) {
-    document.getElementById('data-status').textContent = 'Error loading data — run generate_data.py first.';
+    console.error('Init error:', e);
+    // Only show error if data never loaded
+    if (!loaded) document.getElementById('data-status').textContent = 'Error loading data — run generate_data.py first.';
     console.error(e);
   }
 }
@@ -2889,7 +2891,6 @@ function _renderOhkoResults(results, defTypes) {
       const effLabel = typeEff >= 4 ? ' 4×' : typeEff >= 2 ? ' 2×' : typeEff < 1 ? ' ½×' : '';
       const groupId = `ohko-group-${groupType}`;
 
-      // Collapsible group header
       const typeHead = document.createElement('div');
       typeHead.style.cssText = 'display:flex;align-items:center;gap:6px;margin:10px 0 4px;cursor:pointer;user-select:none';
       typeHead.innerHTML = `<span class="type-badge" style="background:${getTypeColor(groupType)}">${groupType}${effLabel}</span><div style="flex:1;height:1px;background:var(--border)"></div><span style="font-size:11px;color:var(--text3)" id="${groupId}-tog">▾</span>`;
@@ -2899,14 +2900,16 @@ function _renderOhkoResults(results, defTypes) {
       groupBody.id = groupId;
       body.appendChild(groupBody);
 
+      const thisGroup = groupBody;
       typeHead.onclick = () => {
-        const collapsed = groupBody.style.display === 'none';
-        groupBody.style.display = collapsed ? '' : 'none';
-        document.getElementById(`${groupId}-tog`).textContent = collapsed ? '▾' : '▸';
+        const collapsed = thisGroup.style.display === 'none';
+        thisGroup.style.display = collapsed ? '' : 'none';
+        const tog = document.getElementById(`${groupId}-tog`);
+        if (tog) tog.textContent = collapsed ? '▾' : '▸';
       };
     }
 
-    const target = groupByType ? groupBody : body;
+    const target = (groupByType && groupBody) ? groupBody : body;
 
     // Pokémon row
     const row = document.createElement('div');
