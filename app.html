@@ -2600,20 +2600,45 @@ function _doRenderOhkoList(pBase, sBase, power, totalMult, atkEV=0, spaEV=0) {
 
   // What SE multiplier is required?
   const seMult = parseFloat(document.querySelector('input[name="pw-se"]:checked')?.value || 1);
+  const useStab = document.getElementById('pw-stab')?.checked;
+  const itemMult = parseFloat(document.querySelector('input[name="pw-item"]:checked')?.value || 1);
+  const extraMult = parseFloat(document.getElementById('pw-mult')?.value || 1);
 
-  // First pass: filter by actual stat with given EVs (accounts for STAB)
+  // Compute weather offensive multiplier
+  const wmt = pwTarget.moveType;
+  let weatherOffMult = 1;
+  if (pwTarget.weather === 'rain') { if (wmt === 'water') weatherOffMult = 1.5; if (wmt === 'fire') weatherOffMult = 0.5; }
+  else if (pwTarget.weather === 'sun') { if (wmt === 'fire') weatherOffMult = 1.5; if (wmt === 'water') weatherOffMult = 0.5; }
+
+  const defHP  = calcHP(defPoke.stats.hp, pwTarget.evHP||0);
+  let D_phys = calcStat(defPoke.stats.defense,            pwTarget.evDef||0,   31, 50, getNatureMult(pwTarget.nature,'defense'));
+  let D_spec = calcStat(defPoke.stats['special-defense'], pwTarget.evSpDef||0, 31, 50, getNatureMult(pwTarget.nature,'special-defense'));
+  if (pwTarget.weather === 'sand' && defTypes.includes('rock')) D_spec = Math.floor(D_spec * 1.5);
+  if (pwTarget.weather === 'snow' && defTypes.includes('ice'))  D_spec = Math.floor(D_spec * 1.5);
+  const screenDiv = pwTarget.doubles ? 1.5 : 2;
+  if (pwTarget.reflect    || pwTarget.auroraveil) D_phys = Math.floor(D_phys * screenDiv);
+  if (pwTarget.lightscreen || pwTarget.auroraveil) D_spec = Math.floor(D_spec * screenDiv);
+
+  // canOHKO: check if a given A stat + move can OHKO at max roll
+  // damage = floor(floor((22 * A * bp / D) / 50 + 2) * stab * typeEff * itemMult * extraMult * weatherOffMult)
+  function canOHKO(A, movePow, D, stabMult, typeEff) {
+    const base = Math.floor(Math.floor(22 * A * movePow / D) / 50 + 2);
+    const dmg = Math.floor(base * stabMult * typeEff * itemMult * extraMult * weatherOffMult);
+    return dmg >= defHP;
+  }
+
+  // First pass: rough filter by base stat (fast rejection)
   const allPoke = Object.values(DB.pokemon);
   const candidates = allPoke.filter(p => {
     if (!p.moves || p.moves.length === 0) return false;
-    const physStat = calcStat(p.stats.attack, atkEV, 31, 50, 1);
-    const specStat = calcStat(p.stats['special-attack'], spaEV, 31, 50, 1);
-    const physNeeded = calcStat(pBase, atkEV, 31, 50, 1);
-    const specNeeded = calcStat(sBase, spaEV, 31, 50, 1);
-    return physStat >= physNeeded || specStat >= specNeeded ||
-           physStat * 1.5 >= physNeeded || specStat * 1.5 >= specNeeded;
+    // Quick check: could any move possibly OHKO at max stat?
+    const maxPhys = calcStat(p.stats.attack, atkEV, 31, 50, 1.1);
+    const maxSpec = calcStat(p.stats['special-attack'], spaEV, 31, 50, 1.1);
+    return canOHKO(maxPhys * 1.5, power, D_phys, 1.5, seMult || 1) ||
+           canOHKO(maxSpec * 1.5, power, D_spec, 1.5, seMult || 1);
   });
 
-  // Second pass: find qualifying moves
+  // Second pass: per-move actual damage check
   const results = [];
   for (const poke of candidates) {
     const matchingMoves = [];
@@ -2624,24 +2649,36 @@ function _doRenderOhkoList(pBase, sBase, power, totalMult, atkEV=0, spaEV=0) {
       const isPhys = move.category === 'physical';
       const isSpec = move.category === 'special';
 
-      // Check if this Pokémon's relevant stat meets the threshold
-      // Account for STAB: if the move type matches the Pokémon's type, effective base is higher
-      const hasStab = (poke.types || []).includes(move.type);
-      const stabMult = hasStab ? 1.5 : 1;
-      const effAtkBase = isPhys ? poke.stats.attack * stabMult : poke.stats['special-attack'] * stabMult;
-      if (isPhys && effAtkBase < pBase) continue;
-      if (isSpec && effAtkBase < sBase) continue;
-
-      // If a move type is selected, only show moves of that type
+      // If a specific move type is selected, only show that type
       if (pwTarget.moveType !== 'none' && move.type !== pwTarget.moveType) continue;
 
-      // Type effectiveness must match or exceed the selected SE requirement
+      // Type effectiveness
       const typeEff = getTypeEff(move.type, defTypes);
       if (typeEff <= 0) continue;
       if (seMult > 1 && typeEff < seMult) continue;
 
-      // Power check: ≤ slider value, or 100% accuracy moves always included
+      // Power check
       if (move.power > power && move.accuracy !== 100) continue;
+
+      // STAB
+      const hasStab = (poke.types || []).includes(move.type);
+      const stabMult = hasStab ? (useStab ? 1.5 : 1) : 1;
+
+      // Actual stat with EVs
+      const A = isPhys
+        ? calcStat(poke.stats.attack, atkEV, 31, 50, 1)
+        : calcStat(poke.stats['special-attack'], spaEV, 31, 50, 1);
+      const D = isPhys ? D_phys : D_spec;
+
+      // Per-move weather multiplier
+      let moveWeatherMult = 1;
+      if (pwTarget.weather === 'rain') { if (move.type === 'water') moveWeatherMult = 1.5; if (move.type === 'fire') moveWeatherMult = 0.5; }
+      else if (pwTarget.weather === 'sun') { if (move.type === 'fire') moveWeatherMult = 1.5; if (move.type === 'water') moveWeatherMult = 0.5; }
+
+      // Actual max-roll damage
+      const base = Math.floor(Math.floor(22 * A * move.power / D) / 50 + 2);
+      const dmg = Math.floor(base * stabMult * typeEff * itemMult * extraMult * moveWeatherMult);
+      if (dmg < defHP) continue;
 
       matchingMoves.push({ move, typeEff });
     }
