@@ -7,46 +7,98 @@
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 :root{
-  --bg:#f0f2f5;--bg2:#ffffff;--bg3:#f5f6f8;--bg4:#e8eaed;
-  --border:rgba(0,0,0,0.09);--border2:rgba(0,0,0,0.16);
-  --text:#1a1d24;--text2:#5a6075;--text3:#aab0c0;
-  --radius:7px;--font:'Segoe UI',system-ui,sans-serif;
+  --bg:#eef0f4;--bg2:#ffffff;--bg3:#f4f5f8;--bg4:#e8eaee;
+  --border:rgba(0,0,0,0.07);--border2:rgba(0,0,0,0.13);
+  --text:#16181f;--text2:#52586e;--text3:#9ea6bc;
+  --accent:#4f46e5;--accent2:#6366f1;
+  --radius:8px;--font:'Segoe UI',system-ui,sans-serif;
+  --shadow:0 1px 3px rgba(0,0,0,0.06),0 1px 2px rgba(0,0,0,0.04);
+  --shadow-md:0 4px 12px rgba(0,0,0,0.08),0 2px 4px rgba(0,0,0,0.04);
 }
 body{background:var(--bg);color:var(--text);font-family:var(--font);font-size:14px;overflow-x:hidden;overflow-y:auto;height:100vh;display:flex;flex-direction:column}
 
 /* ── header ── */
-#hdr{display:flex;align-items:center;gap:10px;padding:8px 14px;background:var(--bg2);border-bottom:1px solid var(--border);flex-shrink:0;z-index:10}
-#hdr h1{font-size:14px;font-weight:600;letter-spacing:.04em}
-.dot{width:8px;height:8px;border-radius:50%;background:#4f46e5}
-#data-status{font-size:12px;color:var(--text2);margin-left:auto}
-#data-status span{color:#16a34a}
+#hdr{display:flex;align-items:center;gap:10px;padding:9px 16px;background:var(--bg2);border-bottom:1px solid var(--border);flex-shrink:0;z-index:10;box-shadow:var(--shadow)}
+#hdr h1{font-size:13px;font-weight:700;letter-spacing:.06em;color:var(--text)}
+.dot{width:7px;height:7px;border-radius:50%;background:var(--accent);box-shadow:0 0 0 2px rgba(79,70,229,.2)}
+#data-status{font-size:11px;color:var(--text3);margin-left:auto}
+#data-status span{color:#16a34a;font-weight:600}
 
 /* ── main grid ── */
 #main{display:grid;grid-template-columns:280px 255px 170px 255px 280px;flex:1;overflow-x:auto;overflow-y:auto;min-height:0;min-width:0;align-items:start}
 .col{display:flex;flex-direction:column;border-right:1px solid var(--border);min-height:100%}
 .col:last-child{border-right:none}
-.col-head{padding:8px 10px;background:var(--bg2);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:5}
-.col-head h2{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.1em;color:var(--text2)}
 .col-body{padding:8px;display:flex;flex-direction:column;gap:7px}
 
-/* ── add button ── */
-.add-btn{width:22px;height:22px;border-radius:5px;border:1px dashed var(--border2);background:none;color:var(--text2);cursor:pointer;font-size:15px;line-height:1;display:flex;align-items:center;justify-content:center;transition:all .15s}
-.add-btn:hover{background:#4f46e5;border-color:#4f46e5;color:#fff}
-
 /* ── panel ── */
-.panel{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden}
-.panel-bar{display:flex;align-items:center;gap:7px;padding:6px 9px;border-bottom:1px solid var(--border)}
-.panel-stripe{width:4px;height:18px;border-radius:2px;flex-shrink:0}
-.panel-title{font-size:13px;font-weight:600;flex:1;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.panel-close{background:none;border:none;color:var(--text3);cursor:pointer;font-size:14px;padding:0 2px;line-height:1}
+.panel{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;box-shadow:var(--shadow)}
+.panel-bar{display:flex;align-items:center;gap:7px;padding:7px 10px;border-bottom:1px solid var(--border);background:var(--bg3)}
+.panel-stripe{width:3px;height:16px;border-radius:2px;flex-shrink:0}
+.panel-title{font-size:12px;font-weight:700;flex:1;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;letter-spacing:.01em}
+.panel-close{background:none;border:none;color:var(--text3);cursor:pointer;font-size:14px;padding:0 2px;line-height:1;border-radius:3px;transition:color .12s}
 .panel-close:hover{color:#dc2626}
-.panel-body{padding:8px;display:flex;flex-direction:column;gap:6px}
+.panel-body{padding:9px;display:flex;flex-direction:column;gap:6px}
 
 /* ── form elements ── */
-label.lbl{font-size:11px;color:var(--text2);text-transform:uppercase;letter-spacing:.06em;display:block;margin-bottom:2px}
-input[type=text],select{width:100%;background:var(--bg3);border:1px solid var(--border);color:var(--text);padding:4px 7px;border-radius:5px;font-size:13px;outline:none;font-family:var(--font)}
-input[type=text]:focus,select:focus{border-color:#4f46e580}
+label.lbl{font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.08em;display:block;margin-bottom:2px;font-weight:600}
+input[type=text],select{width:100%;background:var(--bg3);border:1px solid var(--border);color:var(--text);padding:5px 8px;border-radius:6px;font-size:12px;outline:none;font-family:var(--font);transition:border-color .12s}
+input[type=text]:focus,select:focus{border-color:rgba(79,70,229,.4);box-shadow:0 0 0 2px rgba(79,70,229,.08)}
 select option{background:#ffffff}
+
+/* ── tabs ── */
+#tab-bar{display:flex;gap:1px;padding:0 16px;background:var(--bg2);border-bottom:1px solid var(--border);flex-shrink:0}
+.tab-btn{padding:10px 18px;font-size:12px;font-weight:600;border:none;background:none;cursor:pointer;color:var(--text3);border-bottom:2px solid transparent;margin-bottom:-1px;transition:all .15s;letter-spacing:.02em}
+.tab-btn.active{color:var(--accent);border-bottom-color:var(--accent)}
+.tab-btn:hover:not(.active){color:var(--text)}
+
+/* ── col heads ── */
+.col-head{padding:9px 10px;background:var(--bg2);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:5}
+.col-head h2{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.12em;color:var(--text3)}
+
+/* ── add button ── */
+.add-btn{width:20px;height:20px;border-radius:5px;border:1px dashed var(--border2);background:none;color:var(--text3);cursor:pointer;font-size:14px;line-height:1;display:flex;align-items:center;justify-content:center;transition:all .15s}
+.add-btn:hover{background:var(--accent);border-color:var(--accent);color:#fff}
+
+/* ── ko badges ── */
+.ko-badge{font-size:10px;padding:1px 6px;border-radius:4px;font-weight:700;margin-left:5px}
+.ko-1{background:#fee2e2;color:#b91c1c}
+.ko-2{background:#fef3c7;color:#92400e}
+.ko-n{background:#e0e7ff;color:#3730a3}
+
+/* ── type badge ── */
+.type-row{display:flex;gap:4px;flex-wrap:wrap;margin-top:2px}
+.type-badge{font-size:10px;padding:2px 7px;border-radius:4px;color:#fff;font-weight:700;text-transform:uppercase;letter-spacing:.05em}
+
+/* ── damage bars ── */
+.dmg-bar-wrap{margin:2px 0}
+.dmg-bar-label{font-size:11px;color:var(--text2);margin-bottom:2px;display:flex;justify-content:space-between;align-items:center}
+.dmg-track{position:relative;height:13px;background:var(--bg3);border-radius:4px;overflow:hidden;border:1px solid var(--border)}
+.dmg-range{position:absolute;top:0;height:100%;border-radius:4px;opacity:.85}
+.dmg-val{position:absolute;right:5px;top:50%;transform:translateY(-50%);font-size:10px;font-weight:700;color:#fff;text-shadow:0 1px 2px rgba(0,0,0,.4)}
+
+/* ── defender block ── */
+.defender-block{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:6px 8px;box-shadow:var(--shadow)}
+.defender-name{font-size:12px;font-weight:700;margin-bottom:3px;display:flex;align-items:center;justify-content:space-between;cursor:pointer;user-select:none;color:var(--text)}
+.defender-name .collapse-btn{font-size:11px;color:var(--text3)}
+
+/* ── move chips ── */
+.move-chip{display:grid;grid-template-columns:18px 1fr auto auto auto;align-items:center;gap:5px;background:var(--bg3);border:1px solid var(--border);border-radius:6px;padding:4px 7px;font-size:12px;transition:border-color .12s}
+.move-chip:hover{border-color:var(--border2)}
+.move-chip-check{accent-color:var(--accent);cursor:pointer;width:13px;height:13px}
+.move-chip-name{font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.move-chip-type{font-size:9px;padding:1px 5px;border-radius:3px;color:#fff;font-weight:700;text-transform:uppercase}
+.move-chip-bp{font-size:11px;color:var(--text3)}
+.move-chip-del{background:none;border:none;color:var(--text3);cursor:pointer;font-size:12px;padding:0 1px;line-height:1;flex-shrink:0;border-radius:3px;transition:color .12s}
+.move-chip-del:hover{color:#dc2626}
+
+/* ── cond items ── */
+.cond-item{display:flex;align-items:center;gap:6px;padding:2px 0;font-size:12px;color:var(--text);cursor:pointer}
+.cond-item input[type=checkbox]{accent-color:var(--accent);cursor:pointer}
+.cond-item input[type=radio]{accent-color:var(--accent);cursor:pointer}
+
+/* ── power chart ── */
+.power-chart-wrap{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:14px;box-shadow:var(--shadow)}
+.power-chart-title{font-size:11px;font-weight:700;color:var(--text);text-transform:uppercase;letter-spacing:.08em}
 
 /* ── pokemon search dropdown ── */
 .poke-wrap{position:relative}
@@ -58,10 +110,6 @@ select option{background:#ffffff}
 .poke-opt:hover,.poke-opt.focused{background:#4f46e511}
 .poke-opt img{width:20px;height:20px;object-fit:contain;image-rendering:pixelated}
 .poke-opt .type-pip{font-size:10px;padding:1px 5px;border-radius:3px;color:#fff}
-
-/* ── type badge ── */
-.type-row{display:flex;gap:4px;flex-wrap:wrap;margin-top:2px}
-.type-badge{font-size:11px;padding:1px 7px;border-radius:3px;color:#fff;font-weight:600;text-transform:uppercase;letter-spacing:.04em}
 
 /* ── stats strip ── */
 .stat-row{display:grid;grid-template-columns:60px 1fr 34px;align-items:center;gap:5px}
@@ -131,35 +179,11 @@ input[type=range]{width:100%;accent-color:#4f46e5;height:4px}
 .defender-block{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:6px 8px}
 .defender-name{font-size:12px;font-weight:600;margin-bottom:3px;display:flex;align-items:center;justify-content:space-between;cursor:pointer;user-select:none}
 .defender-name .collapse-btn{font-size:11px;color:var(--text3)}
-.hp-track{position:relative;height:12px;background:var(--bg3);border-radius:5px;overflow:hidden;margin-bottom:3px;border:1px solid var(--border)}
+.hp-track{position:relative;height:12px;background:var(--bg4);border-radius:5px;overflow:hidden;margin-bottom:3px;border:1px solid var(--border)}
 .hp-fill{height:100%;border-radius:5px;transition:width .3s;background:#16a34a}
 .hp-fill.yellow{background:#d97706}
 .hp-fill.red{background:#dc2626}
 .hp-label{position:absolute;right:4px;top:50%;transform:translateY(-50%);font-size:10px;font-weight:600;color:#fff;text-shadow:0 1px 2px rgba(0,0,0,.5)}
-.dmg-bar-wrap{margin:3px 0}
-.dmg-bar-label{font-size:11px;color:var(--text2);margin-bottom:2px;display:flex;justify-content:space-between}
-.dmg-track{position:relative;height:16px;background:var(--bg3);border-radius:4px;overflow:hidden;border:1px solid var(--border)}
-.dmg-range{position:absolute;top:0;height:100%;border-radius:4px;opacity:.85}
-.dmg-val{position:absolute;right:5px;top:50%;transform:translateY(-50%);font-size:11px;font-weight:600;color:#fff;text-shadow:0 1px 2px rgba(0,0,0,.5)}
-.ko-badge{font-size:11px;padding:1px 7px;border-radius:3px;font-weight:600;margin-left:6px}
-.ko-1{background:#fecaca;color:#b91c1c}
-.ko-2{background:#fde68a;color:#92400e}
-.ko-n{background:#e0e7ff;color:#3730a3}
-
-/* ── col 5 power chart ── */
-.power-chart-wrap{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:10px}
-.power-chart-title{font-size:12px;color:var(--text2);margin-bottom:8px;font-weight:600}
-.power-check-row{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:10px}
-.power-check-item{display:flex;align-items:center;gap:5px;font-size:12px;color:var(--text2);cursor:pointer}
-.power-check-item input{accent-color:#4f46e5}
-#atk-slider-wrap{margin-bottom:10px}
-#atk-slider-wrap label{font-size:11px;color:var(--text2);display:flex;justify-content:space-between;margin-bottom:3px}
-#atk-slider{width:100%;accent-color:#4f46e5}
-.power-line{display:flex;align-items:center;gap:6px;margin-bottom:5px}
-.power-line-label{font-size:12px;color:var(--text2);min-width:80px}
-.power-line-bar{flex:1;height:10px;background:var(--bg3);border-radius:4px;overflow:hidden;border:1px solid var(--border)}
-.power-line-fill{height:100%;border-radius:4px}
-.power-line-val{font-size:12px;font-weight:600;min-width:38px;text-align:right}
 
 /* ── coverage tab ── */
 #view-cov{display:none;flex-direction:column;flex:1;overflow-y:auto;min-height:0}
@@ -683,6 +707,10 @@ function calcDamage(atker, defer, moveKey) {
   // ── Ability effects on A ──
   const atkAbility = (atker.ability||'').toLowerCase();
   const defAbility = (defer.ability||'').toLowerCase();
+
+  // Status conditions on attacker
+  // Burn halves physical Attack (Guts negates this)
+  if (isPhys && atker.status === 'burn' && atkAbility !== 'guts') A = Math.floor(A * 0.5);
 
   // Huge Power / Pure Power doubles Attack
   if (isPhys && (atkAbility === 'huge-power' || atkAbility === 'pure-power')) A *= 2;
@@ -1476,15 +1504,31 @@ function updateStatsDisplay(panelId, poke, isAtk) {
       const natColor = natMult > 1 ? '#dc2626' : natMult < 1 ? '#2563eb' : 'var(--text2)';
 
       const calcedVal = isHP ? calcHP(base, ev) : calcStat(base, ev, 31, 50, natMult);
+
+      // Status effects on displayed stat
+      let displayVal = calcedVal;
+      let statusNote = '';
+      if (panel && panel.status) {
+        if (key === 'speed' && panel.status === 'paralysis') {
+          displayVal = Math.floor(calcedVal * 0.5);
+          statusNote = ' ⚡';
+        }
+        if (key === 'attack' && panel.status === 'burn') {
+          displayVal = Math.floor(calcedVal * 0.5);
+          statusNote = ' 🔥';
+        }
+      }
+
       const barW = Math.min(100, base/255*100).toFixed(1);
 
       const row = document.createElement('div');
       row.className = 'stat-row';
+      const calcColor = statusNote ? '#f59e0b' : natColor;
       row.innerHTML = `
         <span class="stat-name">${label}</span>
         <div class="stat-bar-bg"><div class="stat-bar" style="width:${barW}%;background:${color}"></div></div>
         <span class="stat-val" style="color:${color}">${base}</span>
-        <span class="stat-calc" style="color:${natColor};font-weight:${natMult !== 1 ? '700' : '400'}">${calcedVal}</span>`;
+        <span class="stat-calc" style="color:${calcColor};font-weight:${natMult !== 1 || statusNote ? '700' : '400'}">${displayVal}${statusNote}</span>`;
       container.appendChild(row);
     });
   }
@@ -1783,6 +1827,17 @@ function buildAtkPanel(id) {
         <label>Atk/SpA</label>
         <select id="atkstage-${id}">${stageOptions()}</select>
       </div>
+      <div class="divider"></div>
+      <label class="lbl">Status</label>
+      <select id="status-atk-${id}" style="width:100%;background:var(--bg3);border:1px solid var(--border);color:var(--text);padding:4px 7px;border-radius:5px;font-size:13px;outline:none;font-family:var(--font)">
+        <option value="">— None —</option>
+        <option value="burn">🔥 Burn (Atk ÷2)</option>
+        <option value="paralysis">⚡ Paralysis (Spe ÷2)</option>
+        <option value="poison">☠ Poison</option>
+        <option value="toxic">☠☠ Toxic</option>
+        <option value="freeze">❄ Freeze</option>
+        <option value="sleep">💤 Sleep</option>
+      </select>
       <div id="ability-extras-${id}"></div>
     </div>`;
 
@@ -1802,6 +1857,7 @@ function buildAtkPanel(id) {
   });
   document.getElementById(`item-atk-${id}`).addEventListener('change', e => { panel.item = e.target.value; recalc(); });
   document.getElementById(`atkstage-${id}`).addEventListener('change', e => { panel.atkStage = parseInt(e.target.value)||0; recalc(); });
+  document.getElementById(`status-atk-${id}`).addEventListener('change', e => { panel.status = e.target.value; recalc(); });
 
   bindEvSlider(id,'hp',  'atk', panel, 'evHP');
   bindEvSlider(id,'atk', 'atk', panel, 'evAtk');
@@ -1876,6 +1932,17 @@ function buildDefPanel(id) {
         <label>Def/SpD</label>
         <select id="defstage-${id}">${stageOptions()}</select>
       </div>
+      <div class="divider"></div>
+      <label class="lbl">Status</label>
+      <select id="status-def-${id}" style="width:100%;background:var(--bg3);border:1px solid var(--border);color:var(--text);padding:4px 7px;border-radius:5px;font-size:13px;outline:none;font-family:var(--font)">
+        <option value="">— None —</option>
+        <option value="burn">🔥 Burn (Atk ÷2)</option>
+        <option value="paralysis">⚡ Paralysis (Spe ÷2)</option>
+        <option value="poison">☠ Poison</option>
+        <option value="toxic">☠☠ Toxic</option>
+        <option value="freeze">❄ Freeze</option>
+        <option value="sleep">💤 Sleep</option>
+      </select>
       <div id="ability-extras-def${id}"></div>
     </div>`;
 
@@ -1895,6 +1962,7 @@ function buildDefPanel(id) {
   document.getElementById(`item-def-${id}`).addEventListener('change', e => { panel.item = e.target.value; recalc(); });
   document.getElementById(`defstage-${id}`).addEventListener('change', e => { panel.defStage = parseInt(e.target.value)||0; recalc(); });
   document.getElementById(`atkstage-def-${id}`).addEventListener('change', e => { panel.atkStage = parseInt(e.target.value)||0; recalc(); });
+  document.getElementById(`status-def-${id}`).addEventListener('change', e => { panel.status = e.target.value; recalc(); });
 
   bindEvSlider(id,'hp',  'def', panel, 'evHP');
   bindEvSlider(id,'atk', 'def', panel, 'evAtk');
@@ -2366,6 +2434,15 @@ function buildPowerPanel() {
   });
 }
 
+// Reverse calcStat: given a final stat value, estimate minimum base stat needed
+// Assumes IV=31, level=50, nature neutral (caller adjusts D before calling minAtk)
+function statToBase(statVal, ev=0, natureMult=1) {
+  // calcStat: floor((floor((2*base + 31 + floor(ev/4)) * 50/100) + 5) * natureMult)
+  // Invert: base = ceil(((ceil(statVal / natureMult) - 5) * 2 - 31 - floor(ev/4)))
+  const inner = Math.ceil(statVal / natureMult) - 5;
+  return Math.max(1, Math.ceil(inner * 2 - 31 - Math.floor(ev / 4)));
+}
+
 function renderPowerPanel() {
   const body = document.getElementById('power-results');
   if (!body) return;
@@ -2410,6 +2487,8 @@ function renderPowerPanel() {
 
   const p = minAtk(D_phys);
   const s = minAtk(D_spec);
+  const pBase = statToBase(p);
+  const sBase = statToBase(s);
 
   const barMax = Math.max(p, s, 1);
 
@@ -2419,12 +2498,12 @@ function renderPowerPanel() {
   body.appendChild(scenLabel);
 
   const hdr = document.createElement('div');
-  hdr.style.cssText = 'display:grid;grid-template-columns:1fr 50px 50px;gap:4px;font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px';
-  hdr.innerHTML = '<span></span><span style="text-align:right">Phys</span><span style="text-align:right">Spec</span>';
+  hdr.style.cssText = 'display:grid;grid-template-columns:1fr 90px 90px;gap:4px;font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px';
+  hdr.innerHTML = '<span></span><span style="text-align:right">Physical</span><span style="text-align:right">Special</span>';
   body.appendChild(hdr);
 
   const row = document.createElement('div');
-  row.style.cssText = 'display:grid;grid-template-columns:1fr 50px 50px;align-items:center;gap:4px;margin-bottom:6px';
+  row.style.cssText = 'display:grid;grid-template-columns:1fr 90px 90px;align-items:center;gap:4px;margin-bottom:6px';
 
   const barWrap = document.createElement('div');
   barWrap.style.cssText = 'height:8px;background:var(--bg3);border-radius:4px;overflow:hidden;border:1px solid var(--border)';
@@ -2432,13 +2511,13 @@ function renderPowerPanel() {
   barFill.style.cssText = `height:100%;border-radius:4px;background:${color};width:${Math.min(100, p/barMax*100).toFixed(1)}%`;
   barWrap.appendChild(barFill);
 
-  const physVal = document.createElement('span');
-  physVal.style.cssText = 'font-size:13px;font-weight:700;text-align:right';
-  physVal.textContent = p;
+  const physVal = document.createElement('div');
+  physVal.style.cssText = 'text-align:right;line-height:1.4';
+  physVal.innerHTML = `<span style="font-size:15px;font-weight:700">${p}</span><span style="font-size:10px;color:var(--text3)"> stat</span><br><span style="font-size:11px;color:var(--text2)">${pBase} base</span>`;
 
-  const specVal = document.createElement('span');
-  specVal.style.cssText = 'font-size:13px;font-weight:700;text-align:right;color:var(--text2)';
-  specVal.textContent = s;
+  const specVal = document.createElement('div');
+  specVal.style.cssText = 'text-align:right;line-height:1.4';
+  specVal.innerHTML = `<span style="font-size:15px;font-weight:700">${s}</span><span style="font-size:10px;color:var(--text3)"> stat</span><br><span style="font-size:11px;color:var(--text2)">${sBase} base</span>`;
 
   row.appendChild(barWrap);
   row.appendChild(physVal);
