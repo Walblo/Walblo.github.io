@@ -596,8 +596,12 @@ async function init() {
     recalc();
 
     // OHKO list control listeners
-    document.getElementById('ohko-search').addEventListener('input', () => renderOhkoListDisplay());
-    document.getElementById('ohko-sort').addEventListener('change', () => renderOhkoListDisplay());
+    document.getElementById('ohko-search').addEventListener('input', () => {
+      if (_ohkoCachedResults.length > 0) _renderOhkoResults(_ohkoCachedResults, _ohkoDefTypes);
+    });
+    document.getElementById('ohko-sort').addEventListener('change', () => {
+      if (_ohkoCachedResults.length > 0) _renderOhkoResults(_ohkoCachedResults, _ohkoDefTypes);
+    });
   } catch(e) {
     console.error('Init error:', e);
     // Only show error if data never loaded
