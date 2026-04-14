@@ -1888,84 +1888,62 @@ function buildConditions() {
   const body = document.getElementById('cond-body');
   body.innerHTML = `
     <div class="panel">
-      <div class="panel-body">
+      <div class="panel-body" style="gap:5px">
 
-        <div class="section-head" onclick="toggleSection('sec-weather')">
-          <span class="cond-section" style="margin:0">☀ Weather</span>
-          <span class="section-toggle" id="tog-sec-weather">▾</span>
-        </div>
-        <div class="section-body" id="sec-weather">
+        <span class="cond-section">☀ Weather</span>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:1px 4px">
           ${['none','sun','rain','sand','hail','snow'].map(w=>`
-            <label class="cond-item">
+            <label class="cond-item" style="padding:1px 0;font-size:12px">
               <input type="radio" name="weather" value="${w}" ${w==='none'?'checked':''}>
-              ${{none:'— None',sun:'☀ Harsh Sun',rain:'🌧 Rain',sand:'🌪 Sandstorm',hail:'❄ Hail',snow:'🌨 Snow'}[w]}
+              ${{none:'— None',sun:'☀ Sun',rain:'🌧 Rain',sand:'🌪 Sand',hail:'❄ Hail',snow:'🌨 Snow'}[w]}
             </label>`).join('')}
         </div>
 
         <div class="divider"></div>
-        <div class="section-head" onclick="toggleSection('sec-terrain')">
-          <span class="cond-section" style="margin:0">⚡ Terrain</span>
-          <span class="section-toggle" id="tog-sec-terrain">▾</span>
-        </div>
-        <div class="section-body" id="sec-terrain">
+        <span class="cond-section">⚡ Terrain</span>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:1px 4px">
           ${['none','electric','grassy','misty','psychic'].map(t=>`
-            <label class="cond-item">
+            <label class="cond-item" style="padding:1px 0;font-size:12px">
               <input type="radio" name="terrain" value="${t}" ${t==='none'?'checked':''}>
-              ${{none:'— None',electric:'⚡ Electric',grassy:'🌿 Grassy',misty:'🌫 Misty',psychic:'🔮 Psychic'}[t]}
+              ${{none:'— None',electric:'⚡ Elec',grassy:'🌿 Grass',misty:'🌫 Misty',psychic:'🔮 Psych'}[t]}
             </label>`).join('')}
         </div>
 
         <div class="divider"></div>
-        <div class="section-head" onclick="toggleSection('sec-hazards')">
-          <span class="cond-section" style="margin:0">🪨 Hazards</span>
-          <span class="section-toggle" id="tog-sec-hazards">▾</span>
-        </div>
-        <div class="section-body" id="sec-hazards">
-          <label class="cond-item"><input type="checkbox" id="hz-sr"> Stealth Rock</label>
-          <label class="cond-item"><input type="checkbox" id="hz-sp1"> Spikes (1 layer)</label>
-          <label class="cond-item"><input type="checkbox" id="hz-sp2"> Spikes (2 layers)</label>
-          <label class="cond-item"><input type="checkbox" id="hz-sp3"> Spikes (3 layers)</label>
-          <label class="cond-item"><input type="checkbox" id="hz-tsp"> Toxic Spikes (poison)</label>
-          <label class="cond-item"><input type="checkbox" id="hz-tsp2"> Toxic Spikes (toxic)</label>
+        <span class="cond-section">🪨 Hazards</span>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:1px 4px">
+          <label class="cond-item" style="padding:1px 0;font-size:12px"><input type="checkbox" id="hz-sr"> Stealth Rock</label>
+          <label class="cond-item" style="padding:1px 0;font-size:12px"><input type="checkbox" id="hz-sp1"> Spikes ×1</label>
+          <label class="cond-item" style="padding:1px 0;font-size:12px"><input type="checkbox" id="hz-sp2"> Spikes ×2</label>
+          <label class="cond-item" style="padding:1px 0;font-size:12px"><input type="checkbox" id="hz-sp3"> Spikes ×3</label>
+          <label class="cond-item" style="padding:1px 0;font-size:12px"><input type="checkbox" id="hz-tsp"> T-Spikes (psn)</label>
+          <label class="cond-item" style="padding:1px 0;font-size:12px"><input type="checkbox" id="hz-tsp2"> T-Spikes (tox)</label>
         </div>
 
         <div class="divider"></div>
-        <div class="section-head" onclick="toggleSection('sec-multip')">
-          <span class="cond-section" style="margin:0">✖ Extra Multipliers</span>
-          <span class="section-toggle" id="tog-sec-multip">▾</span>
-        </div>
-        <div class="section-body" id="sec-multip">
-          <div style="font-size:11px;color:var(--text2);line-height:1.6;margin-bottom:6px">
-            For effects not covered elsewhere (e.g. Gems ×1.3, Helping Hand ×1.5).
-          </div>
-          <div class="mult-row">
-            <span class="mult-label">Side A attacker ×</span>
-            <input class="mult-input" type="number" id="mult-atk-other" min="0.1" max="4" step="0.05" value="1" placeholder="1.0">
-          </div>
-          <div class="mult-row">
-            <span class="mult-label">Side B defender ×</span>
-            <input class="mult-input" type="number" id="mult-def-other" min="0.1" max="4" step="0.05" value="1" placeholder="1.0">
-          </div>
+        <span class="cond-section">🛡 Screens</span>
+        <label class="cond-item" style="font-size:12px;margin-bottom:2px">
+          <input type="checkbox" id="cond-doubles">
+          <b>Doubles</b> <span style="font-size:10px;color:var(--text2)">(÷1.5 vs ÷2)</span>
+        </label>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:2px 6px">
+          <div style="font-size:10px;font-weight:700;color:var(--text2);padding:2px 0">SIDE A</div>
+          <div style="font-size:10px;font-weight:700;color:var(--text2);padding:2px 0">SIDE B</div>
+          <label class="cond-item" style="padding:1px 0;font-size:12px"><input type="checkbox" id="cond-reflectA"> Reflect</label>
+          <label class="cond-item" style="padding:1px 0;font-size:12px"><input type="checkbox" id="cond-reflectB"> Reflect</label>
+          <label class="cond-item" style="padding:1px 0;font-size:12px"><input type="checkbox" id="cond-lightscreenA"> Lt. Screen</label>
+          <label class="cond-item" style="padding:1px 0;font-size:12px"><input type="checkbox" id="cond-lightscreenB"> Lt. Screen</label>
+          <label class="cond-item" style="padding:1px 0;font-size:12px"><input type="checkbox" id="cond-auroraveilA"> Aurora Veil</label>
+          <label class="cond-item" style="padding:1px 0;font-size:12px"><input type="checkbox" id="cond-auroraveilB"> Aurora Veil</label>
         </div>
 
         <div class="divider"></div>
-        <div class="section-head" onclick="toggleSection('sec-screens')">
-          <span class="cond-section" style="margin:0">🛡 Screens</span>
-          <span class="section-toggle" id="tog-sec-screens">▾</span>
-        </div>
-        <div class="section-body" id="sec-screens">
-          <label class="cond-item" style="margin-bottom:4px">
-            <input type="checkbox" id="cond-doubles">
-            <span style="font-weight:600">Doubles</span> <span style="font-size:11px;color:var(--text2);margin-left:4px">(×0.66 vs ×0.5)</span>
-          </label>
-          <div style="font-size:11px;color:var(--text2);font-weight:600;margin:4px 0 2px">Side A screens (protect Side A from B's attacks)</div>
-          <label class="cond-item"><input type="checkbox" id="cond-reflectA"> Reflect <span style="font-size:11px;color:var(--text2);margin-left:4px">physical ÷2</span></label>
-          <label class="cond-item"><input type="checkbox" id="cond-lightscreenA"> Light Screen <span style="font-size:11px;color:var(--text2);margin-left:4px">special ÷2</span></label>
-          <label class="cond-item"><input type="checkbox" id="cond-auroraveilA"> Aurora Veil <span style="font-size:11px;color:var(--text2);margin-left:4px">both ÷2</span></label>
-          <div style="font-size:11px;color:var(--text2);font-weight:600;margin:8px 0 2px">Side B screens (protect Side B from A's attacks)</div>
-          <label class="cond-item"><input type="checkbox" id="cond-reflectB"> Reflect <span style="font-size:11px;color:var(--text2);margin-left:4px">physical ÷2</span></label>
-          <label class="cond-item"><input type="checkbox" id="cond-lightscreenB"> Light Screen <span style="font-size:11px;color:var(--text2);margin-left:4px">special ÷2</span></label>
-          <label class="cond-item"><input type="checkbox" id="cond-auroraveilB"> Aurora Veil <span style="font-size:11px;color:var(--text2);margin-left:4px">both ÷2</span></label>
+        <span class="cond-section">✖ Extra ×</span>
+        <div style="display:grid;grid-template-columns:auto 1fr;align-items:center;gap:4px 6px;font-size:12px">
+          <span style="color:var(--text2)">A atk ×</span>
+          <input class="mult-input" type="number" id="mult-atk-other" min="0.1" max="4" step="0.05" value="1" style="font-size:12px;padding:2px 5px">
+          <span style="color:var(--text2)">B def ×</span>
+          <input class="mult-input" type="number" id="mult-def-other" min="0.1" max="4" step="0.05" value="1" style="font-size:12px;padding:2px 5px">
         </div>
 
       </div>
@@ -2004,11 +1982,31 @@ function renderPlots() {
   body.innerHTML = '';
 
   if (defPanels.length === 0 || atkPanels.length === 0) {
-    body.innerHTML = '<div class="no-defenders">Add attackers and defenders to see damage.</div>';
+    body.innerHTML = '<div class="no-defenders">Add Pokémon to both sides to see damage.</div>';
     return;
   }
 
-  defPanels.forEach(def => {
+  // Render damage in both directions
+  // direction: { attackers, defenders, label }
+  const directions = [
+    { attackers: atkPanels, defenders: defPanels, label: 'Side A → Side B' },
+    { attackers: defPanels, defenders: atkPanels, label: 'Side B → Side A' },
+  ];
+
+  directions.forEach(({ attackers, defenders, label }) => {
+    // Skip direction if no attacker has any active moves
+    const hasAnyMoves = attackers.some(atk =>
+      (atk.moves || []).some(m => m.active) && DB.pokemon[atk.poke]
+    );
+    if (!hasAnyMoves) return;
+
+    // Section header
+    const sectionHead = document.createElement('div');
+    sectionHead.style.cssText = 'font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--text2);padding:6px 2px 4px;margin-top:4px;border-top:1px solid var(--border)';
+    sectionHead.textContent = label;
+    body.appendChild(sectionHead);
+
+  defenders.forEach(def => {
     const defPoke = DB.pokemon[def.poke];
     const block = document.createElement('div');
     block.className = 'defender-block';
@@ -2017,13 +2015,14 @@ function renderPlots() {
 
     if (!defPoke) { body.appendChild(block); return; }
 
-    // HP bar (show remaining after all damage from first attacker's move – for display)
+    // HP bar
     const hpBarWrap = document.createElement('div');
     hpBarWrap.className = 'hp-track';
-    hpBarWrap.innerHTML = `<div class="hp-fill" id="hpfill-${def.id}" style="width:100%"></div><div class="hp-label">${defHP} HP</div>`;
+    const hpFillId = `hpfill-${def.id}-${label.replace(/\s/g,'')}`;
+    hpBarWrap.innerHTML = `<div class="hp-fill" id="${hpFillId}" style="width:100%"></div><div class="hp-label">${defHP} HP</div>`;
     block.appendChild(hpBarWrap);
 
-    // ── Calculate one-time entry hazard damage ──
+    // Entry hazard damage
     let entryHazardDmg = 0;
     if (conds.hz_sr)  entryHazardDmg += hazardDamagePerTurn('sr',     defPoke, 1);
     if (conds.hz_sp1) entryHazardDmg += hazardDamagePerTurn('spikes1', defPoke, 1);
@@ -2032,7 +2031,6 @@ function renderPlots() {
 
     let cumulativeAvg = entryHazardDmg;
 
-    // Show hazard bar if any entry hazards active
     if (entryHazardDmg > 0) {
       const hPct = Math.min(100, entryHazardDmg / defHP * 100);
       const hw = document.createElement('div');
@@ -2049,7 +2047,8 @@ function renderPlots() {
         </div>`;
       block.appendChild(hw);
     }
-    atkPanels.forEach(atk => {
+
+    attackers.forEach(atk => {
       const atkPoke = DB.pokemon[atk.poke];
       if (!atkPoke) return;
       const activeMoves = (atk.moves || []).filter(m => m.active);
@@ -2071,16 +2070,10 @@ function renderPlots() {
         const move = DB.moves[entry.name];
         const mhi = getMultiHitInfo(move, atk.ability, atk.item);
 
-        // ── Detect Multiscale/Shadow Shield on defender ──
-        // For multi-hit moves: hit 1 is halved (Multiscale active), hits 2+ are full damage
         const defAbilityName = (def.ability || '').toLowerCase();
         const hasMultiscale = defAbilityName === 'multiscale' || defAbilityName === 'shadow-shield';
-
-        // ── Detect resist berry on defender ──
-        // Berry is consumed on hit 1 — hits 2+ don't get the reduction
         const hasBerry = dmg.berryMult < 1;
 
-        // Helper: calc one hit's min/max given a base power and whether Multiscale/berry are active
         function oneHit(hitPow, multiscaleActive, berryActive) {
           const msMult = multiscaleActive ? 0.5 : 1;
           const bMult  = berryActive ? 0.5 : 1;
@@ -2092,36 +2085,26 @@ function renderPlots() {
           return { min: hMin, max: hMax, avg: Math.floor((hMin + hMax) / 2) };
         }
 
-        // ── Compute total damage accounting for multi-hit ──
         let totalMin, totalMax, totalAvg, hitLabel = '';
-        let perHitDmg = []; // array of { min, max, avg } per hit slot (index = hit number 0-based)
+        let perHitDmg = [];
 
         if (mhi) {
           if (mhi.escalating && mhi.hitPowers) {
-            // Triple Axel / Triple Kick: escalating power, can miss each hit
-            // Hit 1: Multiscale active (if applicable). Hit 2+: Multiscale broken.
             const hits = mhi.hitPowers.map((hp, i) => oneHit(hp, hasMultiscale && i === 0, hasBerry && i === 0));
             perHitDmg = hits;
-            // Min = only hit 1 lands (miss on hit 2)
-            // Max = all hits land
             totalMin = hits[0].min;
             totalMax = hits.reduce((s, h) => s + h.max, 0);
-            // Avg: each subsequent hit requires all previous to hit (acc^n), 90% acc
             const acc = move.accuracy ? move.accuracy / 100 : 1;
-            let avgSum = 0;
-            let pAll = 1;
+            let avgSum = 0, pAll = 1;
             hits.forEach(h => { pAll *= acc; avgSum += h.avg * pAll; });
             totalAvg = Math.floor(avgSum);
             hitLabel = ` <span style="font-size:10px;color:var(--text2)">(×1–${mhi.maxHits} esc.${hasMultiscale ? ' · MS' : ''}${hasBerry ? ' · berry' : ''})</span>`;
           } else {
-            // Standard multi-hit: same power per hit
-            // Hit 1 may be vs Multiscale, rest are not
             const h1 = oneHit(move.power, hasMultiscale, hasBerry);
             const hRest = oneHit(move.power, false, false);
             perHitDmg = [];
             for (let i = 0; i < mhi.maxHits; i++) perHitDmg.push(i === 0 ? h1 : hRest);
             totalMin = h1.min * mhi.minHits;
-            // Max: hit 1 at h1.max, remaining hits at hRest.max
             totalMax = h1.max + hRest.max * (mhi.maxHits - 1);
             const avgHits = (mhi.minHits + mhi.maxHits) / 2;
             totalAvg = Math.floor(h1.avg + hRest.avg * (avgHits - 1));
@@ -2132,18 +2115,14 @@ function renderPlots() {
             }
           }
         } else {
-          totalMin = dmg.min;
-          totalMax = dmg.max;
-          totalAvg = dmg.avg;
+          totalMin = dmg.min; totalMax = dmg.max; totalAvg = dmg.avg;
           perHitDmg = [{ min: dmg.min, max: dmg.max, avg: dmg.avg }];
         }
 
         const minPct = Math.min(100, (totalMin / defHP * 100));
         const maxPct = Math.min(100, (totalMax / defHP * 100));
-
         cumulativeAvg += totalAvg;
 
-        // KO calc
         const hitsToKO = totalAvg > 0 ? Math.ceil((defHP - entryHazardDmg) / totalAvg) : 999;
         let toxicDmg = 0;
         if (conds.hz_tsp2) {
@@ -2151,7 +2130,6 @@ function renderPlots() {
         } else if (conds.hz_tsp) {
           toxicDmg = Math.floor(defHP * 0.125) * hitsToKO;
         }
-
         const totalWithHazards = cumulativeAvg + toxicDmg;
 
         let koText = '';
@@ -2170,17 +2148,14 @@ function renderPlots() {
         const moveTypeBadge = move ? `<span class="type-badge" style="background:${getTypeColor(move.type)};font-size:9px;padding:1px 4px">${move.type}</span>` : '';
         const catIcon = move ? (move.category === 'physical' ? '⚔' : '✨') : '';
 
-        const label = document.createElement('div');
-        label.className = 'dmg-bar-label';
-        label.innerHTML = `<span style="display:flex;align-items:center;gap:4px"><span style="width:8px;height:8px;border-radius:50%;background:${atk.color};display:inline-block;flex-shrink:0"></span><b>${atkPoke.display}</b>${moveTypeBadge}${catIcon} ${move ? move.display : entry.name}${hitLabel}</span><span>${minPct.toFixed(1)}–${maxPct.toFixed(1)}% ${koText}</span>`;
+        const lbl = document.createElement('div');
+        lbl.className = 'dmg-bar-label';
+        lbl.innerHTML = `<span style="display:flex;align-items:center;gap:4px"><span style="width:8px;height:8px;border-radius:50%;background:${atk.color};display:inline-block;flex-shrink:0"></span><b>${atkPoke.display}</b>${moveTypeBadge}${catIcon} ${move ? move.display : entry.name}${hitLabel}</span><span>${minPct.toFixed(1)}–${maxPct.toFixed(1)}% ${koText}</span>`;
 
         const track = document.createElement('div');
         track.className = 'dmg-track';
 
-        // ── Draw bar: segments for each hit (multi-hit) or single range ──
         if (mhi && !mhi.escalating) {
-          // Stacked segments left-to-right, one per hit slot
-          // Hit 1 may be dimmer (Multiscale halved it), subsequent hits full brightness
           let cursor = 0;
           for (let i = 0; i < mhi.maxHits; i++) {
             const h = perHitDmg[i] || perHitDmg[perHitDmg.length - 1];
@@ -2191,14 +2166,12 @@ function renderPlots() {
             seg.style.left  = `${cursor + segMinPct}%`;
             seg.style.width = `${Math.max(0.3, segMaxPct - segMinPct)}%`;
             seg.style.background = atk.color;
-            // Hit 1 vs Multiscale: show as dimmer to signal it's the shield-breaker
             const isOptional = i >= mhi.minHits;
             seg.style.opacity = isOptional ? '0.35' : (i === 0 && hasMultiscale ? '0.5' : '0.85');
             track.appendChild(seg);
             cursor += segMinPct;
           }
         } else if (mhi && mhi.escalating) {
-          // Escalating hits: draw each hit's range at its cumulative position
           let cursor = 0;
           perHitDmg.forEach((h, i) => {
             const segMinPct = Math.min(100 - cursor, h.min / defHP * 100);
@@ -2208,13 +2181,11 @@ function renderPlots() {
             seg.style.left  = `${cursor + segMinPct}%`;
             seg.style.width = `${Math.max(0.3, segMaxPct - segMinPct)}%`;
             seg.style.background = atk.color;
-            // Hit 1 vs Multiscale is dimmer; hits grow brighter as power escalates
             seg.style.opacity = i === 0 && hasMultiscale ? '0.45' : String(0.65 + i * 0.1);
             track.appendChild(seg);
             cursor += segMinPct;
           });
         } else {
-          // Single hit
           const bar = document.createElement('div');
           bar.className = 'dmg-range';
           bar.style.left = `${minPct}%`;
@@ -2226,16 +2197,15 @@ function renderPlots() {
         const val = document.createElement('div');
         val.className = 'dmg-val';
         val.textContent = `${totalAvg}`;
-
         track.appendChild(val);
-        wrap.appendChild(label);
+        wrap.appendChild(lbl);
         wrap.appendChild(track);
         block.appendChild(wrap);
-      }); // end activeMoves.forEach
-    }); // end atkPanels.forEach
+      });
+    });
 
-    // Update HP bar color
-    const hpFill = document.getElementById(`hpfill-${def.id}`);
+    // Update HP bar
+    const hpFill = document.getElementById(hpFillId);
     if (hpFill) {
       const remaining = Math.max(0, 100 - (cumulativeAvg / defHP * 100));
       hpFill.style.width = remaining + '%';
@@ -2244,7 +2214,9 @@ function renderPlots() {
 
     body.appendChild(block);
   });
+  }); // end directions.forEach
 }
+
 
 // ─────────────────────────────────────────────────────────
 // POWER NEEDED PANEL
