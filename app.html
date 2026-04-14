@@ -2045,8 +2045,6 @@ function renderPlots() {
     block.className = 'defender-block';
     const defHP = defPoke ? calcHP(defPoke.stats.hp, parseInt(def.evHP)||0, 31, 50) : 0;
 
-    const hpFillId = `hpfill-${def.id}-${body.id}`;
-
     // Collapsible header
     const nameRow = document.createElement('div');
     nameRow.className = 'defender-name';
@@ -2161,7 +2159,7 @@ function renderPlots() {
         const maxPct = Math.min(100, (totalMax / defHP * 100));
         cumulativeMin += totalMin;
         cumulativeMax += totalMax;
-        const totalAvg = Math.floor((totalMin + totalMax) / 2);
+        totalAvg = Math.floor((totalMin + totalMax) / 2);
 
         const hitsToKO = totalAvg > 0 ? Math.ceil((defHP - entryHazardDmg) / totalAvg) : 999;
         let toxicDmg = 0;
@@ -2238,16 +2236,21 @@ function renderPlots() {
       });
     });
 
+    // Build HP bar with damage range now that we know totals
+    const minPctHp = Math.min(100, cumulativeMin / defHP * 100);
+    const maxPctHp = Math.min(100, cumulativeMax / defHP * 100);
+    const remainPct = Math.max(0, 100 - maxPctHp);
+    const hpColor = remainPct > 50 ? '#16a34a' : remainPct > 25 ? '#d97706' : '#dc2626';
+    const hpBarWrap = document.createElement('div');
+    hpBarWrap.style.cssText = 'position:relative;height:12px;background:var(--bg4);border-radius:5px;overflow:hidden;margin-bottom:3px;border:1px solid var(--border)';
+    hpBarWrap.innerHTML = `
+      <div style="position:absolute;top:0;left:0;width:${100 - minPctHp}%;height:100%;background:${hpColor};border-radius:5px"></div>
+      <div style="position:absolute;top:0;left:${100 - maxPctHp}%;width:${Math.max(0.5, maxPctHp - minPctHp)}%;height:100%;background:rgba(255,255,255,0.3);border-radius:2px"></div>
+      <div style="position:absolute;right:4px;top:50%;transform:translateY(-50%);font-size:10px;font-weight:600;color:#fff;text-shadow:0 1px 2px rgba(0,0,0,.5)">${defHP} HP</div>`;
+    inner.insertBefore(hpBarWrap, inner.firstChild);
+
     block.appendChild(inner);
     body.appendChild(block);
-
-    // Update HP bar (must be after block is in DOM for getElementById to work)
-    const hpFill = document.getElementById(hpFillId);
-    if (hpFill) {
-      const remaining = Math.max(0, 100 - (cumulativeAvg / defHP * 100));
-      hpFill.style.width = remaining + '%';
-      hpFill.className = 'hp-fill' + (remaining > 50 ? '' : remaining > 25 ? ' yellow' : ' red');
-    }
   });
   }); // end directions
 }
