@@ -385,8 +385,9 @@ input[type=range]{width:100%;accent-color:#4f46e5;height:4px}
 </div>
 </div>
 
-<div id="view-ohko" style="display:none;flex-direction:column;flex:1;overflow-y:auto;min-height:0;padding:12px">
-  <div id="power-body"></div>
+<div id="view-ohko" style="display:none;flex-direction:row;flex:1;overflow:hidden;min-height:0;gap:0">
+  <div id="power-body" style="width:420px;flex-shrink:0;overflow-y:auto;padding:12px;border-right:1px solid var(--border)"></div>
+  <div id="ohko-list-body" style="flex:1;overflow-y:auto;padding:12px"></div>
 </div>
 
 <div id="view-dex">
@@ -2352,6 +2353,15 @@ function buildPowerPanel() {
             <span id="pw-mult-val" style="font-size:12px;font-weight:600;text-align:right">×1</span>
           </div>
           <div style="font-size:10px;color:var(--text3);margin-top:3px">Life Orb=1.3 · Band/Specs=1.5 · STAB+Band=2.25</div>
+          <div style="margin-top:8px;border-top:1px solid var(--border);padding-top:8px">
+            <div class="power-chart-title" style="margin-bottom:6px">Attacker Item</div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:2px 8px">
+              <label class="cond-item" style="font-size:12px"><input type="radio" name="pw-item" id="pw-item-none" value="1" checked> None</label>
+              <label class="cond-item" style="font-size:12px"><input type="radio" name="pw-item" id="pw-item-typeplate" value="1.2"> Type item ×1.2</label>
+              <label class="cond-item" style="font-size:12px"><input type="radio" name="pw-item" id="pw-item-lifeorb" value="1.3"> Life Orb ×1.3</label>
+              <label class="cond-item" style="font-size:12px"><input type="radio" name="pw-item" id="pw-item-choice" value="1.5"> Band/Specs ×1.5</label>
+            </div>
+          </div>
 
           <div style="margin-top:10px;border-top:1px solid var(--border);padding-top:8px">
             <div class="power-chart-title" style="margin-bottom:6px">Conditions</div>
@@ -2402,7 +2412,8 @@ function buildPowerPanel() {
   document.getElementById('pw-poke-search').appendChild(pwSearchWrap);
   buildNatureDropdown('pw-nature', pwTarget);
 
-  ['pw-stab','pw-se-none','pw-se-2x','pw-se-4x','pw-doubles','pw-reflect','pw-lightscreen','pw-auroraveil'].forEach(id => {
+  ['pw-stab','pw-se-none','pw-se-2x','pw-se-4x','pw-doubles','pw-reflect','pw-lightscreen','pw-auroraveil',
+   'pw-item-none','pw-item-typeplate','pw-item-lifeorb','pw-item-choice'].forEach(id => {
     document.getElementById(id).addEventListener('change', () => {
       pwTarget.doubles    = document.getElementById('pw-doubles').checked;
       pwTarget.reflect    = document.getElementById('pw-reflect').checked;
@@ -2434,13 +2445,18 @@ function buildPowerPanel() {
   });
 }
 
-// Reverse calcStat: given a final stat value, estimate minimum base stat needed
-// Assumes IV=31, level=50, nature neutral (caller adjusts D before calling minAtk)
-function statToBase(statVal, ev=0, natureMult=1) {
-  // calcStat: floor((floor((2*base + 31 + floor(ev/4)) * 50/100) + 5) * natureMult)
-  // Invert: base = ceil(((ceil(statVal / natureMult) - 5) * 2 - 31 - floor(ev/4)))
-  const inner = Math.ceil(statVal / natureMult) - 5;
-  return Math.max(1, Math.ceil(inner * 2 - 31 - Math.floor(ev / 4)));
+// Reverse calcStat: given a needed final stat, find the minimum base stat
+// calcStat at lv50, IV31, EV0, neutral nature: floor((2*base+31)*0.5 + 5)
+// So: base = ceil((statVal - 5) * 2 - 31) / 2  → ceil((statVal - 5) * 2 - 31 + 0) / 2
+function statToBase(statVal) {
+  // Invert: statVal = floor((2*base + 31) / 2 + 5)  (at lv50, IV31, EV0, neutral)
+  // 2*base + 31 ≈ (statVal - 5) * 2
+  // base ≈ (statVal - 5) - 15.5
+  // Use ceiling to find minimum base that achieves statVal
+  for (let b = 1; b <= 255; b++) {
+    if (calcStat(b, 0, 31, 50, 1) >= statVal) return b;
+  }
+  return 255;
 }
 
 function renderPowerPanel() {
@@ -2457,7 +2473,8 @@ function renderPowerPanel() {
   const extraMult = parseFloat(document.getElementById('pw-mult')?.value||1);
   const useStab   = document.getElementById('pw-stab')?.checked;
   const seMult    = parseFloat(document.querySelector('input[name="pw-se"]:checked')?.value||1);
-  const totalMult = (useStab ? 1.5 : 1) * seMult * extraMult;
+  const itemMult = parseFloat(document.querySelector('input[name="pw-item"]:checked')?.value||1);
+  const totalMult = (useStab ? 1.5 : 1) * seMult * extraMult * itemMult;
 
   const stabStr = useStab ? 'STAB' : '';
   const seStr   = seMult === 4 ? 'SE 4×' : seMult === 2 ? 'SE 2×' : '';
@@ -2481,57 +2498,196 @@ function renderPowerPanel() {
   if (pwTarget.reflect    || pwTarget.auroraveil) D_phys = Math.floor(D_phys * screenDiv);
   if (pwTarget.lightscreen || pwTarget.auroraveil) D_spec = Math.floor(D_spec * screenDiv);
 
-  function minAtk(D) {
-    return Math.max(1, Math.ceil((defHP - 2) * 50 * D / (22 * power * totalMult)));
-  }
+   function minAtk(D) {
+     return Math.max(1, Math.ceil((defHP - 2) * 50 * D / (22 * power * totalMult)));
+   }
 
-  const p = minAtk(D_phys);
-  const s = minAtk(D_spec);
-  const pBase = statToBase(p);
-  const sBase = statToBase(s);
+   const p = minAtk(D_phys);
+   const s = minAtk(D_spec);
+   const pBase = statToBase(p);
+   const sBase = statToBase(s);
+   const pRange = `${calcStat(pBase,0,31,50,1)}–${calcStat(pBase,252,31,50,1.1)}`;
+   const sRange = `${calcStat(sBase,0,31,50,1)}–${calcStat(sBase,252,31,50,1.1)}`;
 
-  const barMax = Math.max(p, s, 1);
+   const barMax = Math.max(pBase, sBase, 1);
 
-  const scenLabel = document.createElement('div');
-  scenLabel.style.cssText = `font-size:11px;font-weight:600;color:${color};margin-bottom:8px`;
-  scenLabel.textContent = `Scenario: ${label}  (×${totalMult.toFixed(2).replace(/\.?0+$/, '')})`;
-  body.appendChild(scenLabel);
+   const scenLabel = document.createElement('div');
+   scenLabel.style.cssText = `font-size:11px;font-weight:600;color:${color};margin-bottom:8px`;
+   scenLabel.textContent = `Scenario: ${label}  (×${totalMult.toFixed(2).replace(/\.?0+$/, '')})`;
+   body.appendChild(scenLabel);
 
-  const hdr = document.createElement('div');
-  hdr.style.cssText = 'display:grid;grid-template-columns:1fr 90px 90px;gap:4px;font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px';
-  hdr.innerHTML = '<span></span><span style="text-align:right">Physical</span><span style="text-align:right">Special</span>';
-  body.appendChild(hdr);
+   const hdr = document.createElement('div');
+   hdr.style.cssText = 'display:grid;grid-template-columns:1fr 90px 90px;gap:4px;font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px';
+   hdr.innerHTML = '<span></span><span style="text-align:right">Physical</span><span style="text-align:right">Special</span>';
+   body.appendChild(hdr);
 
-  const row = document.createElement('div');
-  row.style.cssText = 'display:grid;grid-template-columns:1fr 90px 90px;align-items:center;gap:4px;margin-bottom:6px';
+   const row = document.createElement('div');
+   row.style.cssText = 'display:grid;grid-template-columns:1fr 90px 90px;align-items:center;gap:4px;margin-bottom:6px';
 
-  const barWrap = document.createElement('div');
-  barWrap.style.cssText = 'height:8px;background:var(--bg3);border-radius:4px;overflow:hidden;border:1px solid var(--border)';
-  const barFill = document.createElement('div');
-  barFill.style.cssText = `height:100%;border-radius:4px;background:${color};width:${Math.min(100, p/barMax*100).toFixed(1)}%`;
-  barWrap.appendChild(barFill);
+   const barWrap = document.createElement('div');
+   barWrap.style.cssText = 'height:8px;background:var(--bg3);border-radius:4px;overflow:hidden;border:1px solid var(--border)';
+   const barFill = document.createElement('div');
+   barFill.style.cssText = `height:100%;border-radius:4px;background:${color};width:${Math.min(100, pBase/barMax*100).toFixed(1)}%`;
+   barWrap.appendChild(barFill);
 
-  const physVal = document.createElement('div');
-  physVal.style.cssText = 'text-align:right;line-height:1.4';
-  physVal.innerHTML = `<span style="font-size:15px;font-weight:700">${p}</span><span style="font-size:10px;color:var(--text3)"> stat</span><br><span style="font-size:11px;color:var(--text2)">${pBase} base</span>`;
+   const physVal = document.createElement('div');
+   physVal.style.cssText = 'text-align:right;line-height:1.5';
+   physVal.innerHTML = `<span style="font-size:17px;font-weight:700">${pBase}</span><span style="font-size:10px;color:var(--text3)"> base</span><br><span style="font-size:10px;color:var(--text2)">${pRange}</span>`;
 
-  const specVal = document.createElement('div');
-  specVal.style.cssText = 'text-align:right;line-height:1.4';
-  specVal.innerHTML = `<span style="font-size:15px;font-weight:700">${s}</span><span style="font-size:10px;color:var(--text3)"> stat</span><br><span style="font-size:11px;color:var(--text2)">${sBase} base</span>`;
+   const specVal = document.createElement('div');
+   specVal.style.cssText = 'text-align:right;line-height:1.5';
+   specVal.innerHTML = `<span style="font-size:17px;font-weight:700">${sBase}</span><span style="font-size:10px;color:var(--text3)"> base</span><br><span style="font-size:10px;color:var(--text2)">${sRange}</span>`;
 
-  row.appendChild(barWrap);
-  row.appendChild(physVal);
-  row.appendChild(specVal);
-  body.appendChild(row);
+   row.appendChild(barWrap);
+   row.appendChild(physVal);
+   row.appendChild(specVal);
+   body.appendChild(row);
 
-  const note = document.createElement('div');
-  note.style.cssText = 'font-size:10px;color:var(--text3)';
-  note.textContent = `${defPoke.display}: ${defHP} HP · ${D_phys} Def · ${D_spec} SpD`;
-  body.appendChild(note);
+   const note = document.createElement('div');
+   note.style.cssText = 'font-size:10px;color:var(--text3)';
+   note.textContent = `${defPoke.display}: ${defHP} HP · ${D_phys} Def · ${D_spec} SpD`;
+   body.appendChild(note);
+
+   // Trigger filter list update
+   renderOhkoList(pBase, sBase, power, totalMult);
 }
 // ─────────────────────────────────────────────────────────
 // TABS
 // ─────────────────────────────────────────────────────────
+// ─────────────────────────────────────────────────────────
+// OHKO LIST — who can OHKO this target?
+// ─────────────────────────────────────────────────────────
+let _ohkoListTimer = null;
+function renderOhkoList(pBase, sBase, power, totalMult) {
+  clearTimeout(_ohkoListTimer);
+  _ohkoListTimer = setTimeout(() => _doRenderOhkoList(pBase, sBase, power, totalMult), 80);
+}
+
+function _doRenderOhkoList(pBase, sBase, power, totalMult) {
+  const body = document.getElementById('ohko-list-body');
+  if (!body) return;
+
+  if (!pwTarget.poke) {
+    body.innerHTML = '<div style="font-size:12px;color:var(--text3);padding:20px 0">Select a target to see who can OHKO it.</div>';
+    return;
+  }
+
+  body.innerHTML = '<div style="font-size:11px;color:var(--text3);padding:8px 0">Searching…</div>';
+
+  // Gather all pokemon, first-pass filter by base stat
+  const allPoke = Object.values(DB.pokemon);
+  const candidates = allPoke.filter(p => {
+    if (!p.moves || p.moves.length === 0) return false;
+    return p.stats.attack >= pBase || p.stats['special-attack'] >= sBase;
+  });
+
+  // Second pass: find qualifying moves
+  // Move qualifies if: power <= slider power (or power == 0 and we skip)
+  //   OR accuracy == 100 and power > 0
+  // Also must be physical if using atk stat, special if using spa stat
+  const results = [];
+  for (const poke of candidates) {
+    const physOk = poke.stats.attack >= pBase;
+    const specOk = poke.stats['special-attack'] >= sBase;
+    const matchingMoves = [];
+
+    for (const moveName of (poke.moves || [])) {
+      const move = DB.moves[moveName];
+      if (!move || move.category === 'status' || !move.power) continue;
+      const isPhys = move.category === 'physical';
+      const isSpec = move.category === 'special';
+      if (isPhys && !physOk) continue;
+      if (isSpec && !specOk) continue;
+      // Power check: ≤ slider, or exactly 100% accuracy
+      if (move.power > power && move.accuracy !== 100) continue;
+      matchingMoves.push(move);
+    }
+
+    if (matchingMoves.length > 0) {
+      results.push({ poke, moves: matchingMoves });
+    }
+  }
+
+  body.innerHTML = '';
+
+  if (results.length === 0) {
+    body.innerHTML = '<div style="font-size:12px;color:var(--text3);padding:12px 0">No Pokémon found that can OHKO this target with the current settings.</div>';
+    return;
+  }
+
+  // Sort by primary type then by best attack stat desc
+  results.sort((a, b) => {
+    const ta = a.poke.types[0] || '';
+    const tb = b.poke.types[0] || '';
+    if (ta !== tb) return ta.localeCompare(tb);
+    const statA = Math.max(a.poke.stats.attack, a.poke.stats['special-attack']);
+    const statB = Math.max(b.poke.stats.attack, b.poke.stats['special-attack']);
+    return statB - statA;
+  });
+
+  // Header
+  const hdr = document.createElement('div');
+  hdr.style.cssText = 'font-size:11px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.08em;margin-bottom:10px;padding-bottom:6px;border-bottom:1px solid var(--border)';
+  hdr.textContent = `${results.length} Pokémon can OHKO ${DB.pokemon[pwTarget.poke]?.display || ''}`;
+  body.appendChild(hdr);
+
+  let lastType = null;
+
+  results.forEach(({ poke, moves }) => {
+    const type = poke.types[0] || 'normal';
+
+    // Type group header
+    if (type !== lastType) {
+      lastType = type;
+      const typeHead = document.createElement('div');
+      typeHead.style.cssText = 'display:flex;align-items:center;gap:6px;margin:10px 0 4px';
+      typeHead.innerHTML = `<span class="type-badge" style="background:${getTypeColor(type)}">${type}</span><div style="flex:1;height:1px;background:var(--border)"></div>`;
+      body.appendChild(typeHead);
+    }
+
+    // Pokémon row
+    const row = document.createElement('div');
+    row.style.cssText = 'display:flex;align-items:flex-start;gap:8px;padding:5px 6px;background:var(--bg2);border:1px solid var(--border);border-radius:6px;margin-bottom:4px';
+
+    // Sprite
+    const img = document.createElement('img');
+    img.src = `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${poke.dex_id}.png`;
+    img.style.cssText = 'width:32px;height:32px;object-fit:contain;image-rendering:pixelated;flex-shrink:0';
+    row.appendChild(img);
+
+    // Info
+    const info = document.createElement('div');
+    info.style.cssText = 'flex:1;min-width:0';
+
+    const nameRow = document.createElement('div');
+    nameRow.style.cssText = 'display:flex;align-items:center;gap:5px;margin-bottom:3px';
+    const atkStat = poke.stats.attack;
+    const spaStat = poke.stats['special-attack'];
+    nameRow.innerHTML = `<span style="font-size:12px;font-weight:700">${poke.display}</span>
+      <span style="font-size:10px;color:var(--text3)">Atk ${atkStat} · SpA ${spaStat}</span>`;
+    info.appendChild(nameRow);
+
+    // Moves
+    const movesWrap = document.createElement('div');
+    movesWrap.style.cssText = 'display:flex;flex-wrap:wrap;gap:3px';
+    moves.slice(0, 6).forEach(move => {
+      const chip = document.createElement('span');
+      chip.style.cssText = `display:inline-flex;align-items:center;gap:3px;background:${getTypeColor(move.type)}22;border:1px solid ${getTypeColor(move.type)}44;border-radius:4px;padding:1px 5px;font-size:10px;font-weight:600;color:var(--text)`;
+      chip.innerHTML = `<span style="width:6px;height:6px;border-radius:50%;background:${getTypeColor(move.type)};display:inline-block;flex-shrink:0"></span>${move.display} <span style="color:var(--text3)">${move.power}bp</span>`;
+      movesWrap.appendChild(chip);
+    });
+    if (moves.length > 6) {
+      const more = document.createElement('span');
+      more.style.cssText = 'font-size:10px;color:var(--text3);padding:1px 4px';
+      more.textContent = `+${moves.length - 6} more`;
+      movesWrap.appendChild(more);
+    }
+    info.appendChild(movesWrap);
+    row.appendChild(info);
+    body.appendChild(row);
+  });
+}
+
 function toggleSection(id) {
   const body = document.getElementById(id);
   const tog  = document.getElementById('tog-' + id);
