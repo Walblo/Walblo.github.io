@@ -689,6 +689,10 @@ function calcDamage(atker, defer, moveKey) {
   if (!isPhys && atkAbility === 'solar-power' && conds.weather === 'sun') A = Math.floor(A * 1.5);
   // Assault Vest on defender (SpDef)
   if (!isPhys && defer.item === 'assault-vest') D = Math.floor(D * 1.5);
+  // Sandstorm: Rock-types get 1.5x SpDef
+  if (!isPhys && conds.weather === 'sand' && (defPoke.types||[]).includes('rock')) D = Math.floor(D * 1.5);
+  // Snow: Ice-types get 1.5x SpDef
+  if (!isPhys && conds.weather === 'snow' && (defPoke.types||[]).includes('ice')) D = Math.floor(D * 1.5);
   // Marvel Scale: +50% Def when statused
   // Mold Breaker / Teravolt / Turboblaze: ignore defender abilities
   const moldBreaker = atkAbility === 'mold-breaker' || atkAbility === 'teravolt' || atkAbility === 'turboblaze';
