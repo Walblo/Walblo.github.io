@@ -569,7 +569,7 @@ async function init() {
 const COLORS = ['#e53e3e','#3182ce','#38a169','#d69e2e','#805ad5','#dd6b20','#00897b','#d63384'];
 let atkPanels = [];
 let defPanels = [];
-let atkCounter = 0, defCounter = 0;
+let atkCounter = 0, defCounter = 100;
 
 // Condition state
 const conds = {
@@ -1147,7 +1147,7 @@ function selectPoke(p, input, sprite, list, containerId, panelId, isAtk) {
     }
 
     updateStatsDisplay(panelId, p, isAtk);
-    if (isAtk) updateMoveSelect(panelId, p);
+    updateMoveSelect(panelId, p);
     recalc();
   }
 }
@@ -1508,7 +1508,7 @@ function posMoveTip(e) {
 function hideMoveTip() { moveTip.style.display = 'none'; }
 
 function buildMovePicker(panelId) {
-  const panel = atkPanels.find(x => x.id === panelId);
+  const panel = atkPanels.find(x => x.id === panelId) || defPanels.find(x => x.id === panelId);
   if (!panel) return;
 
   // moves is now an array [{name, active}]
@@ -1791,8 +1791,8 @@ function buildAtkPanel(id) {
 }
 
 function buildDefPanel(id) {
-  const panel = { id, poke:'', item:'none', nature:'Hardy', ability:'',
-    evHP:0, evAtk:0, evDef:0, evSpAtk:0, evSpDef:0, evSpe:0, defStage:0 };
+  const panel = { id, poke:'', item:'none', nature:'Hardy', ability:'', moves:[],
+    evHP:0, evAtk:0, evDef:0, evSpAtk:0, evSpDef:0, evSpe:0, defStage:0, atkStage:0 };
   defPanels.push(panel);
 
   const div = document.createElement('div');
@@ -1823,6 +1823,8 @@ function buildDefPanel(id) {
         <select id="ability-def-${id}"><option value="">— select Pokémon first —</option></select>
         <div class="ab-tooltip" id="abtip-def-${id}">Select a Pokémon to see ability info.</div>
       </div>
+      <label class="lbl">Moves</label>
+      <div id="move-picker-${id}"></div>
       <label class="lbl">Held Item</label>
       <select id="item-def-${id}">
         ${Object.values((DB.meta.items)||{}).map(it=>`<option value="${it.name}">${it.display}</option>`).join('')}
@@ -1844,11 +1846,16 @@ function buildDefPanel(id) {
       </div>
 
       <div class="divider"></div>
-      <label class="lbl">Def Stage</label>
+      <label class="lbl">Stat Stage</label>
+      <div class="stage-row">
+        <label>Atk/SpA</label>
+        <select id="atkstage-def-${id}">${stageOptions()}</select>
+      </div>
       <div class="stage-row">
         <label>Def/SpD</label>
         <select id="defstage-${id}">${stageOptions()}</select>
       </div>
+      <div id="ability-extras-def${id}"></div>
     </div>`;
 
   document.getElementById('def-body').appendChild(div);
@@ -1857,6 +1864,7 @@ function buildDefPanel(id) {
   document.getElementById(`def-search-${id}`).appendChild(searchWrap);
 
   buildNatureDropdown(`nature-def-${id}`, panel);
+  buildMovePicker(id);
 
   document.getElementById(`ability-def-${id}`).addEventListener('change', e => {
     panel.ability = e.target.value;
@@ -1865,6 +1873,7 @@ function buildDefPanel(id) {
   });
   document.getElementById(`item-def-${id}`).addEventListener('change', e => { panel.item = e.target.value; recalc(); });
   document.getElementById(`defstage-${id}`).addEventListener('change', e => { panel.defStage = parseInt(e.target.value)||0; recalc(); });
+  document.getElementById(`atkstage-def-${id}`).addEventListener('change', e => { panel.atkStage = parseInt(e.target.value)||0; recalc(); });
 
   bindEvSlider(id,'hp',  'def', panel, 'evHP');
   bindEvSlider(id,'atk', 'def', panel, 'evAtk');
