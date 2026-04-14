@@ -570,6 +570,7 @@ const COLORS = ['#e53e3e','#3182ce','#38a169','#d69e2e','#805ad5','#dd6b20','#00
 let atkPanels = [];
 let defPanels = [];
 let atkCounter = 0, defCounter = 100;
+const pwTarget = { poke: '', nature: 'Hardy', evHP:0, evDef:0, evSpDef:0 };
 
 // Condition state
 const conds = {
@@ -1111,6 +1112,26 @@ function selectPoke(p, input, sprite, list, containerId, panelId, isAtk) {
   sprite.src = `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${p.dex_id}.png`;
   sprite.style.display = 'block';
   list.classList.remove('open');
+
+  // OHKO calc target
+  if (panelId === 'pw') {
+    pwTarget.poke = p.name;
+    const typeRow = document.getElementById('pw-poke-types');
+    if (typeRow) {
+      typeRow.innerHTML = '';
+      (p.types||[]).forEach(t => {
+        const b = document.createElement('span');
+        b.className = 'type-badge';
+        b.style.background = getTypeColor(t);
+        b.textContent = t;
+        typeRow.appendChild(b);
+      });
+    }
+    const statsEl = document.getElementById('pw-poke-stats');
+    if (statsEl) statsEl.textContent = `HP ${p.stats.hp} · Def ${p.stats.defense} · SpD ${p.stats['special-defense']}`;
+    renderPowerPanel();
+    return;
+  }
 
   const panels = isAtk ? atkPanels : defPanels;
   const panel = panels.find(x => x.id === panelId);
@@ -2042,19 +2063,13 @@ function renderPlots() {
 
     if (!defPoke) { block.appendChild(inner); body.appendChild(block); return; }
 
-    // HP bar
-    const hpBarWrap = document.createElement('div');
-    hpBarWrap.className = 'hp-track';
-    hpBarWrap.innerHTML = `<div class="hp-fill" id="${hpFillId}" style="width:100%"></div><div class="hp-label">${defHP} HP</div>`;
-    inner.appendChild(hpBarWrap);
-
     let entryHazardDmg = 0;
     if (conds.hz_sr)  entryHazardDmg += hazardDamagePerTurn('sr',     defPoke, 1);
     if (conds.hz_sp1) entryHazardDmg += hazardDamagePerTurn('spikes1', defPoke, 1);
     if (conds.hz_sp2) entryHazardDmg += hazardDamagePerTurn('spikes2', defPoke, 1);
     if (conds.hz_sp3) entryHazardDmg += hazardDamagePerTurn('spikes3', defPoke, 1);
 
-    let cumulativeAvg = entryHazardDmg;
+    let cumulativeMin = 0, cumulativeMax = 0;
 
     if (entryHazardDmg > 0) {
       const hPct = Math.min(100, entryHazardDmg / defHP * 100);
@@ -2144,13 +2159,15 @@ function renderPlots() {
 
         const minPct = Math.min(100, (totalMin / defHP * 100));
         const maxPct = Math.min(100, (totalMax / defHP * 100));
-        cumulativeAvg += totalAvg;
+        cumulativeMin += totalMin;
+        cumulativeMax += totalMax;
+        const totalAvg = Math.floor((totalMin + totalMax) / 2);
 
         const hitsToKO = totalAvg > 0 ? Math.ceil((defHP - entryHazardDmg) / totalAvg) : 999;
         let toxicDmg = 0;
         if (conds.hz_tsp2) { for (let t = 1; t <= hitsToKO; t++) toxicDmg += Math.floor(defHP * t / 16); }
         else if (conds.hz_tsp) { toxicDmg = Math.floor(defHP * 0.125) * hitsToKO; }
-        const totalWithHazards = cumulativeAvg + toxicDmg;
+        const totalWithHazards = cumulativeMax + toxicDmg;
 
         let koText = '';
         if (totalMin + entryHazardDmg >= defHP) koText = '<span class="ko-badge ko-1">OHKO</span>';
@@ -2241,30 +2258,45 @@ function renderPlots() {
 function buildPowerPanel() {
   const body = document.getElementById('power-body');
   body.innerHTML = `
-    <div class="power-chart-wrap">
-      <div class="power-chart-title">Min Attack Stat to OHKO</div>
-      <label class="lbl" style="margin-bottom:4px">Modifiers</label>
-      <div style="display:flex;flex-direction:column;gap:3px;margin-bottom:10px">
-        <label class="cond-item" style="padding:2px 0"><input type="checkbox" id="pw-stab" style="accent-color:#4f46e5"> STAB ×1.5</label>
-        <div style="height:1px;background:var(--border);margin:3px 0"></div>
-        <label class="cond-item" style="padding:2px 0"><input type="radio" name="pw-se" id="pw-se-none" value="1" checked style="accent-color:#6b7280"> No SE</label>
-        <label class="cond-item" style="padding:2px 0"><input type="radio" name="pw-se" id="pw-se-2x" value="2" style="accent-color:#d97706"> SE 2×</label>
-        <label class="cond-item" style="padding:2px 0"><input type="radio" name="pw-se" id="pw-se-4x" value="4" style="accent-color:#dc2626"> SE 4×</label>
+    <div class="power-chart-wrap" style="max-width:700px">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:12px">
+
+        <div>
+          <div class="power-chart-title" style="margin-bottom:8px">Min Attack Stat to OHKO</div>
+          <div style="display:grid;grid-template-columns:auto auto auto;gap:6px 12px;align-items:center;margin-bottom:8px">
+            <label class="cond-item" style="font-size:12px"><input type="checkbox" id="pw-stab" style="accent-color:#4f46e5"> STAB</label>
+            <label class="cond-item" style="font-size:12px"><input type="radio" name="pw-se" id="pw-se-none" value="1" checked> No SE</label>
+            <label class="cond-item" style="font-size:12px"><input type="radio" name="pw-se" id="pw-se-2x" value="2"> SE 2×</label>
+            <span></span>
+            <label class="cond-item" style="font-size:12px"><input type="radio" name="pw-se" id="pw-se-4x" value="4"> SE 4×</label>
+          </div>
+          <div style="display:grid;grid-template-columns:auto 1fr 36px;align-items:center;gap:6px;margin-bottom:6px">
+            <span style="font-size:11px;color:var(--text2)">Power</span>
+            <input type="range" id="pw-power" min="40" max="200" step="5" value="80" style="accent-color:#4f46e5">
+            <span id="pw-power-val" style="font-size:12px;font-weight:600;text-align:right">80</span>
+          </div>
+          <div style="display:grid;grid-template-columns:auto 1fr 36px;align-items:center;gap:6px">
+            <span style="font-size:11px;color:var(--text2)">Mult</span>
+            <input type="range" id="pw-mult" min="0.5" max="3" step="0.05" value="1" style="accent-color:#4f46e5">
+            <span id="pw-mult-val" style="font-size:12px;font-weight:600;text-align:right">×1</span>
+          </div>
+          <div style="font-size:10px;color:var(--text3);margin-top:3px">Life Orb=1.3 · Band/Specs=1.5 · STAB+Band=2.25</div>
+        </div>
+
+        <div>
+          <div class="power-chart-title" style="margin-bottom:8px">Target Pokémon</div>
+          <div id="pw-poke-search"></div>
+          <div class="type-row" id="pw-poke-types" style="margin-top:4px"></div>
+          <div id="pw-poke-stats" style="font-size:11px;color:var(--text2);margin-top:4px"></div>
+        </div>
+
       </div>
-      <label class="lbl">Move Power</label>
-      <div style="display:grid;grid-template-columns:1fr 40px;align-items:center;gap:6px;margin-bottom:3px">
-        <input type="range" id="pw-power" min="40" max="200" step="5" value="80" style="accent-color:#4f46e5">
-        <span id="pw-power-val" style="font-size:13px;font-weight:600;text-align:right">80</span>
-      </div>
-      <div style="font-size:10px;color:var(--text3);margin-bottom:10px">bp</div>
-      <label class="lbl">Extra multiplier</label>
-      <div style="display:grid;grid-template-columns:1fr 44px;align-items:center;gap:6px;margin-bottom:2px">
-        <input type="range" id="pw-mult" min="0.5" max="3" step="0.05" value="1" style="accent-color:#4f46e5">
-        <span id="pw-mult-val" style="font-size:13px;font-weight:600;text-align:right">×1</span>
-      </div>
-      <div style="font-size:10px;color:var(--text3);margin-bottom:12px">Life Orb=1.3 · Band/Specs=1.5 · STAB+Band=2.25</div>
       <div id="power-results"></div>
     </div>`;
+
+  // Build the poke search for the OHKO target
+  const pwSearchWrap = buildPokeSearch('pw-poke-search', 'pw', false);
+  document.getElementById('pw-poke-search').appendChild(pwSearchWrap);
 
   ['pw-stab','pw-se-none','pw-se-2x','pw-se-4x'].forEach(id => {
     document.getElementById(id).addEventListener('change', renderPowerPanel);
@@ -2284,8 +2316,8 @@ function renderPowerPanel() {
   const body = document.getElementById('power-results');
   if (!body) return;
   body.innerHTML = '';
-  if (defPanels.length === 0) {
-    body.innerHTML = '<div style="font-size:11px;color:var(--text3);padding:8px 0">Add a defender to see this.</div>';
+  if (!pwTarget.poke) {
+    body.innerHTML = '<div style="font-size:11px;color:var(--text3);padding:8px 0">Select a target Pokémon above.</div>';
     return;
   }
 
@@ -2296,76 +2328,64 @@ function renderPowerPanel() {
   const seMult    = parseFloat(document.querySelector('input[name="pw-se"]:checked')?.value||1);
   const totalMult = (useStab ? 1.5 : 1) * seMult * extraMult;
 
-  // Label and color based on selection
   const stabStr = useStab ? 'STAB' : '';
   const seStr   = seMult === 4 ? 'SE 4×' : seMult === 2 ? 'SE 2×' : '';
   const label   = [stabStr, seStr].filter(Boolean).join(' + ') || 'Raw';
   const color   = seMult === 4 ? '#dc2626' : seMult === 2 ? '#d97706' : useStab ? '#4f46e5' : '#6b7280';
 
-  defPanels.forEach(def => {
-    const defPoke = DB.pokemon[def.poke];
-    if (!defPoke) return;
+  const defPoke = DB.pokemon[pwTarget.poke];
+  if (!defPoke) return;
 
-    const defHP  = calcHP(defPoke.stats.hp, def.evHP||0);
-    const D_phys = calcStat(defPoke.stats.defense,            def.evDef||0,   31, LEVEL, getNatureMult(def.nature,'defense'));
-    const D_spec = calcStat(defPoke.stats['special-defense'], def.evSpDef||0, 31, LEVEL, getNatureMult(def.nature,'special-defense'));
+  const defHP  = calcHP(defPoke.stats.hp, pwTarget.evHP||0);
+  const D_phys = calcStat(defPoke.stats.defense,            pwTarget.evDef||0,   31, LEVEL, getNatureMult(pwTarget.nature,'defense'));
+  const D_spec = calcStat(defPoke.stats['special-defense'], pwTarget.evSpDef||0, 31, LEVEL, getNatureMult(pwTarget.nature,'special-defense'));
 
-    function minAtk(D) {
-      return Math.max(1, Math.ceil((defHP - 2) * 50 * D / (22 * power * totalMult)));
-    }
+  function minAtk(D) {
+    return Math.max(1, Math.ceil((defHP - 2) * 50 * D / (22 * power * totalMult)));
+  }
 
-    const p = minAtk(D_phys);
-    const s = minAtk(D_spec);
+  const p = minAtk(D_phys);
+  const s = minAtk(D_spec);
 
-    const title = document.createElement('div');
-    title.style.cssText = 'font-size:12px;font-weight:700;color:var(--text);margin-bottom:8px;padding-bottom:4px;border-bottom:1px solid var(--border)';
-    title.textContent = defPoke.display;
-    body.appendChild(title);
+  const barMax = Math.max(p, s, 1);
 
-    // Scenario label
-    const scenLabel = document.createElement('div');
-    scenLabel.style.cssText = `font-size:11px;font-weight:600;color:${color};margin-bottom:6px`;
-    scenLabel.textContent = `Scenario: ${label}  (×${totalMult.toFixed(2).replace(/\.?0+$/, '')})`;
-    body.appendChild(scenLabel);
+  const scenLabel = document.createElement('div');
+  scenLabel.style.cssText = `font-size:11px;font-weight:600;color:${color};margin-bottom:8px`;
+  scenLabel.textContent = `Scenario: ${label}  (×${totalMult.toFixed(2).replace(/\.?0+$/, '')})`;
+  body.appendChild(scenLabel);
 
-    // Column headers
-    const hdr = document.createElement('div');
-    hdr.style.cssText = 'display:grid;grid-template-columns:1fr 50px 50px;gap:4px;font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px';
-    hdr.innerHTML = '<span></span><span style="text-align:right">Phys</span><span style="text-align:right">Spec</span>';
-    body.appendChild(hdr);
+  const hdr = document.createElement('div');
+  hdr.style.cssText = 'display:grid;grid-template-columns:1fr 50px 50px;gap:4px;font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px';
+  hdr.innerHTML = '<span></span><span style="text-align:right">Phys</span><span style="text-align:right">Spec</span>';
+  body.appendChild(hdr);
 
-    // Single result row
-    const barMax = Math.max(p, s, 1);
-    const row = document.createElement('div');
-    row.style.cssText = 'display:grid;grid-template-columns:1fr 50px 50px;align-items:center;gap:4px;margin-bottom:6px';
+  const row = document.createElement('div');
+  row.style.cssText = 'display:grid;grid-template-columns:1fr 50px 50px;align-items:center;gap:4px;margin-bottom:6px';
 
-    const barWrap = document.createElement('div');
-    barWrap.style.cssText = 'height:8px;background:var(--bg3);border-radius:4px;overflow:hidden;border:1px solid var(--border)';
-    const barFill = document.createElement('div');
-    barFill.style.cssText = `height:100%;border-radius:4px;background:${color};width:${Math.min(100, p/barMax*100).toFixed(1)}%`;
-    barWrap.appendChild(barFill);
+  const barWrap = document.createElement('div');
+  barWrap.style.cssText = 'height:8px;background:var(--bg3);border-radius:4px;overflow:hidden;border:1px solid var(--border)';
+  const barFill = document.createElement('div');
+  barFill.style.cssText = `height:100%;border-radius:4px;background:${color};width:${Math.min(100, p/barMax*100).toFixed(1)}%`;
+  barWrap.appendChild(barFill);
 
-    const physVal = document.createElement('span');
-    physVal.style.cssText = 'font-size:13px;font-weight:700;text-align:right';
-    physVal.textContent = p;
+  const physVal = document.createElement('span');
+  physVal.style.cssText = 'font-size:13px;font-weight:700;text-align:right';
+  physVal.textContent = p;
 
-    const specVal = document.createElement('span');
-    specVal.style.cssText = 'font-size:13px;font-weight:700;text-align:right;color:var(--text2)';
-    specVal.textContent = s;
+  const specVal = document.createElement('span');
+  specVal.style.cssText = 'font-size:13px;font-weight:700;text-align:right;color:var(--text2)';
+  specVal.textContent = s;
 
-    row.appendChild(barWrap);
-    row.appendChild(physVal);
-    row.appendChild(specVal);
-    body.appendChild(row);
+  row.appendChild(barWrap);
+  row.appendChild(physVal);
+  row.appendChild(specVal);
+  body.appendChild(row);
 
-    // Context note
-    const note = document.createElement('div');
-    note.style.cssText = 'font-size:10px;color:var(--text3);margin-bottom:14px';
-    note.textContent = `${defPoke.display}: ${defHP} HP · ${D_phys} Def · ${D_spec} SpD`;
-    body.appendChild(note);
-  });
+  const note = document.createElement('div');
+  note.style.cssText = 'font-size:10px;color:var(--text3)';
+  note.textContent = `${defPoke.display}: ${defHP} HP · ${D_phys} Def · ${D_spec} SpD`;
+  body.appendChild(note);
 }
-
 // ─────────────────────────────────────────────────────────
 // TABS
 // ─────────────────────────────────────────────────────────
