@@ -2832,6 +2832,11 @@ function _renderOhkoResults(results, defTypes) {
     return false;
   });
 
+  // ── Filter by selected type tags ──
+  if (window._ohkoTypeFilter && window._ohkoTypeFilter.size > 0) {
+    filtered = filtered.filter(({ moves }) => window._ohkoTypeFilter.has(moves[0].type));
+  }
+
   // ── Filter by learnable move tags ──
   const ohkoMoveFilters = window._ohkoMoveFilters || [];
   if (ohkoMoveFilters.length > 0) {
@@ -2843,11 +2848,6 @@ function _renderOhkoResults(results, defTypes) {
   if (filtered.length === 0) {
     body.innerHTML = '<div style="font-size:12px;color:var(--text3);padding:12px 0">No Pokémon match the current filters.</div>';
     return;
-  }
-
-  // ── Filter by selected type tags ──
-  if (window._ohkoTypeFilter && window._ohkoTypeFilter.size > 0) {
-    filtered = filtered.filter(({ moves }) => window._ohkoTypeFilter.has(moves[0].type));
   }
 
   // ── Sort ──
