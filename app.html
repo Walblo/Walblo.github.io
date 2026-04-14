@@ -2221,16 +2221,16 @@ function renderPlots() {
       });
     });
 
-    // Update HP bar
+    block.appendChild(inner);
+    body.appendChild(block);
+
+    // Update HP bar (must be after block is in DOM for getElementById to work)
     const hpFill = document.getElementById(hpFillId);
     if (hpFill) {
       const remaining = Math.max(0, 100 - (cumulativeAvg / defHP * 100));
       hpFill.style.width = remaining + '%';
       hpFill.className = 'hp-fill' + (remaining > 50 ? '' : remaining > 25 ? ' yellow' : ' red');
     }
-
-    block.appendChild(inner);
-    body.appendChild(block);
   });
   }); // end directions
 }
