@@ -595,7 +595,7 @@ const COLORS = ['#e53e3e','#3182ce','#38a169','#d69e2e','#805ad5','#dd6b20','#00
 let atkPanels = [];
 let defPanels = [];
 let atkCounter = 0, defCounter = 100;
-const pwTarget = { poke: '', nature: 'Hardy', evHP:0, evDef:0, evSpDef:0, weather:'none', doubles:false, reflect:false, lightscreen:false, auroraveil:false };
+const pwTarget = { poke: '', nature: 'Hardy', evHP:0, evDef:0, evSpDef:0, weather:'none', doubles:false, reflect:false, lightscreen:false, auroraveil:false, weatherBoost:false };
 
 // Condition state
 const conds = {
@@ -792,30 +792,39 @@ function calcDamage(atker, defer, moveKey) {
   if (atker.item === 'life-orb') A = Math.floor(A * 1.3);
   if (isPhys  && atker.item === 'punching-glove') A = Math.floor(A * 1.1);
 
+  // ── Declare early — needed throughout ──
+  const effectiveWeather = (atkAbility === 'mega-sol' || atkAbility === 'orichalcum-pulse') ? 'sun' : conds.weather;
+  const effectiveTerrain = (atkAbility === 'hadron-engine') ? 'electric' : conds.terrain;
+  const typeChangeAbilities = { pixilate:'fairy', refrigerate:'ice', aerilate:'flying', galvanize:'electric' };
+  let typeOverride = null;
+  if (typeChangeAbilities[atkAbility] && move.type === 'normal') {
+    typeOverride = typeChangeAbilities[atkAbility];
+  }
+
   // ── Variable power moves ──
   let power = move.power || 0;
   if (power === 0) return null;
 
   const moveName = move.name;
-  // Gyro Ball: 25 * defSpe / atkSpe, capped at 150
-  if (moveName === 'gyro-ball') power = Math.min(150, Math.floor(25 * defSpe / Math.max(1, atkSpe)));
-  // Electro Ball: based on speed ratio
+
+  // Paralysis halves speed for Gyro Ball / Electro Ball
+  const atkSpeEff = (atker.status === 'paralysis') ? Math.floor(atkSpe * 0.5) : atkSpe;
+  const defSpeEff = (defer.status === 'paralysis') ? Math.floor(defSpe * 0.5) : defSpe;
+
+  if (moveName === 'gyro-ball') power = Math.min(150, Math.floor(25 * defSpeEff / Math.max(1, atkSpeEff)));
   if (moveName === 'electro-ball') {
-    const ratio = Math.floor(atkSpe / Math.max(1, defSpe));
+    const ratio = Math.floor(atkSpeEff / Math.max(1, defSpeEff));
     power = ratio >= 4 ? 150 : ratio >= 3 ? 120 : ratio >= 2 ? 80 : ratio >= 1 ? 60 : 40;
   }
-  // Low Kick / Grass Knot: based on defender weight
   if (moveName === 'low-kick' || moveName === 'grass-knot') {
     const w = defPoke.weight || 0;
     power = w >= 2000 ? 120 : w >= 1000 ? 100 : w >= 500 ? 80 : w >= 250 ? 60 : w >= 100 ? 40 : 20;
   }
-  // Hex: doubles if defender is statused (assume active = 130)
-  if (moveName === 'hex') power = 130;
-  // Facade: doubles if statused
-  if (moveName === 'facade') power = 140;
-  // Stored Power: base 20, assume +1 stage applied = 40 (user can adjust stages)
-  // (already fine as-is from the data)
-  // Weather Ball: doubles power in any weather, changes type to match
+  // Hex: 130bp if defender is statused, 65bp base otherwise
+  if (moveName === 'hex') power = defer.status ? 130 : 65;
+  // Facade: 140bp if attacker is statused, 70bp base otherwise
+  if (moveName === 'facade') power = atker.status ? 140 : 70;
+  // Weather Ball: doubles power in weather, changes type
   if (moveName === 'weather-ball' && effectiveWeather !== 'none') {
     power = 100;
     const weatherTypes = { sun:'fire', rain:'water', sand:'rock', hail:'ice', snow:'ice' };
@@ -827,57 +836,32 @@ function calcDamage(atker, defer, moveKey) {
   if (!isPhys && atker.item === 'wise-glasses') power = Math.floor(power * 1.1);
 
   // ── Ability effects on power ──
-  // Technician: moves 60bp or less get 1.5x
   if (power <= 60 && atkAbility === 'technician') power = Math.floor(power * 1.5);
-  // Sheer Force: rough 1.3x on moves with secondary effects (approximate)
   if (atkAbility === 'sheer-force' && move.effect && move.effect.length > 10) power = Math.floor(power * 1.3);
-  // Tough Claws: contact moves +30%
   if (atkAbility === 'tough-claws' && isPhys) power = Math.floor(power * 1.3);
-  // Adaptability: STAB becomes 2x (handled in stab below)
-  // Iron Fist: punching moves +20%
   const punchMoves = ['ice-punch','fire-punch','thunder-punch','mach-punch','drain-punch','bullet-punch','focus-punch','shadow-punch','sky-uppercut','comet-punch','meteor-mash','plasma-fists','surging-strikes','wicked-blow'];
   if (atkAbility === 'iron-fist' && punchMoves.includes(moveName)) power = Math.floor(power * 1.2);
-  // Strong Jaw: biting moves +50%
   const biteMoves = ['bite','crunch','fire-fang','ice-fang','thunder-fang','poison-fang','psychic-fangs','hyper-fang','fishious-rend','jaw-lock','pluck','leech-life'];
   if (atkAbility === 'strong-jaw' && biteMoves.includes(moveName)) power = Math.floor(power * 1.5);
-  // Reckless: recoil moves +20%
   const recoilMoves = ['double-edge','brave-bird','flare-blitz','wild-charge','head-smash','volt-tackle','take-down','submission','jump-kick','high-jump-kick','wood-hammer','head-charge','light-of-ruin','chloroblast'];
   if (atkAbility === 'reckless' && recoilMoves.includes(moveName)) power = Math.floor(power * 1.2);
-  // Punk Rock: sound moves +30%
   const soundMoves = ['boomburst','hyper-voice','sparkling-aria','clanging-scales','clangorous-soul','overdrive','disarming-voice','echoed-voice','round','snore','uproar','chatter','bug-buzz','metal-sound','screech','growl','roar','sing','supersonic','perish-song','noble-roar','torch-song','alluring-voice'];
   if (atkAbility === 'punk-rock' && soundMoves.includes(moveName)) power = Math.floor(power * 1.3);
-  // Liquid Voice: sound moves become Water type
   if (atkAbility === 'liquid-voice' && soundMoves.includes(moveName) && !typeOverride) typeOverride = 'water';
-  // Steely Spirit: Steel moves +50%
   if (atkAbility === 'steely-spirit' && move.type === 'steel') power = Math.floor(power * 1.5);
-  // Transistor: Electric moves +50%
   if (atkAbility === 'transistor' && move.type === 'electric') power = Math.floor(power * 1.5);
-  // Dragon's Maw: Dragon moves +50%
   if ((atkAbility === 'dragons-maw' || atkAbility === "dragon's-maw") && move.type === 'dragon') power = Math.floor(power * 1.5);
-  // Rocky Payload: Rock moves +50%
   if (atkAbility === 'rocky-payload' && move.type === 'rock') power = Math.floor(power * 1.5);
-  // Analytic: +30% (assume moving last)
   if (atkAbility === 'analytic') power = Math.floor(power * 1.3);
-  // Sand Force: Rock/Ground/Steel +30% in sandstorm
-  if (atkAbility === 'sand-force' && conds.weather === 'sand' && ['rock','ground','steel'].includes(move.type)) power = Math.floor(power * 1.3);
-  // Orichalcum Pulse: treat as sun active, boost Atk in sun (physical)
+  if (atkAbility === 'sand-force' && effectiveWeather === 'sand' && ['rock','ground','steel'].includes(move.type)) power = Math.floor(power * 1.3);
   if (atkAbility === 'orichalcum-pulse' && isPhys) A = Math.floor(A * (4/3));
-  // Hadron Engine: treat as electric terrain active, boost SpAtk
   if (atkAbility === 'hadron-engine' && !isPhys) A = Math.floor(A * (4/3));
-  // Pixilate / Refrigerate / Aerilate / Galvanize: type change + 1.2x (simplified: apply 1.2 if applicable)
-  const typeChangeAbilities = { pixilate:'fairy', refrigerate:'ice', aerilate:'flying', galvanize:'electric' };
-  let typeOverride = null;
-  if (typeChangeAbilities[atkAbility] && move.type === 'normal') {
-    typeOverride = typeChangeAbilities[atkAbility];
-    power = Math.floor(power * 1.2);
-  }
-  // Mega Launcher: pulse moves +50%
+  // Pixilate/Refrigerate/Aerilate/Galvanize: +1.2x when type changes
+  if (typeChangeAbilities[atkAbility] && move.type === 'normal') power = Math.floor(power * 1.2);
   const pulseMoves = ['aura-sphere','dark-pulse','dragon-pulse','heal-pulse','origin-pulse','water-pulse'];
   if (atkAbility === 'mega-launcher' && pulseMoves.includes(moveName)) power = Math.floor(power * 1.5);
 
-  // ── Weather ──
-  // Mega Sol: attacker's moves behave as if sun is active, regardless of actual weather
-  const effectiveWeather = (atkAbility === 'mega-sol' || atkAbility === 'orichalcum-pulse') ? 'sun' : conds.weather;
+  // ── Weather offensive multiplier ──
   let weather = 1;
   if (effectiveWeather === 'rain') {
     if (move.type === 'water') weather = 1.5;
@@ -887,13 +871,14 @@ function calcDamage(atker, defer, moveKey) {
     if (move.type === 'water') weather = 0.5;
   }
 
-  // ── Terrain ──
+  // ── Terrain offensive multiplier ──
   let terrain = 1;
-  const effectiveTerrain = (atkAbility === 'hadron-engine') ? 'electric' : conds.terrain;
   if (effectiveTerrain === 'electric' && move.type === 'electric') terrain = 1.3;
   if (effectiveTerrain === 'grassy'   && move.type === 'grass')    terrain = 1.3;
   if (effectiveTerrain === 'psychic'  && move.type === 'psychic')  terrain = 1.3;
   if (effectiveTerrain === 'misty'    && move.type === 'dragon')   terrain = 0.5;
+  // Grassy Terrain halves Earthquake, Bulldoze, Magnitude
+  if (effectiveTerrain === 'grassy' && ['earthquake','bulldoze','magnitude'].includes(moveName)) terrain *= 0.5;
 
   // ── STAB ──
   const moveType = typeOverride || move.type;
@@ -904,23 +889,14 @@ function calcDamage(atker, defer, moveKey) {
   const typeEff = getTypeEff(moveType, defPoke.types || []);
   if (typeEff === 0) return { min:0, max:0, avg:0, typeEff:0, defHP };
 
-  // Filter / Solid Rock
   const filterMult = (filterActive && typeEff > 1) ? 0.75 : 1;
-
-  // Expert belt
   const expertMult = (atker.item === 'expert-belt' && typeEff > 1) ? 1.2 : 1;
-  // Tinted Lens: doubles NVE damage
   const tintedLensMult = (atkAbility === 'tinted-lens' && typeEff < 1) ? 2 : 1;
-  // Neuroforce: SE moves +25%
   const neuroforceMult = (atkAbility === 'neuroforce' && typeEff > 1) ? 1.25 : 1;
-  // Supreme Overlord: +10% per fainted ally
   const supremeMult = (atkAbility === 'supreme-overlord') ? (1 + 0.1 * (atker.faintedAllies||0)) : 1;
-  // Rivalry: same gender +25%, opposite −25%
   const rivalryMult = (atkAbility === 'rivalry') ? (atker.gender === 'same' ? 1.25 : atker.gender === 'opposite' ? 0.75 : 1) : 1;
 
-  // ── Resist berries on defender ──
-  // Each berry halves damage from a supereffective hit of its type
-  // Chilan Berry is special: halves Normal damage always (not just SE)
+  // ── Resist berries ──
   const RESIST_BERRIES = {
     'occa-berry':'fire','passho-berry':'water','wacan-berry':'electric','rindo-berry':'grass',
     'yache-berry':'ice','chople-berry':'fighting','kebia-berry':'poison','shuca-berry':'ground',
@@ -945,16 +921,14 @@ function calcDamage(atker, defer, moveKey) {
   };
   const typeItemMult = (TYPE_ITEMS[moveType] === atker.item) ? 1.2 : 1;
 
-  // ── Screens (attacker is Side A → defender is Side B, and vice versa) ──
-  // We determine which side is defending based on which panel list the defender belongs to.
-  // Side B = defPanels; Side A = atkPanels. Screens on the defending side reduce damage.
+  // ── Screens ──
   const defIsB = defPanels.some(p => p.id === defer.id);
   const defScreens = defIsB
     ? { reflect: conds.reflectB, lightscreen: conds.lightscreenB, auroraveil: conds.auroraveilB }
     : { reflect: conds.reflectA, lightscreen: conds.lightscreenA, auroraveil: conds.auroraveilA };
   const screenMult = conds.doubles ? 2/3 : 0.5;
   let screenFactor = 1;
-  if (isPhys && (defScreens.reflect || defScreens.auroraveil)) screenFactor = screenMult;
+  if (isPhys  && (defScreens.reflect     || defScreens.auroraveil)) screenFactor = screenMult;
   if (!isPhys && (defScreens.lightscreen || defScreens.auroraveil)) screenFactor = screenMult;
 
   // ── Manual other multipliers ──
@@ -972,6 +946,8 @@ function calcDamage(atker, defer, moveKey) {
   const avg = Math.floor((min+max)/2);
 
   return { min, max, avg, typeEff, defHP, stab, A, D, power, berryMult };
+}
+
 }
 
 // Hazard damage per turn in a 2-turn KO scenario
@@ -2367,13 +2343,14 @@ function buildPowerPanel() {
           <div style="margin-top:10px;border-top:1px solid var(--border);padding-top:8px">
             <div class="power-chart-title" style="margin-bottom:6px">Conditions</div>
             <div style="font-size:11px;color:var(--text2);font-weight:600;margin-bottom:2px">Weather</div>
-            <div style="display:grid;grid-template-columns:1fr 1fr;gap:1px 4px;margin-bottom:6px">
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:1px 4px;margin-bottom:4px">
               ${['none','sun','rain','sand','hail','snow'].map(w=>`
                 <label class="cond-item" style="padding:1px 0;font-size:12px">
                   <input type="radio" name="pw-weather" value="${w}" ${w==='none'?'checked':''}>
                   ${{none:'— None',sun:'☀ Sun',rain:'🌧 Rain',sand:'🌪 Sand',hail:'❄ Hail',snow:'🌨 Snow'}[w]}
                 </label>`).join('')}
             </div>
+            <label class="cond-item" style="font-size:12px;margin-bottom:6px"><input type="checkbox" id="pw-weatherboost"> Move type boosted by weather ×1.5</label>
             <div style="font-size:11px;color:var(--text2);font-weight:600;margin-bottom:2px">Screens on defender</div>
             <label class="cond-item" style="font-size:12px;margin-bottom:2px"><input type="checkbox" id="pw-doubles"> Doubles</label>
             <label class="cond-item" style="font-size:12px"><input type="checkbox" id="pw-reflect"> Reflect (phys ÷2)</label>
@@ -2412,13 +2389,14 @@ function buildPowerPanel() {
   document.getElementById('pw-poke-search').appendChild(pwSearchWrap);
   buildNatureDropdown('pw-nature', pwTarget);
 
-  ['pw-stab','pw-se-none','pw-se-2x','pw-se-4x','pw-doubles','pw-reflect','pw-lightscreen','pw-auroraveil',
+  ['pw-stab','pw-se-none','pw-se-2x','pw-se-4x','pw-doubles','pw-reflect','pw-lightscreen','pw-auroraveil','pw-weatherboost',
    'pw-item-none','pw-item-typeplate','pw-item-lifeorb','pw-item-choice'].forEach(id => {
     document.getElementById(id).addEventListener('change', () => {
-      pwTarget.doubles    = document.getElementById('pw-doubles').checked;
-      pwTarget.reflect    = document.getElementById('pw-reflect').checked;
-      pwTarget.lightscreen= document.getElementById('pw-lightscreen').checked;
-      pwTarget.auroraveil = document.getElementById('pw-auroraveil').checked;
+      pwTarget.doubles      = document.getElementById('pw-doubles').checked;
+      pwTarget.reflect      = document.getElementById('pw-reflect').checked;
+      pwTarget.lightscreen  = document.getElementById('pw-lightscreen').checked;
+      pwTarget.auroraveil   = document.getElementById('pw-auroraveil').checked;
+      pwTarget.weatherBoost = document.getElementById('pw-weatherboost').checked;
       renderPowerPanel();
     });
   });
@@ -2498,8 +2476,13 @@ function renderPowerPanel() {
   if (pwTarget.reflect    || pwTarget.auroraveil) D_phys = Math.floor(D_phys * screenDiv);
   if (pwTarget.lightscreen || pwTarget.auroraveil) D_spec = Math.floor(D_spec * screenDiv);
 
+  // Weather offensive boost — 1.5× if attacker's move type is boosted by weather
+  // Sun boosts Fire, Rain boosts Water. The user indicates this via the weather selection.
+  // We apply it as a separate multiplier so it's transparent.
+  const weatherOffMult = (pwTarget.weatherBoost) ? 1.5 : 1;
+
    function minAtk(D) {
-     return Math.max(1, Math.ceil((defHP - 2) * 50 * D / (22 * power * totalMult)));
+     return Math.max(1, Math.ceil((defHP - 2) * 50 * D / (22 * power * totalMult * weatherOffMult)));
    }
 
    const p = minAtk(D_phys);
@@ -2581,18 +2564,20 @@ function _doRenderOhkoList(pBase, sBase, power, totalMult) {
   // What SE multiplier is required?
   const seMult = parseFloat(document.querySelector('input[name="pw-se"]:checked')?.value || 1);
 
-  // First pass: filter by base stat
+  // First pass: filter by base stat — account for STAB (1.5×) since attacker likely uses STAB moves
+  // A pokemon with base stat * 1.5 >= needed base stat can potentially OHKO with STAB
+  const STAB_FACTOR = 1.5;
   const allPoke = Object.values(DB.pokemon);
   const candidates = allPoke.filter(p => {
     if (!p.moves || p.moves.length === 0) return false;
-    return p.stats.attack >= pBase || p.stats['special-attack'] >= sBase;
+    // Check if STAB-boosted stat meets threshold (conservative: check raw too)
+    return p.stats.attack >= pBase || p.stats['special-attack'] >= sBase ||
+           p.stats.attack * STAB_FACTOR >= pBase || p.stats['special-attack'] * STAB_FACTOR >= sBase;
   });
 
   // Second pass: find qualifying moves
   const results = [];
   for (const poke of candidates) {
-    const physOk = poke.stats.attack >= pBase;
-    const specOk = poke.stats['special-attack'] >= sBase;
     const matchingMoves = [];
 
     for (const moveName of (poke.moves || [])) {
@@ -2600,15 +2585,21 @@ function _doRenderOhkoList(pBase, sBase, power, totalMult) {
       if (!move || move.category === 'status' || !move.power) continue;
       const isPhys = move.category === 'physical';
       const isSpec = move.category === 'special';
-      if (isPhys && !physOk) continue;
-      if (isSpec && !specOk) continue;
+
+      // Check if this Pokémon's relevant stat meets the threshold
+      // Account for STAB: if the move type matches the Pokémon's type, effective base is higher
+      const hasStab = (poke.types || []).includes(move.type);
+      const stabMult = hasStab ? 1.5 : 1;
+      const effAtkBase = isPhys ? poke.stats.attack * stabMult : poke.stats['special-attack'] * stabMult;
+      if (isPhys && effAtkBase < pBase) continue;
+      if (isSpec && effAtkBase < sBase) continue;
 
       // Type effectiveness must match or exceed the selected SE requirement
       const typeEff = getTypeEff(move.type, defTypes);
-      if (typeEff <= 0) continue; // immune
-      if (seMult > 1 && typeEff < seMult) continue; // must be at least as SE as selected
+      if (typeEff <= 0) continue;
+      if (seMult > 1 && typeEff < seMult) continue;
 
-      // Power check: ≤ slider value, or 100% accuracy moves are always included
+      // Power check: ≤ slider value, or 100% accuracy moves always included
       if (move.power > power && move.accuracy !== 100) continue;
 
       matchingMoves.push({ move, typeEff });
