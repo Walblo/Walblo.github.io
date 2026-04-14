@@ -570,7 +570,7 @@ const COLORS = ['#e53e3e','#3182ce','#38a169','#d69e2e','#805ad5','#dd6b20','#00
 let atkPanels = [];
 let defPanels = [];
 let atkCounter = 0, defCounter = 100;
-const pwTarget = { poke: '', nature: 'Hardy', evHP:0, evDef:0, evSpDef:0 };
+const pwTarget = { poke: '', nature: 'Hardy', evHP:0, evDef:0, evSpDef:0, weather:'none', doubles:false, reflect:false, lightscreen:false, auroraveil:false };
 
 // Condition state
 const conds = {
@@ -2261,8 +2261,8 @@ function renderPlots() {
 function buildPowerPanel() {
   const body = document.getElementById('power-body');
   body.innerHTML = `
-    <div class="power-chart-wrap" style="max-width:700px">
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:12px">
+    <div class="power-chart-wrap" style="max-width:900px">
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;margin-bottom:12px">
 
         <div>
           <div class="power-chart-title" style="margin-bottom:8px">Min Attack Stat to OHKO</div>
@@ -2284,6 +2284,23 @@ function buildPowerPanel() {
             <span id="pw-mult-val" style="font-size:12px;font-weight:600;text-align:right">×1</span>
           </div>
           <div style="font-size:10px;color:var(--text3);margin-top:3px">Life Orb=1.3 · Band/Specs=1.5 · STAB+Band=2.25</div>
+
+          <div style="margin-top:10px;border-top:1px solid var(--border);padding-top:8px">
+            <div class="power-chart-title" style="margin-bottom:6px">Conditions</div>
+            <div style="font-size:11px;color:var(--text2);font-weight:600;margin-bottom:2px">Weather</div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:1px 4px;margin-bottom:6px">
+              ${['none','sun','rain','sand','hail','snow'].map(w=>`
+                <label class="cond-item" style="padding:1px 0;font-size:12px">
+                  <input type="radio" name="pw-weather" value="${w}" ${w==='none'?'checked':''}>
+                  ${{none:'— None',sun:'☀ Sun',rain:'🌧 Rain',sand:'🌪 Sand',hail:'❄ Hail',snow:'🌨 Snow'}[w]}
+                </label>`).join('')}
+            </div>
+            <div style="font-size:11px;color:var(--text2);font-weight:600;margin-bottom:2px">Screens on defender</div>
+            <label class="cond-item" style="font-size:12px;margin-bottom:2px"><input type="checkbox" id="pw-doubles"> Doubles</label>
+            <label class="cond-item" style="font-size:12px"><input type="checkbox" id="pw-reflect"> Reflect (phys ÷2)</label>
+            <label class="cond-item" style="font-size:12px"><input type="checkbox" id="pw-lightscreen"> Light Screen (spec ÷2)</label>
+            <label class="cond-item" style="font-size:12px"><input type="checkbox" id="pw-auroraveil"> Aurora Veil (both ÷2)</label>
+          </div>
         </div>
 
         <div>
@@ -2291,19 +2308,43 @@ function buildPowerPanel() {
           <div id="pw-poke-search"></div>
           <div class="type-row" id="pw-poke-types" style="margin-top:4px"></div>
           <div id="pw-poke-stats" style="font-size:11px;color:var(--text2);margin-top:4px"></div>
+          <div style="margin-top:8px">
+            <div style="font-size:11px;color:var(--text2);font-weight:600;margin-bottom:4px">Nature</div>
+            <select id="pw-nature" style="width:100%;background:var(--bg3);border:1px solid var(--border);color:var(--text);padding:3px 6px;border-radius:5px;font-size:12px;outline:none;font-family:var(--font)"></select>
+          </div>
+        </div>
+
+        <div>
+          <div class="power-chart-title" style="margin-bottom:8px">Defender EVs</div>
+          <div style="display:flex;flex-direction:column;gap:4px">
+            ${[['pw-ev-hp','HP'],['pw-ev-def','Def'],['pw-ev-spd','SpD']].map(([id,label])=>`
+              <div style="display:grid;grid-template-columns:28px 1fr 32px;align-items:center;gap:5px">
+                <span style="font-size:11px;color:var(--text2)">${label}</span>
+                <input type="range" id="${id}" min="0" max="252" step="4" value="0" style="accent-color:#4f46e5">
+                <span id="${id}-val" style="font-size:11px;font-weight:600;text-align:right">0</span>
+              </div>`).join('')}
+          </div>
         </div>
 
       </div>
       <div id="power-results"></div>
     </div>`;
 
-  // Build the poke search for the OHKO target
   const pwSearchWrap = buildPokeSearch('pw-poke-search', 'pw', false);
   document.getElementById('pw-poke-search').appendChild(pwSearchWrap);
+  buildNatureDropdown('pw-nature', pwTarget);
 
-  ['pw-stab','pw-se-none','pw-se-2x','pw-se-4x'].forEach(id => {
-    document.getElementById(id).addEventListener('change', renderPowerPanel);
+  ['pw-stab','pw-se-none','pw-se-2x','pw-se-4x','pw-doubles','pw-reflect','pw-lightscreen','pw-auroraveil'].forEach(id => {
+    document.getElementById(id).addEventListener('change', () => {
+      pwTarget.doubles    = document.getElementById('pw-doubles').checked;
+      pwTarget.reflect    = document.getElementById('pw-reflect').checked;
+      pwTarget.lightscreen= document.getElementById('pw-lightscreen').checked;
+      pwTarget.auroraveil = document.getElementById('pw-auroraveil').checked;
+      renderPowerPanel();
+    });
   });
+  document.querySelectorAll('input[name="pw-weather"]').forEach(r =>
+    r.addEventListener('change', e => { pwTarget.weather = e.target.value; renderPowerPanel(); }));
   document.getElementById('pw-power').addEventListener('input', e => {
     document.getElementById('pw-power-val').textContent = e.target.value;
     renderPowerPanel();
@@ -2312,6 +2353,16 @@ function buildPowerPanel() {
     const v = parseFloat(e.target.value);
     document.getElementById('pw-mult-val').textContent = '×' + v.toFixed(2).replace(/\.?0+$/,'');
     renderPowerPanel();
+  });
+  [['pw-ev-hp','evHP'],['pw-ev-def','evDef'],['pw-ev-spd','evSpDef']].forEach(([id,key]) => {
+    document.getElementById(id).addEventListener('input', e => {
+      pwTarget[key] = parseInt(e.target.value)||0;
+      document.getElementById(id+'-val').textContent = e.target.value;
+      renderPowerPanel();
+    });
+  });
+  document.getElementById('pw-nature').addEventListener('change', e => {
+    pwTarget.nature = e.target.value; renderPowerPanel();
   });
 }
 
@@ -2339,9 +2390,19 @@ function renderPowerPanel() {
   const defPoke = DB.pokemon[pwTarget.poke];
   if (!defPoke) return;
 
-  const defHP  = calcHP(defPoke.stats.hp, pwTarget.evHP||0);
-  const D_phys = calcStat(defPoke.stats.defense,            pwTarget.evDef||0,   31, LEVEL, getNatureMult(pwTarget.nature,'defense'));
-  const D_spec = calcStat(defPoke.stats['special-defense'], pwTarget.evSpDef||0, 31, LEVEL, getNatureMult(pwTarget.nature,'special-defense'));
+  let D_phys = calcStat(defPoke.stats.defense,            pwTarget.evDef||0,   31, LEVEL, getNatureMult(pwTarget.nature,'defense'));
+  let D_spec = calcStat(defPoke.stats['special-defense'], pwTarget.evSpDef||0, 31, LEVEL, getNatureMult(pwTarget.nature,'special-defense'));
+  const defHP = calcHP(defPoke.stats.hp, pwTarget.evHP||0);
+
+  // Sand: Rock-types get 1.5× SpDef
+  if (pwTarget.weather === 'sand' && (defPoke.types||[]).includes('rock')) D_spec = Math.floor(D_spec * 1.5);
+  // Snow: Ice-types get 1.5× SpDef
+  if (pwTarget.weather === 'snow' && (defPoke.types||[]).includes('ice'))  D_spec = Math.floor(D_spec * 1.5);
+
+  // Screens: divide the relevant D stat
+  const screenDiv = pwTarget.doubles ? 1.5 : 2;
+  if (pwTarget.reflect    || pwTarget.auroraveil) D_phys = Math.floor(D_phys * screenDiv);
+  if (pwTarget.lightscreen || pwTarget.auroraveil) D_spec = Math.floor(D_spec * screenDiv);
 
   function minAtk(D) {
     return Math.max(1, Math.ceil((defHP - 2) * 50 * D / (22 * power * totalMult)));
