@@ -387,7 +387,22 @@ input[type=range]{width:100%;accent-color:#4f46e5;height:4px}
 
 <div id="view-ohko" style="display:none;flex-direction:row;flex:1;overflow:hidden;min-height:0;gap:0">
   <div id="power-body" style="width:500px;flex-shrink:0;overflow-y:auto;padding:12px;border-right:1px solid var(--border)"></div>
-  <div id="ohko-list-body" style="flex:1;overflow-y:auto;padding:12px"></div>
+  <div style="flex:1;display:flex;flex-direction:column;overflow:hidden;min-height:0">
+    <div id="ohko-list-controls" style="padding:8px 12px;border-bottom:1px solid var(--border);background:var(--bg2);display:flex;flex-wrap:wrap;gap:6px;align-items:center;flex-shrink:0">
+      <input id="ohko-search" type="text" placeholder="Search Pokémon or ability…" style="background:var(--bg3);border:1px solid var(--border);color:var(--text);padding:4px 8px;border-radius:5px;font-size:12px;outline:none;font-family:var(--font);width:180px">
+      <select id="ohko-sort" style="background:var(--bg3);border:1px solid var(--border);color:var(--text);padding:4px 8px;border-radius:5px;font-size:12px;outline:none;font-family:var(--font)">
+        <option value="eff">Sort: Effectiveness</option>
+        <option value="atk">Sort: Atk stat ↓</option>
+        <option value="spa">Sort: SpA stat ↓</option>
+        <option value="bst">Sort: BST ↓</option>
+        <option value="name">Sort: Name A–Z</option>
+      </select>
+      <div id="ohko-type-tags" style="display:flex;flex-wrap:wrap;gap:4px;align-items:center">
+        <span style="font-size:11px;color:var(--text3)">Filter types:</span>
+      </div>
+    </div>
+    <div id="ohko-list-body" style="flex:1;overflow-y:auto;padding:12px"></div>
+  </div>
 </div>
 
 <div id="view-dex">
@@ -582,6 +597,10 @@ async function init() {
     buildPowerPanel();
     initDex();
     recalc();
+
+    // OHKO list control listeners (elements exist in HTML, not built dynamically)
+    document.getElementById('ohko-search').addEventListener('input', () => renderPowerPanel());
+    document.getElementById('ohko-sort').addEventListener('change', () => renderPowerPanel());
   } catch(e) {
     document.getElementById('data-status').textContent = 'Error loading data — run generate_data.py first.';
     console.error(e);
@@ -2697,64 +2716,135 @@ function _doRenderOhkoList(pBase, sBase, power, totalMult, atkEV=0, spaEV=0) {
     return;
   }
 
-  // Sort by best move's type effectiveness desc, then move type alphabetically, then stat desc
-  results.sort((a, b) => {
+  // ── Controls state ──
+  const searchVal = (document.getElementById('ohko-search')?.value || '').toLowerCase();
+  const sortVal   = document.getElementById('ohko-sort')?.value || 'eff';
+
+  // Build type tag filter UI (pill buttons for each move type present in results)
+  const typesPresent = [...new Set(results.map(r => r.moves[0].type))].sort();
+  const typeTagsEl = document.getElementById('ohko-type-tags');
+  if (typeTagsEl) {
+    // Preserve selected tags across renders
+    if (!window._ohkoTypeFilter) window._ohkoTypeFilter = new Set();
+    typeTagsEl.innerHTML = '<span style="font-size:11px;color:var(--text3)">Filter types:</span>';
+    typesPresent.forEach(t => {
+      const btn = document.createElement('span');
+      const active = window._ohkoTypeFilter.has(t);
+      btn.style.cssText = `cursor:pointer;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;padding:2px 7px;border-radius:4px;color:${active?'#fff':'var(--text2)'};background:${active?getTypeColor(t):'var(--bg3)'};border:1px solid ${active?getTypeColor(t):'var(--border)'}`;
+      btn.textContent = t;
+      btn.onclick = () => {
+        if (window._ohkoTypeFilter.has(t)) window._ohkoTypeFilter.delete(t);
+        else window._ohkoTypeFilter.add(t);
+        _doRenderOhkoList(pBase, sBase, power, totalMult, atkEV, spaEV);
+      };
+      typeTagsEl.appendChild(btn);
+    });
+    if (window._ohkoTypeFilter.size > 0) {
+      const clr = document.createElement('span');
+      clr.style.cssText = 'font-size:10px;color:var(--text3);cursor:pointer;text-decoration:underline;padding:2px 4px';
+      clr.textContent = 'clear';
+      clr.onclick = () => { window._ohkoTypeFilter.clear(); _doRenderOhkoList(pBase, sBase, power, totalMult, atkEV, spaEV); };
+      typeTagsEl.appendChild(clr);
+    }
+  }
+
+  // ── Filter by search (name or ability) ──
+  let filtered = results.filter(({ poke }) => {
+    if (!searchVal) return true;
+    if (poke.display.toLowerCase().includes(searchVal)) return true;
+    if ((poke.abilities || []).some(a => a.toLowerCase().replace(/-/g,' ').includes(searchVal))) return true;
+    return false;
+  });
+
+  // ── Filter by selected type tags ──
+  if (window._ohkoTypeFilter && window._ohkoTypeFilter.size > 0) {
+    filtered = filtered.filter(({ moves }) => window._ohkoTypeFilter.has(moves[0].type));
+  }
+
+  // ── Sort ──
+  filtered.sort((a, b) => {
+    if (sortVal === 'atk') return b.poke.stats.attack - a.poke.stats.attack;
+    if (sortVal === 'spa') return b.poke.stats['special-attack'] - a.poke.stats['special-attack'];
+    if (sortVal === 'bst') {
+      const bstA = Object.values(a.poke.stats).reduce((s,v)=>s+v,0);
+      const bstB = Object.values(b.poke.stats).reduce((s,v)=>s+v,0);
+      return bstB - bstA;
+    }
+    if (sortVal === 'name') return a.poke.display.localeCompare(b.poke.display);
+    // Default: effectiveness desc, then move type alpha, then best stat desc
     const effA = getTypeEff(a.moves[0].type, defTypes);
     const effB = getTypeEff(b.moves[0].type, defTypes);
     if (effB !== effA) return effB - effA;
-    const ta = a.moves[0].type || '';
-    const tb = b.moves[0].type || '';
+    const ta = a.moves[0].type || '', tb = b.moves[0].type || '';
     if (ta !== tb) return ta.localeCompare(tb);
-    const statA = Math.max(a.poke.stats.attack, a.poke.stats['special-attack']);
-    const statB = Math.max(b.poke.stats.attack, b.poke.stats['special-attack']);
-    return statB - statA;
+    return Math.max(b.poke.stats.attack, b.poke.stats['special-attack']) - Math.max(a.poke.stats.attack, a.poke.stats['special-attack']);
   });
 
-  // Header
+  // ── Header ──
   const hdr = document.createElement('div');
   hdr.style.cssText = 'font-size:11px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.08em;margin-bottom:10px;padding-bottom:6px;border-bottom:1px solid var(--border)';
-  hdr.textContent = `${results.length} Pokémon can OHKO ${DB.pokemon[pwTarget.poke]?.display || ''}`;
+  hdr.textContent = `${filtered.length}${filtered.length !== results.length ? ' of ' + results.length : ''} Pokémon can OHKO ${DB.pokemon[pwTarget.poke]?.display || ''}`;
   body.appendChild(hdr);
 
+  // ── Group by move type (when sorting by effectiveness) ──
+  const groupByType = sortVal === 'eff';
   let lastType = null;
+  let groupBody = null;
 
-  results.forEach(({ poke, moves }) => {
+  filtered.forEach(({ poke, moves }) => {
     const groupType = moves[0].type || 'normal';
     const typeEff = getTypeEff(groupType, defTypes);
 
-    // Type group header
-    if (groupType !== lastType) {
+    if (groupByType && groupType !== lastType) {
       lastType = groupType;
-      const effLabel = typeEff >= 4 ? ' 4×' : typeEff >= 2 ? ' 2×' : '';
+      const effLabel = typeEff >= 4 ? ' 4×' : typeEff >= 2 ? ' 2×' : typeEff < 1 ? ' ½×' : '';
+      const groupId = `ohko-group-${groupType}`;
+
+      // Collapsible group header
       const typeHead = document.createElement('div');
-      typeHead.style.cssText = 'display:flex;align-items:center;gap:6px;margin:10px 0 4px';
-      typeHead.innerHTML = `<span class="type-badge" style="background:${getTypeColor(groupType)}">${groupType}${effLabel}</span><div style="flex:1;height:1px;background:var(--border)"></div>`;
+      typeHead.style.cssText = 'display:flex;align-items:center;gap:6px;margin:10px 0 4px;cursor:pointer;user-select:none';
+      typeHead.innerHTML = `<span class="type-badge" style="background:${getTypeColor(groupType)}">${groupType}${effLabel}</span><div style="flex:1;height:1px;background:var(--border)"></div><span style="font-size:11px;color:var(--text3)" id="${groupId}-tog">▾</span>`;
       body.appendChild(typeHead);
+
+      groupBody = document.createElement('div');
+      groupBody.id = groupId;
+      body.appendChild(groupBody);
+
+      typeHead.onclick = () => {
+        const collapsed = groupBody.style.display === 'none';
+        groupBody.style.display = collapsed ? '' : 'none';
+        document.getElementById(`${groupId}-tog`).textContent = collapsed ? '▾' : '▸';
+      };
     }
+
+    const target = groupByType ? groupBody : body;
 
     // Pokémon row
     const row = document.createElement('div');
     row.style.cssText = 'display:flex;align-items:flex-start;gap:8px;padding:5px 6px;background:var(--bg2);border:1px solid var(--border);border-radius:6px;margin-bottom:4px';
 
-    // Sprite
     const img = document.createElement('img');
     img.src = `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${poke.dex_id}.png`;
     img.style.cssText = 'width:32px;height:32px;object-fit:contain;image-rendering:pixelated;flex-shrink:0';
     row.appendChild(img);
 
-    // Info
     const info = document.createElement('div');
     info.style.cssText = 'flex:1;min-width:0';
 
     const nameRow = document.createElement('div');
-    nameRow.style.cssText = 'display:flex;align-items:center;gap:5px;margin-bottom:3px';
-    const atkStat = poke.stats.attack;
-    const spaStat = poke.stats['special-attack'];
+    nameRow.style.cssText = 'display:flex;align-items:center;gap:5px;margin-bottom:2px;flex-wrap:wrap';
+    const atkStat = calcStat(poke.stats.attack, atkEV, 31, 50, 1);
+    const spaStat = calcStat(poke.stats['special-attack'], spaEV, 31, 50, 1);
+    const bst = Object.values(poke.stats).reduce((s,v)=>s+v,0);
+    // Show ability tags
+    const abilityTags = (poke.abilities||[]).slice(0,2).map(a =>
+      `<span style="font-size:9px;background:var(--bg3);border:1px solid var(--border);border-radius:3px;padding:0 4px;color:var(--text2)">${a.replace(/-/g,' ').replace(/\b\w/g,c=>c.toUpperCase())}</span>`
+    ).join('');
     nameRow.innerHTML = `<span style="font-size:12px;font-weight:700">${poke.display}</span>
-      <span style="font-size:10px;color:var(--text3)">Atk ${atkStat} · SpA ${spaStat}</span>`;
+      <span style="font-size:10px;color:var(--text3)">Atk ${atkStat} · SpA ${spaStat} · BST ${bst}</span>
+      ${abilityTags}`;
     info.appendChild(nameRow);
 
-    // Moves
     const movesWrap = document.createElement('div');
     movesWrap.style.cssText = 'display:flex;flex-wrap:wrap;gap:3px';
     moves.slice(0, 6).forEach(move => {
@@ -2771,7 +2861,7 @@ function _doRenderOhkoList(pBase, sBase, power, totalMult, atkEV=0, spaEV=0) {
     }
     info.appendChild(movesWrap);
     row.appendChild(info);
-    body.appendChild(row);
+    target.appendChild(row);
   });
 }
 
