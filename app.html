@@ -2834,9 +2834,11 @@ function _renderOhkoResults(results, defTypes) {
     return false;
   });
 
-  // ── Filter by selected type tags ──
+  // ── Filter by selected type tags (OR — show any matching type) ──
   if (window._ohkoTypeFilter && window._ohkoTypeFilter.size > 0) {
-    filtered = filtered.filter(({ moves }) => window._ohkoTypeFilter.has(moves[0].type));
+    filtered = filtered.filter(({ moves }) =>
+      moves.some(m => window._ohkoTypeFilter.has(m.type))
+    );
   }
 
   // ── Filter by learnable move tags ──
