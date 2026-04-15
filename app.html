@@ -294,7 +294,7 @@ input[type=range]{width:100%;accent-color:#4f46e5;height:4px}
 
 /* ── pokedex table ── */
 #dex-controls{margin-bottom:10px}
-#dex-move-filters{display:none}
+#dex-move-filters{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-top:4px}
 .move-filter-tag{display:flex;align-items:center;gap:4px;background:var(--bg3);border:1px solid var(--border);border-radius:4px;padding:2px 8px;font-size:12px;color:var(--text)}
 .move-filter-tag button{background:none;border:none;color:var(--text2);cursor:pointer;font-size:13px;padding:0;line-height:1}
 .move-filter-tag button:hover{color:var(--text)}
@@ -389,7 +389,12 @@ input[type=range]{width:100%;accent-color:#4f46e5;height:4px}
   <div id="power-body" style="width:500px;flex-shrink:0;overflow-y:auto;padding:12px;border-right:1px solid var(--border)"></div>
   <div style="flex:1;display:flex;flex-direction:column;overflow:hidden;min-height:0">
     <div id="ohko-list-controls" style="padding:8px 12px;border-bottom:1px solid var(--border);background:var(--bg2);display:flex;flex-wrap:wrap;gap:6px;align-items:center;flex-shrink:0">
-      <input id="ohko-search" type="text" placeholder="Search name or ability…" style="background:var(--bg3);border:1px solid var(--border);color:var(--text);padding:4px 8px;border-radius:5px;font-size:12px;outline:none;font-family:var(--font);width:180px">
+      <input id="ohko-search" type="text" placeholder="Search name or ability…" style="background:var(--bg3);border:1px solid var(--border);color:var(--text);padding:4px 8px;border-radius:5px;font-size:12px;outline:none;font-family:var(--font);width:170px">
+      <div class="move-filter-wrap" style="position:relative">
+        <input id="ohko-move-input" type="text" placeholder="Must learn move…" autocomplete="off" style="background:var(--bg3);border:1px solid var(--border);color:var(--text);padding:4px 8px;border-radius:5px;font-size:12px;outline:none;font-family:var(--font);width:150px">
+        <div id="ohko-move-suggestions" style="position:absolute;top:100%;left:0;background:var(--bg2);border:1px solid var(--border);border-radius:5px;z-index:50;max-height:200px;overflow-y:auto;min-width:200px;box-shadow:0 4px 12px rgba(0,0,0,.12)"></div>
+      </div>
+      <div id="ohko-move-tags" style="display:flex;flex-wrap:wrap;gap:4px"></div>
       <select id="ohko-sort" style="background:var(--bg3);border:1px solid var(--border);color:var(--text);padding:4px 8px;border-radius:5px;font-size:12px;outline:none;font-family:var(--font)">
         <option value="eff">Sort: Effectiveness</option>
         <option value="atk">Sort: Atk stat ↓</option>
@@ -602,6 +607,56 @@ async function init() {
     document.getElementById('ohko-sort').addEventListener('change', () => {
       if (_ohkoCachedResults.length > 0) _renderOhkoResults(_ohkoCachedResults, _ohkoDefTypes);
     });
+
+    // OHKO move filter (tag-based, filters full learnset)
+    window._ohkoMoveFilters = [];
+    const ohkoMoveInput = document.getElementById('ohko-move-input');
+    const ohkoMoveSugg  = document.getElementById('ohko-move-suggestions');
+    const ohkoMoveTags  = document.getElementById('ohko-move-tags');
+
+    function ohkoRenderMoveTags() {
+      ohkoMoveTags.innerHTML = '';
+      window._ohkoMoveFilters.forEach(key => {
+        const move = DB.moves[key];
+        const tag = document.createElement('div');
+        tag.className = 'move-filter-tag';
+        tag.innerHTML = `<span>${move ? move.display : key}</span><button>×</button>`;
+        tag.querySelector('button').addEventListener('click', () => {
+          window._ohkoMoveFilters = window._ohkoMoveFilters.filter(m => m !== key);
+          ohkoRenderMoveTags();
+          if (_ohkoCachedResults.length > 0) _renderOhkoResults(_ohkoCachedResults, _ohkoDefTypes);
+        });
+        ohkoMoveTags.appendChild(tag);
+      });
+    }
+
+    ohkoMoveInput.addEventListener('input', () => {
+      const q = ohkoMoveInput.value.toLowerCase().trim();
+      ohkoMoveSugg.innerHTML = '';
+      if (!q) return;
+      Object.values(DB.moves).filter(m => m.display && m.display.toLowerCase().includes(q)).slice(0, 12).forEach(m => {
+        const d = document.createElement('div');
+        d.textContent = m.display;
+        d.style.cssText = 'padding:5px 10px;font-size:12px;cursor:pointer;color:var(--text)';
+        d.addEventListener('mouseover', () => d.style.background = 'var(--bg3)');
+        d.addEventListener('mouseout',  () => d.style.background = '');
+        d.addEventListener('mousedown', e => {
+          e.preventDefault();
+          const key = m.name;
+          if (!key || window._ohkoMoveFilters.includes(key)) { ohkoMoveSugg.innerHTML=''; ohkoMoveInput.value=''; return; }
+          window._ohkoMoveFilters.push(key);
+          ohkoMoveInput.value = '';
+          ohkoMoveSugg.innerHTML = '';
+          ohkoRenderMoveTags();
+          if (_ohkoCachedResults.length > 0) _renderOhkoResults(_ohkoCachedResults, _ohkoDefTypes);
+        });
+        ohkoMoveSugg.appendChild(d);
+      });
+    });
+    ohkoMoveInput.addEventListener('keydown', e => {
+      if (e.key === 'Escape') { ohkoMoveSugg.innerHTML=''; ohkoMoveInput.value=''; }
+    });
+    ohkoMoveInput.addEventListener('blur', () => setTimeout(() => { ohkoMoveSugg.innerHTML=''; }, 150));
   } catch(e) {
     console.error('Init error:', e);
     // Only show error if data never loaded
@@ -2751,6 +2806,14 @@ function _renderOhkoResults(results, defTypes) {
     return false;
   });
 
+  // ── Filter by must-learn moves (full learnset, not just OHKO moves) ──
+  const ohkoMoveFilters = window._ohkoMoveFilters || [];
+  if (ohkoMoveFilters.length > 0) {
+    filtered = filtered.filter(({ poke }) =>
+      ohkoMoveFilters.every(key => (poke.moves || []).includes(key))
+    );
+  }
+
   if (filtered.length === 0) {
     body.innerHTML = '<div style="font-size:12px;color:var(--text3);padding:12px 0">No Pokémon match.</div>';
     return;
@@ -3101,12 +3164,14 @@ function initDex() {
     moveSugg.innerHTML = '';
     if (!q) return;
     const matches = Object.values(DB.moves)
-      .filter(m => m.display && m.display.toLowerCase().includes(q) && m.category !== 'status' || 
-                   m.display && m.display.toLowerCase().includes(q))
+      .filter(m => m.display && m.display.toLowerCase().includes(q))
       .slice(0, 12);
     matches.forEach(m => {
       const d = document.createElement('div');
       d.textContent = m.display;
+      d.style.cssText = 'padding:5px 10px;font-size:12px;cursor:pointer;color:var(--text)';
+      d.addEventListener('mouseover', () => d.style.background = 'var(--bg3)');
+      d.addEventListener('mouseout',  () => d.style.background = '');
       d.addEventListener('mousedown', e => { e.preventDefault(); addMoveFilter(m.name); });
       moveSugg.appendChild(d);
     });
