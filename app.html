@@ -3046,7 +3046,9 @@ function renderDex() {
   if (megaF === 'base') rows = rows.filter(p => !p.is_mega);
   if (abilF)  rows = rows.filter(p => (p.abilities||[]).includes(abilF));
   if (dexMoveFilters.length > 0) {
+    console.log('renderDex: filtering by moves', dexMoveFilters, 'before=', rows.length);
     rows = rows.filter(p => dexMoveFilters.every(m => (p.moves||[]).includes(m)));
+    console.log('renderDex: after move filter=', rows.length);
   }
 
   rows.sort((a,b) => {
@@ -3135,8 +3137,10 @@ function initDex() {
   const moveTags  = document.getElementById('dex-move-tags');
 
   function addMoveFilter(key) {
+    console.log('addMoveFilter called with key=', key);
     if (!key || dexMoveFilters.includes(key)) { moveSugg.innerHTML=''; moveInput.value=''; return; }
     dexMoveFilters.push(key);
+    console.log('dexMoveFilters now=', dexMoveFilters);
     moveInput.value = '';
     moveSugg.innerHTML = '';
     renderMoveTags();
@@ -3186,6 +3190,10 @@ function initDex() {
   });
 
   moveInput.addEventListener('blur', () => setTimeout(() => { moveSugg.innerHTML = ''; }, 150));
+
+  // DEBUG — remove after confirming
+  console.log('initDex: moveInput=', moveInput, 'moveSugg=', moveSugg, 'moveTags=', moveTags);
+  moveInput.addEventListener('input', () => console.log('dex move input fired, value=', moveInput.value, 'DB.moves keys=', Object.keys(DB.moves).length));
 }
 function recalc() {
   if (!loaded) return;
