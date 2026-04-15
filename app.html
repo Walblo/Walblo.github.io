@@ -2380,6 +2380,7 @@ function renderPlots() {
 // ─────────────────────────────────────────────────────────
 function buildPowerPanel() {
   const body = document.getElementById('power-body');
+  console.log('buildPowerPanel: body=', body);
   body.innerHTML = `
     <div class="power-chart-wrap" style="max-width:860px">
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:12px">
@@ -2419,16 +2420,15 @@ function buildPowerPanel() {
             <div class="power-chart-title" style="margin-bottom:6px">Conditions</div>
             <div style="font-size:11px;color:var(--text2);font-weight:600;margin-bottom:2px">Weather</div>
             <div style="display:grid;grid-template-columns:1fr 1fr;gap:1px 4px;margin-bottom:6px">
-              ${['none','sun','rain','sand','hail','snow'].map(w=>`
-                <label class="cond-item" style="padding:1px 0;font-size:12px">
-                  <input type="radio" name="pw-weather" value="${w}" ${w==='none'?'checked':''}>
-                  ${{none:'— None',sun:'☀ Sun',rain:'🌧 Rain',sand:'🌪 Sand',hail:'❄ Hail',snow:'🌨 Snow'}[w]}
-                </label>`).join('')}
+              ${['none','sun','rain','sand','hail','snow'].map(function(w){
+                const labels={none:'\u2014 None',sun:'\u2600 Sun',rain:'\uD83C\uDF27 Rain',sand:'\uD83C\uDF2A Sand',hail:'\u2745 Hail',snow:'\uD83C\uDF28 Snow'};
+                return '<label class="cond-item" style="padding:1px 0;font-size:12px"><input type="radio" name="pw-weather" value="'+w+'" '+(w==='none'?'checked':'')+'>'+labels[w]+'</label>';
+              }).join('')}
             </div>
             <div style="font-size:11px;color:var(--text2);font-weight:600;margin-bottom:2px">Move type</div>
             <select id="pw-movetype" style="width:100%;background:var(--bg3);border:1px solid var(--border);color:var(--text);padding:4px 7px;border-radius:5px;font-size:12px;outline:none;font-family:var(--font);margin-bottom:6px">
               <option value="none">— Any / Unknown</option>
-              ${['normal','fire','water','electric','grass','ice','fighting','poison','ground','flying','psychic','bug','rock','ghost','dragon','dark','steel','fairy'].map(t=>`<option value="${t}">${t.charAt(0).toUpperCase()+t.slice(1)}</option>`).join('')}
+              ${['normal','fire','water','electric','grass','ice','fighting','poison','ground','flying','psychic','bug','rock','ghost','dragon','dark','steel','fairy'].map(function(t){return '<option value="'+t+'">'+t.charAt(0).toUpperCase()+t.slice(1)+'</option>';}).join('')}
             </select>
             <div id="pw-weather-note" style="font-size:10px;color:var(--text3);margin-bottom:6px"></div>
             <div style="font-size:11px;color:var(--text2);font-weight:600;margin-bottom:2px">Screens on defender</div>
@@ -2468,12 +2468,10 @@ function buildPowerPanel() {
               <div>
                 <div class="power-chart-title" style="margin-bottom:6px">Defender EVs</div>
                 <div style="display:flex;flex-direction:column;gap:4px">
-                  ${[['pw-ev-hp','HP'],['pw-ev-def','Def'],['pw-ev-spd','SpD']].map(([id,label])=>`
-                    <div style="display:grid;grid-template-columns:28px 1fr 32px;align-items:center;gap:5px">
-                      <span style="font-size:11px;color:var(--text2)">${label}</span>
-                      <input type="range" id="${id}" min="0" max="252" step="4" value="0" style="accent-color:#4f46e5">
-                      <span id="${id}-val" style="font-size:11px;font-weight:600;text-align:right">0</span>
-                    </div>`).join('')}
+                  ${[['pw-ev-hp','HP'],['pw-ev-def','Def'],['pw-ev-spd','SpD']].map(function(pair){
+                    var id=pair[0],label=pair[1];
+                    return '<div style="display:grid;grid-template-columns:28px 1fr 32px;align-items:center;gap:5px"><span style="font-size:11px;color:var(--text2)">'+label+'</span><input type="range" id="'+id+'" min="0" max="252" step="4" value="0" style="accent-color:#4f46e5"><span id="'+id+'-val" style="font-size:11px;font-weight:600;text-align:right">0</span></div>';
+                  }).join('')}
                 </div>
               </div>
             </div>
@@ -2487,7 +2485,6 @@ function buildPowerPanel() {
   const pwSearchWrap = buildPokeSearch('pw-poke-search', 'pw', false);
   document.getElementById('pw-poke-search').appendChild(pwSearchWrap);
   buildNatureDropdown('pw-nature', pwTarget);
-
   ['pw-stab','pw-se-none','pw-se-2x','pw-se-4x','pw-doubles','pw-reflect','pw-lightscreen','pw-auroraveil',
    'pw-item-none','pw-item-typeplate','pw-item-lifeorb','pw-item-choice'].forEach(id => {
     document.getElementById(id).addEventListener('change', () => {
@@ -2520,9 +2517,7 @@ function buildPowerPanel() {
       renderPowerPanel();
     });
   });
-  document.getElementById('pw-nature').addEventListener('change', e => {
-    pwTarget.nature = e.target.value; renderPowerPanel();
-  });
+  // pw-nature is handled via buildNatureDropdown which calls panel.nature = n.name directly
 }
 
 // Reverse calcStat: given a needed final stat, find the minimum base stat
@@ -2968,6 +2963,7 @@ function buildNatureDropdown(selectId, panel) {
 
   function setNature(n) {
     panel.nature = n.name;
+    if (panel === pwTarget) renderPowerPanel();
     display.innerHTML = '';
     const nm = document.createElement('span');
     nm.className = 'nat-name';
