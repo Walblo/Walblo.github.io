@@ -399,6 +399,7 @@ input[type=range]{width:100%;accent-color:#4f46e5;height:4px}
         <option value="eff">Sort: Effectiveness</option>
         <option value="atk">Sort: Atk stat ↓</option>
         <option value="spa">Sort: SpA stat ↓</option>
+        <option value="spe">Sort: Speed ↓</option>
         <option value="bst">Sort: BST ↓</option>
         <option value="name">Sort: Name A–Z</option>
       </select>
@@ -672,7 +673,18 @@ const COLORS = ['#e53e3e','#3182ce','#38a169','#d69e2e','#805ad5','#dd6b20','#00
 let atkPanels = [];
 let defPanels = [];
 let atkCounter = 0, defCounter = 100;
-const pwTarget = { poke: '', nature: 'Hardy', evHP:0, evDef:0, evSpDef:0, evAtk:0, evSpA:0, weather:'none', moveType:'none', doubles:false, reflect:false, lightscreen:false, auroraveil:false };
+const pwTarget = {
+  poke: '', nature: 'Hardy', atkNature: 'Hardy',
+  evHP:0, evDef:0, evSpDef:0, evAtk:0, evSpA:0,
+  weather:'none', moveType:'none',
+  doubles:false, reflect:false, lightscreen:false, auroraveil:false,
+  atkStage:0, spaStage:0, defStage:0, spdStage:0,
+  // Speed
+  evSpe:0, speStage:0, tailwind:false, unburden:false,
+  evAtkSpe:0, atkSpeStage:0, atkTailwind:false, atkUnburden:false,
+  // Items
+  atkItem:'none', defItem:'none',
+};
 
 // Condition state
 const conds = {
@@ -727,6 +739,13 @@ function calcStat(base, ev, iv=31, level=50, natureMult=1) {
 }
 function calcHP(base, ev, iv=31, level=50) {
   return Math.floor((2*base + iv + Math.floor(ev/4)) * level/100) + level + 10;
+}
+
+function effSpeed(baseSpe, ev, stage, tailwind, scarf, unburden) {
+  const stat = calcStat(baseSpe, ev, 31, 50, 1);
+  const sm = stage >= 0 ? (2+stage)/2 : 2/(2-stage);
+  const itemMult = scarf ? 1.5 : unburden ? 2 : 1;
+  return Math.floor(stat * sm * itemMult * (tailwind ? 2 : 1));
 }
 function getNatureMult(natureName, statName) {
   const natures = (DB.meta.natures || []);
@@ -1208,7 +1227,7 @@ function selectPoke(p, input, sprite, list, containerId, panelId, isAtk) {
       });
     }
     const statsEl = document.getElementById('pw-poke-stats');
-    if (statsEl) statsEl.textContent = `HP ${p.stats.hp} · Def ${p.stats.defense} · SpD ${p.stats['special-defense']}`;
+    if (statsEl) statsEl.textContent = `HP ${p.stats.hp} · Def ${p.stats.defense} · SpD ${p.stats['special-defense']} · Spe ${p.stats.speed}`;
     renderPowerPanel();
     return;
   }
@@ -2382,98 +2401,154 @@ function buildPowerPanel() {
   const body = document.getElementById('power-body');
   console.log('buildPowerPanel: body=', body);
   body.innerHTML = `
-    <div class="power-chart-wrap" style="max-width:860px">
+    <div class="power-chart-wrap" style="max-width:900px">
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:12px">
 
+        <!-- LEFT COLUMN: Attacker settings -->
         <div>
-          <div class="power-chart-title" style="margin-bottom:8px">Min Attack Stat to OHKO</div>
-          <div style="display:grid;grid-template-columns:auto auto auto;gap:6px 12px;align-items:center;margin-bottom:8px">
+          <div class="power-chart-title" style="margin-bottom:6px">Min Attack Stat to OHKO</div>
+          <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:6px">
             <label class="cond-item" style="font-size:12px"><input type="checkbox" id="pw-stab" style="accent-color:#4f46e5"> STAB</label>
             <label class="cond-item" style="font-size:12px"><input type="radio" name="pw-se" id="pw-se-none" value="1" checked> No SE</label>
             <label class="cond-item" style="font-size:12px"><input type="radio" name="pw-se" id="pw-se-2x" value="2"> SE 2×</label>
-            <span></span>
             <label class="cond-item" style="font-size:12px"><input type="radio" name="pw-se" id="pw-se-4x" value="4"> SE 4×</label>
           </div>
-          <div style="display:grid;grid-template-columns:auto 1fr 36px;align-items:center;gap:6px;margin-bottom:6px">
-            <span style="font-size:11px;color:var(--text2)">Power</span>
-            <input type="range" id="pw-power" min="40" max="200" step="5" value="80" style="accent-color:#4f46e5">
-            <span id="pw-power-val" style="font-size:12px;font-weight:600;text-align:right">80</span>
-          </div>
-          <div style="display:grid;grid-template-columns:auto 1fr 36px;align-items:center;gap:6px">
-            <span style="font-size:11px;color:var(--text2)">Mult</span>
-            <input type="range" id="pw-mult" min="0.5" max="3" step="0.05" value="1" style="accent-color:#4f46e5">
-            <span id="pw-mult-val" style="font-size:12px;font-weight:600;text-align:right">×1</span>
-          </div>
-          <div style="font-size:10px;color:var(--text3);margin-top:3px">Life Orb=1.3 · Band/Specs=1.5 · STAB+Band=2.25</div>
 
-          <div style="margin-top:8px;border-top:1px solid var(--border);padding-top:8px">
-            <div class="power-chart-title" style="margin-bottom:6px">Attacker Item</div>
-            <div style="display:grid;grid-template-columns:1fr 1fr;gap:2px 8px">
-              <label class="cond-item" style="font-size:12px"><input type="radio" name="pw-item" id="pw-item-none" value="1" checked> None</label>
-              <label class="cond-item" style="font-size:12px"><input type="radio" name="pw-item" id="pw-item-typeplate" value="1.2"> Type item ×1.2</label>
-              <label class="cond-item" style="font-size:12px"><input type="radio" name="pw-item" id="pw-item-lifeorb" value="1.3"> Life Orb ×1.3</label>
-              <label class="cond-item" style="font-size:12px"><input type="radio" name="pw-item" id="pw-item-choice" value="1.5"> Band/Specs ×1.5</label>
-            </div>
+          <div style="margin-bottom:6px">
+            <div style="font-size:10px;color:var(--text3);font-weight:600;margin-bottom:3px">ATTACKER NATURE</div>
+            <select id="pw-atk-nature" style="width:100%;background:var(--bg3);border:1px solid var(--border);color:var(--text);padding:3px 6px;border-radius:5px;font-size:12px;outline:none;font-family:var(--font)">
+              <option value="Hardy">Neutral (×1.0)</option>
+              <option value="Adamant">+Atk / -SpA</option>
+              <option value="Naughty">+Atk / -SpD</option>
+              <option value="Brave">+Atk / -Spe</option>
+              <option value="Lonely">+Atk / -Def</option>
+              <option value="Modest">+SpA / -Atk</option>
+              <option value="Rash">+SpA / -SpD</option>
+              <option value="Quiet">+SpA / -Spe</option>
+              <option value="Mild">+SpA / -Def</option>
+              <option value="Jolly">+Spe / -SpA</option>
+              <option value="Hasty">+Spe / -Def</option>
+              <option value="Naive">+Spe / -SpD</option>
+              <option value="Timid">+Spe / -Atk</option>
+              <option value="Bold">+Def / -Atk</option>
+              <option value="Impish">+Def / -SpA</option>
+              <option value="Jolly">+Spe / -SpA</option>
+            </select>
           </div>
 
-          <div style="margin-top:10px;border-top:1px solid var(--border);padding-top:8px">
-            <div class="power-chart-title" style="margin-bottom:6px">Conditions</div>
-            <div style="font-size:11px;color:var(--text2);font-weight:600;margin-bottom:2px">Weather</div>
-            <div style="display:grid;grid-template-columns:1fr 1fr;gap:1px 4px;margin-bottom:6px">
+          <div style="margin-bottom:6px">
+            <div style="font-size:10px;color:var(--text3);font-weight:600;margin-bottom:3px">ATTACKER ITEM</div>
+            <select id="pw-atk-item" style="width:100%;background:var(--bg3);border:1px solid var(--border);color:var(--text);padding:3px 6px;border-radius:5px;font-size:12px;outline:none;font-family:var(--font)">
+              <option value="none">None</option>
+              <option value="typeplate">Type Plate ×1.2</option>
+              <option value="lifeorb">Life Orb ×1.3</option>
+              <option value="band">Choice Band ×1.5 (Phys)</option>
+              <option value="specs">Choice Specs ×1.5 (Spec)</option>
+              <option value="scarf">Choice Scarf (Spe ×1.5)</option>
+            </select>
+          </div>
+
+          <div style="border-top:1px solid var(--border);padding-top:6px;margin-bottom:4px">
+            <div style="font-size:10px;color:var(--text3);font-weight:600;margin-bottom:4px">ATTACKER EVs & STAGES</div>
+            ${[['pw-ev-atk','pw-atk-stage','pw-atk-stage-val','Atk','#dc2626'],['pw-ev-spa','pw-spa-stage','pw-spa-stage-val','SpA','#9333ea'],['pw-atk-spe-ev','pw-atk-spe-stage','pw-atk-spe-stage-val','Spe','#16a34a']].map(function(r){
+              var evId=r[0],stgId=r[1],stgValId=r[2],label=r[3],color=r[4];
+              return '<div style="display:grid;grid-template-columns:28px 1fr 28px 60px 28px;align-items:center;gap:3px;margin-bottom:3px">'
+                +'<span style="font-size:11px;color:var(--text2)">'+label+'</span>'
+                +'<input type="range" id="'+evId+'" min="0" max="252" step="4" value="0" style="accent-color:#4f46e5">'
+                +'<span id="'+evId+'-val" style="font-size:10px;font-weight:600;text-align:right">0</span>'
+                +'<input type="range" id="'+stgId+'" min="-6" max="6" step="1" value="0" style="accent-color:'+color+'">'
+                +'<span id="'+stgValId+'" style="font-size:10px;font-weight:700;text-align:right;color:'+color+'">0</span>'
+                +'</div>';
+            }).join('')}
+            <label class="cond-item" style="font-size:11px;margin-top:2px"><input type="checkbox" id="pw-atk-tailwind"> Tailwind ×2</label>
+            <label class="cond-item" style="font-size:11px;margin-left:8px"><input type="checkbox" id="pw-atk-unburden"> Unburden ×2</label>
+          </div>
+
+          <div style="border-top:1px solid var(--border);padding-top:6px">
+            <div style="font-size:10px;color:var(--text3);font-weight:600;margin-bottom:3px">WEATHER & MOVE TYPE</div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:1px 4px;margin-bottom:4px">
               ${['none','sun','rain','sand','hail','snow'].map(function(w){
                 const labels={none:'\u2014 None',sun:'\u2600 Sun',rain:'\uD83C\uDF27 Rain',sand:'\uD83C\uDF2A Sand',hail:'\u2745 Hail',snow:'\uD83C\uDF28 Snow'};
-                return '<label class="cond-item" style="padding:1px 0;font-size:12px"><input type="radio" name="pw-weather" value="'+w+'" '+(w==='none'?'checked':'')+'>'+labels[w]+'</label>';
+                return '<label class="cond-item" style="padding:1px 0;font-size:11px"><input type="radio" name="pw-weather" value="'+w+'" '+(w==='none'?'checked':'')+'>'+labels[w]+'</label>';
               }).join('')}
             </div>
-            <div style="font-size:11px;color:var(--text2);font-weight:600;margin-bottom:2px">Move type</div>
-            <select id="pw-movetype" style="width:100%;background:var(--bg3);border:1px solid var(--border);color:var(--text);padding:4px 7px;border-radius:5px;font-size:12px;outline:none;font-family:var(--font);margin-bottom:6px">
+            <select id="pw-movetype" style="width:100%;background:var(--bg3);border:1px solid var(--border);color:var(--text);padding:3px 6px;border-radius:5px;font-size:12px;outline:none;font-family:var(--font);margin-bottom:2px">
               <option value="none">— Any / Unknown</option>
               ${['normal','fire','water','electric','grass','ice','fighting','poison','ground','flying','psychic','bug','rock','ghost','dragon','dark','steel','fairy'].map(function(t){return '<option value="'+t+'">'+t.charAt(0).toUpperCase()+t.slice(1)+'</option>';}).join('')}
             </select>
-            <div id="pw-weather-note" style="font-size:10px;color:var(--text3);margin-bottom:6px"></div>
-            <div style="font-size:11px;color:var(--text2);font-weight:600;margin-bottom:2px">Screens on defender</div>
-            <label class="cond-item" style="font-size:12px;margin-bottom:2px"><input type="checkbox" id="pw-doubles"> Doubles</label>
-            <label class="cond-item" style="font-size:12px"><input type="checkbox" id="pw-reflect"> Reflect (phys ÷2)</label>
-            <label class="cond-item" style="font-size:12px"><input type="checkbox" id="pw-lightscreen"> Light Screen (spec ÷2)</label>
-            <label class="cond-item" style="font-size:12px"><input type="checkbox" id="pw-auroraveil"> Aurora Veil (both ÷2)</label>
+            <div id="pw-weather-note" style="font-size:10px;color:var(--text3)"></div>
           </div>
         </div>
 
+        <!-- RIGHT COLUMN: Target/Defender settings -->
         <div>
-          <div class="power-chart-title" style="margin-bottom:8px">Target Pokémon</div>
+          <div class="power-chart-title" style="margin-bottom:6px">Target Pokémon</div>
           <div id="pw-poke-search"></div>
           <div class="type-row" id="pw-poke-types" style="margin-top:4px"></div>
           <div id="pw-poke-stats" style="font-size:11px;color:var(--text2);margin-top:4px"></div>
-          <div style="margin-top:8px">
-            <div style="font-size:11px;color:var(--text2);font-weight:600;margin-bottom:4px">Nature</div>
-            <select id="pw-nature" style="width:100%;background:var(--bg3);border:1px solid var(--border);color:var(--text);padding:3px 6px;border-radius:5px;font-size:12px;outline:none;font-family:var(--font)"></select>
+
+          <div style="margin-top:6px;margin-bottom:6px">
+            <div style="font-size:10px;color:var(--text3);font-weight:600;margin-bottom:3px">DEFENDER NATURE</div>
+            <select id="pw-nature" style="width:100%;background:var(--bg3);border:1px solid var(--border);color:var(--text);padding:3px 6px;border-radius:5px;font-size:12px;outline:none;font-family:var(--font)">
+              <option value="Hardy">Neutral (×1.0)</option>
+              <option value="Adamant">+Atk / -SpA</option>
+              <option value="Naughty">+Atk / -SpD</option>
+              <option value="Brave">+Atk / -Spe</option>
+              <option value="Lonely">+Atk / -Def</option>
+              <option value="Modest">+SpA / -Atk</option>
+              <option value="Rash">+SpA / -SpD</option>
+              <option value="Quiet">+SpA / -Spe</option>
+              <option value="Mild">+SpA / -Def</option>
+              <option value="Jolly">+Spe / -SpA</option>
+              <option value="Hasty">+Spe / -Def</option>
+              <option value="Naive">+Spe / -SpD</option>
+              <option value="Timid">+Spe / -Atk</option>
+              <option value="Bold">+Def / -Atk</option>
+              <option value="Impish">+Def / -SpA</option>
+              <option value="Lax">+Def / -SpD</option>
+              <option value="Relaxed">+Def / -Spe</option>
+              <option value="Calm">+SpD / -Atk</option>
+              <option value="Careful">+SpD / -SpA</option>
+              <option value="Gentle">+SpD / -Def</option>
+              <option value="Sassy">+SpD / -Spe</option>
+            </select>
           </div>
-          <div style="margin-top:10px;border-top:1px solid var(--border);padding-top:8px">
-            <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
-              <div>
-                <div class="power-chart-title" style="margin-bottom:6px">Attacker EVs</div>
-                <div style="display:flex;flex-direction:column;gap:4px">
-                  <div style="display:grid;grid-template-columns:28px 1fr 32px;align-items:center;gap:5px">
-                    <span style="font-size:11px;color:var(--text2)">Atk</span>
-                    <input type="range" id="pw-ev-atk" min="0" max="252" step="4" value="0" style="accent-color:#4f46e5">
-                    <span id="pw-ev-atk-val" style="font-size:11px;font-weight:600;text-align:right">0</span>
-                  </div>
-                  <div style="display:grid;grid-template-columns:28px 1fr 32px;align-items:center;gap:5px">
-                    <span style="font-size:11px;color:var(--text2)">SpA</span>
-                    <input type="range" id="pw-ev-spa" min="0" max="252" step="4" value="0" style="accent-color:#4f46e5">
-                    <span id="pw-ev-spa-val" style="font-size:11px;font-weight:600;text-align:right">0</span>
-                  </div>
-                </div>
-              </div>
-              <div>
-                <div class="power-chart-title" style="margin-bottom:6px">Defender EVs</div>
-                <div style="display:flex;flex-direction:column;gap:4px">
-                  ${[['pw-ev-hp','HP'],['pw-ev-def','Def'],['pw-ev-spd','SpD']].map(function(pair){
-                    var id=pair[0],label=pair[1];
-                    return '<div style="display:grid;grid-template-columns:28px 1fr 32px;align-items:center;gap:5px"><span style="font-size:11px;color:var(--text2)">'+label+'</span><input type="range" id="'+id+'" min="0" max="252" step="4" value="0" style="accent-color:#4f46e5"><span id="'+id+'-val" style="font-size:11px;font-weight:600;text-align:right">0</span></div>';
-                  }).join('')}
-                </div>
-              </div>
+
+          <div style="margin-bottom:6px">
+            <div style="font-size:10px;color:var(--text3);font-weight:600;margin-bottom:3px">DEFENDER ITEM</div>
+            <select id="pw-def-item" style="width:100%;background:var(--bg3);border:1px solid var(--border);color:var(--text);padding:3px 6px;border-radius:5px;font-size:12px;outline:none;font-family:var(--font)">
+              <option value="none">None</option>
+              <option value="assaultvest">Assault Vest (SpD ×1.5)</option>
+              <option value="eviolite">Eviolite (Def/SpD ×1.5)</option>
+              <option value="scarf">Choice Scarf (Spe ×1.5)</option>
+              <option value="seberry">SE Reduce Berry (SE ×0.5)</option>
+              <option value="rockyhelmet">Rocky Helmet</option>
+            </select>
+          </div>
+
+          <div style="border-top:1px solid var(--border);padding-top:6px;margin-bottom:4px">
+            <div style="font-size:10px;color:var(--text3);font-weight:600;margin-bottom:4px">DEFENDER EVs & STAGES</div>
+            ${[['pw-ev-hp','','','HP','#6b7280'],['pw-ev-def','pw-def-stage','pw-def-stage-val','Def','#2563eb'],['pw-ev-spd','pw-spd-stage','pw-spd-stage-val','SpD','#0891b2'],['pw-spe-ev','pw-spe-stage','pw-spe-stage-val','Spe','#d97706']].map(function(r){
+              var evId=r[0],stgId=r[1],stgValId=r[2],label=r[3],color=r[4];
+              var stageHtml = stgId ? '<input type="range" id="'+stgId+'" min="-6" max="6" step="1" value="0" style="accent-color:'+color+'"><span id="'+stgValId+'" style="font-size:10px;font-weight:700;text-align:right;color:'+color+'">0</span>' : '<span></span><span></span>';
+              return '<div style="display:grid;grid-template-columns:28px 1fr 28px 60px 28px;align-items:center;gap:3px;margin-bottom:3px">'
+                +'<span style="font-size:11px;color:var(--text2)">'+label+'</span>'
+                +'<input type="range" id="'+evId+'" min="0" max="252" step="4" value="0" style="accent-color:#4f46e5">'
+                +'<span id="'+evId+'-val" style="font-size:10px;font-weight:600;text-align:right">0</span>'
+                +stageHtml
+                +'</div>';
+            }).join('')}
+            <label class="cond-item" style="font-size:11px;margin-top:2px"><input type="checkbox" id="pw-tailwind"> Tailwind ×2</label>
+            <label class="cond-item" style="font-size:11px;margin-left:8px"><input type="checkbox" id="pw-unburden"> Unburden ×2</label>
+          </div>
+
+          <div style="border-top:1px solid var(--border);padding-top:6px">
+            <div style="font-size:10px;color:var(--text3);font-weight:600;margin-bottom:3px">SCREENS</div>
+            <div style="display:flex;flex-wrap:wrap;gap:4px 10px">
+              <label class="cond-item" style="font-size:11px"><input type="checkbox" id="pw-doubles"> Doubles</label>
+              <label class="cond-item" style="font-size:11px"><input type="checkbox" id="pw-reflect"> Reflect</label>
+              <label class="cond-item" style="font-size:11px"><input type="checkbox" id="pw-lightscreen"> Light Screen</label>
+              <label class="cond-item" style="font-size:11px"><input type="checkbox" id="pw-auroraveil"> Aurora Veil</label>
             </div>
           </div>
         </div>
@@ -2484,40 +2559,56 @@ function buildPowerPanel() {
 
   const pwSearchWrap = buildPokeSearch('pw-poke-search', 'pw', false);
   document.getElementById('pw-poke-search').appendChild(pwSearchWrap);
-  buildNatureDropdown('pw-nature', pwTarget);
-  ['pw-stab','pw-se-none','pw-se-2x','pw-se-4x','pw-doubles','pw-reflect','pw-lightscreen','pw-auroraveil',
-   'pw-item-none','pw-item-typeplate','pw-item-lifeorb','pw-item-choice'].forEach(id => {
-    document.getElementById(id).addEventListener('change', () => {
-      pwTarget.doubles     = document.getElementById('pw-doubles').checked;
-      pwTarget.reflect     = document.getElementById('pw-reflect').checked;
-      pwTarget.lightscreen = document.getElementById('pw-lightscreen').checked;
-      pwTarget.auroraveil  = document.getElementById('pw-auroraveil').checked;
+
+  // Simple selects — no custom dropdown
+  document.getElementById('pw-nature').addEventListener('change', e => { pwTarget.nature = e.target.value; renderPowerPanel(); });
+  document.getElementById('pw-atk-nature').addEventListener('change', e => { pwTarget.atkNature = e.target.value; renderPowerPanel(); });
+  document.getElementById('pw-atk-item').addEventListener('change', e => { pwTarget.atkItem = e.target.value; renderPowerPanel(); });
+  document.getElementById('pw-def-item').addEventListener('change', e => { pwTarget.defItem = e.target.value; renderPowerPanel(); });
+  document.getElementById('pw-movetype').addEventListener('change', e => { pwTarget.moveType = e.target.value; renderPowerPanel(); });
+
+  // Checkboxes
+  ['pw-stab','pw-se-none','pw-se-2x','pw-se-4x','pw-doubles','pw-reflect','pw-lightscreen','pw-auroraveil','pw-tailwind','pw-unburden','pw-atk-tailwind','pw-atk-unburden'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.addEventListener('change', () => {
+      pwTarget.doubles      = document.getElementById('pw-doubles').checked;
+      pwTarget.reflect      = document.getElementById('pw-reflect').checked;
+      pwTarget.lightscreen  = document.getElementById('pw-lightscreen').checked;
+      pwTarget.auroraveil   = document.getElementById('pw-auroraveil').checked;
+      pwTarget.tailwind     = document.getElementById('pw-tailwind').checked;
+      pwTarget.unburden     = document.getElementById('pw-unburden').checked;
+      pwTarget.atkTailwind  = document.getElementById('pw-atk-tailwind').checked;
+      pwTarget.atkUnburden  = document.getElementById('pw-atk-unburden').checked;
       renderPowerPanel();
     });
   });
-  document.getElementById('pw-movetype').addEventListener('change', e => {
-    pwTarget.moveType = e.target.value;
-    renderPowerPanel();
-  });
+
+  // Weather
   document.querySelectorAll('input[name="pw-weather"]').forEach(r =>
     r.addEventListener('change', e => { pwTarget.weather = e.target.value; renderPowerPanel(); }));
-  document.getElementById('pw-power').addEventListener('input', e => {
-    document.getElementById('pw-power-val').textContent = e.target.value;
-    renderPowerPanel();
-  });
-  document.getElementById('pw-mult').addEventListener('input', e => {
-    const v = parseFloat(e.target.value);
-    document.getElementById('pw-mult-val').textContent = '×' + v.toFixed(2).replace(/\.?0+$/,'');
-    renderPowerPanel();
-  });
-  [['pw-ev-atk','evAtk'],['pw-ev-spa','evSpA'],['pw-ev-hp','evHP'],['pw-ev-def','evDef'],['pw-ev-spd','evSpDef']].forEach(([id,key]) => {
-    document.getElementById(id).addEventListener('input', e => {
+
+  // EV sliders
+  [['pw-ev-atk','evAtk'],['pw-ev-spa','evSpA'],['pw-ev-hp','evHP'],['pw-ev-def','evDef'],['pw-ev-spd','evSpDef'],
+   ['pw-spe-ev','evSpe'],['pw-atk-spe-ev','evAtkSpe']].forEach(([id,key]) => {
+    const el = document.getElementById(id);
+    if (el) el.addEventListener('input', e => {
       pwTarget[key] = parseInt(e.target.value)||0;
       document.getElementById(id+'-val').textContent = e.target.value;
       renderPowerPanel();
     });
   });
-  // pw-nature is handled via buildNatureDropdown which calls panel.nature = n.name directly
+
+  // Stage sliders
+  [['pw-atk-stage','atkStage'],['pw-spa-stage','spaStage'],['pw-def-stage','defStage'],['pw-spd-stage','spdStage'],
+   ['pw-spe-stage','speStage'],['pw-atk-spe-stage','atkSpeStage']].forEach(([id,key]) => {
+    const el = document.getElementById(id);
+    if (el) el.addEventListener('input', e => {
+      pwTarget[key] = parseInt(e.target.value)||0;
+      const v = pwTarget[key];
+      document.getElementById(id+'-val').textContent = (v > 0 ? '+' : '') + v;
+      renderPowerPanel();
+    });
+  });
 }
 
 // Reverse calcStat: given a needed final stat, find the minimum base stat
@@ -2540,12 +2631,26 @@ function renderPowerPanel() {
   }
 
   const LEVEL = 50;
-  const power     = parseInt(document.getElementById('pw-power')?.value||80);
-  const extraMult = parseFloat(document.getElementById('pw-mult')?.value||1);
+  const BASE_POWER = 80;
   const useStab   = document.getElementById('pw-stab')?.checked;
   const seMult    = parseFloat(document.querySelector('input[name="pw-se"]:checked')?.value||1);
-  const itemMult = parseFloat(document.querySelector('input[name="pw-item"]:checked')?.value||1);
-  const totalMult = (useStab ? 1.5 : 1) * seMult * extraMult * itemMult;
+
+  // Attacker item multiplier
+  const atkItemKey = pwTarget.atkItem || 'none';
+  const atkItemMult = atkItemKey === 'typeplate' ? 1.2 : atkItemKey === 'lifeorb' ? 1.3 : (atkItemKey === 'band' || atkItemKey === 'specs') ? 1.5 : 1;
+  const atkScarf = atkItemKey === 'scarf';
+
+  const totalMult = (useStab ? 1.5 : 1) * seMult * atkItemMult;
+
+  function stageMult(s) { return s >= 0 ? (2+s)/2 : 2/(2-s); }
+  const atkStageMult = stageMult(pwTarget.atkStage||0);
+  const spaStageMult = stageMult(pwTarget.spaStage||0);
+  const defStageMult = stageMult(pwTarget.defStage||0);
+  const spdStageMult = stageMult(pwTarget.spdStage||0);
+
+  // Attacker nature affects Atk/SpA/Spe
+  const atkNatAtkMult = getNatureMult(pwTarget.atkNature||'Hardy', 'attack');
+  const atkNatSpaMult = getNatureMult(pwTarget.atkNature||'Hardy', 'special-attack');
 
   const stabStr = useStab ? 'STAB' : '';
   const seStr   = seMult === 4 ? 'SE 4×' : seMult === 2 ? 'SE 2×' : '';
@@ -2555,9 +2660,19 @@ function renderPowerPanel() {
   const defPoke = DB.pokemon[pwTarget.poke];
   if (!defPoke) return;
 
+  // Defender item effects
+  const defItemKey = pwTarget.defItem || 'none';
+  const defAvMult  = (defItemKey === 'assaultvest' || defItemKey === 'eviolite') ? 1.5 : 1;
+  const defEvoMult = defItemKey === 'eviolite' ? 1.5 : 1;
+  const defScarfSpe = defItemKey === 'scarf';
+  const defSeBerry = defItemKey === 'seberry';
+
   let D_phys = calcStat(defPoke.stats.defense,            pwTarget.evDef||0,   31, LEVEL, getNatureMult(pwTarget.nature,'defense'));
   let D_spec = calcStat(defPoke.stats['special-defense'], pwTarget.evSpDef||0, 31, LEVEL, getNatureMult(pwTarget.nature,'special-defense'));
   const defHP = calcHP(defPoke.stats.hp, pwTarget.evHP||0);
+  // Assault Vest / Eviolite
+  if (defItemKey === 'assaultvest' || defItemKey === 'eviolite') D_spec = Math.floor(D_spec * 1.5);
+  if (defItemKey === 'eviolite') D_phys = Math.floor(D_phys * 1.5);
 
   // Sand: Rock-types get 1.5× SpDef
   if (pwTarget.weather === 'sand' && (defPoke.types||[]).includes('rock')) D_spec = Math.floor(D_spec * 1.5);
@@ -2588,18 +2703,28 @@ function renderPowerPanel() {
     else weatherNote.textContent = '';
   }
 
-   function minAtk(D) {
-     return Math.max(1, Math.ceil((defHP - 2) * 50 * D / (22 * power * totalMult * weatherOffMult)));
+  // Apply defender stages
+  D_phys = Math.floor(D_phys * defStageMult);
+  D_spec = Math.floor(D_spec * spdStageMult);
+  // SE berry halves damage from SE hits — equivalent to doubling effective D for SE scenario
+  const seBerryMult = (defSeBerry && seMult > 1) ? 2 : 1;
+
+   function minAtk(D, isPhys) {
+     const itemBandMult = (isPhys && atkItemKey === 'band') ? 1.5 : (!isPhys && atkItemKey === 'specs') ? 1.5 : atkItemKey === 'lifeorb' ? 1.3 : atkItemKey === 'typeplate' ? 1.2 : 1;
+     const natMult = isPhys ? atkNatAtkMult : atkNatSpaMult;
+     const effTotal = (useStab ? 1.5 : 1) * seMult * itemBandMult * weatherOffMult * seBerryMult;
+     return Math.max(1, Math.ceil((defHP - 2) * 50 * D / (22 * BASE_POWER * effTotal)));
    }
 
-   const p = minAtk(D_phys);
-   const s = minAtk(D_spec);
+   const p = minAtk(D_phys, true);
+   const s = minAtk(D_spec, false);
    const atkEV = pwTarget.evAtk || 0;
    const spaEV = pwTarget.evSpA || 0;
-   const pBase = statToBase(p, atkEV);
-   const sBase = statToBase(s, spaEV);
-   const pRange = `${calcStat(pBase,atkEV,31,50,1)}–${calcStat(pBase,252,31,50,1.1)}`;
-   const sRange = `${calcStat(sBase,spaEV,31,50,1)}–${calcStat(sBase,252,31,50,1.1)}`;
+   // Divide by stage and nature to get minimum base stat
+   const pBase = statToBase(Math.ceil(p / (atkStageMult * atkNatAtkMult)), atkEV);
+   const sBase = statToBase(Math.ceil(s / (spaStageMult * atkNatSpaMult)), spaEV);
+   const pRange = `${calcStat(pBase,atkEV,31,50,atkNatAtkMult)}–${calcStat(pBase,252,31,50,1.1)}`;
+   const sRange = `${calcStat(sBase,spaEV,31,50,atkNatSpaMult)}–${calcStat(sBase,252,31,50,1.1)}`;
 
    const barMax = Math.max(pBase, sBase, 1);
 
@@ -2637,11 +2762,11 @@ function renderPowerPanel() {
 
    const note = document.createElement('div');
    note.style.cssText = 'font-size:10px;color:var(--text3)';
-   note.textContent = `${defPoke.display}: ${defHP} HP · ${D_phys} Def · ${D_spec} SpD`;
+   const defEffSpePanel = effSpeed(defPoke.stats.speed, pwTarget.evSpe||0, pwTarget.speStage||0, pwTarget.tailwind||false, defScarfSpe, pwTarget.unburden||false);
+   note.textContent = `${defPoke.display}: ${defHP} HP · ${D_phys} Def · ${D_spec} SpD · ${defEffSpePanel} eff. Spe`;
    body.appendChild(note);
 
-   // Trigger filter list update
-   renderOhkoList(pBase, sBase, power, totalMult, atkEV, spaEV);
+   renderOhkoList(pBase, sBase, totalMult, atkEV, spaEV);
 }
 // ─────────────────────────────────────────────────────────
 // TABS
@@ -2653,9 +2778,9 @@ let _ohkoListTimer = null;
 let _ohkoCachedResults = [];
 let _ohkoDefTypes = [];
 
-function renderOhkoList(pBase, sBase, power, totalMult, atkEV=0, spaEV=0) {
+function renderOhkoList(pBase, sBase, totalMult, atkEV=0, spaEV=0) {
   clearTimeout(_ohkoListTimer);
-  _ohkoListTimer = setTimeout(() => _doRenderOhkoList(pBase, sBase, power, totalMult, atkEV, spaEV), 80);
+  _ohkoListTimer = setTimeout(() => _doRenderOhkoList(pBase, sBase, totalMult, atkEV, spaEV), 80);
 }
 
 function renderOhkoListDisplay() {
@@ -2663,7 +2788,7 @@ function renderOhkoListDisplay() {
   _renderOhkoResults(_ohkoCachedResults, _ohkoDefTypes);
 }
 
-function _doRenderOhkoList(pBase, sBase, power, totalMult, atkEV=0, spaEV=0) {
+function _doRenderOhkoList(pBase, sBase, totalMult, atkEV=0, spaEV=0) {
   const body = document.getElementById('ohko-list-body');
   if (!body) return;
 
@@ -2678,44 +2803,57 @@ function _doRenderOhkoList(pBase, sBase, power, totalMult, atkEV=0, spaEV=0) {
   if (!defPoke) { body.innerHTML = ''; return; }
   const defTypes = defPoke.types || [];
 
-  // What SE multiplier is required?
-  const seMult = parseFloat(document.querySelector('input[name="pw-se"]:checked')?.value || 1);
-  const useStab = document.getElementById('pw-stab')?.checked;
-  const itemMult = parseFloat(document.querySelector('input[name="pw-item"]:checked')?.value || 1);
-  const extraMult = parseFloat(document.getElementById('pw-mult')?.value || 1);
+  const seMult   = parseFloat(document.querySelector('input[name="pw-se"]:checked')?.value || 1);
+  const useStab  = document.getElementById('pw-stab')?.checked;
 
-  // Compute weather offensive multiplier
+  // Attacker item
+  const atkItemKey = pwTarget.atkItem || 'none';
+  const atkScarf   = atkItemKey === 'scarf';
+
+  // Stage multipliers
+  function stageMult(s) { return s >= 0 ? (2+s)/2 : 2/(2-s); }
+  const atkStageMult = stageMult(pwTarget.atkStage||0);
+  const spaStageMult = stageMult(pwTarget.spaStage||0);
+  const defStageMult = stageMult(pwTarget.defStage||0);
+  const spdStageMult = stageMult(pwTarget.spdStage||0);
+
+  // Attacker nature
+  const atkNatAtkMult = getNatureMult(pwTarget.atkNature||'Hardy', 'attack');
+  const atkNatSpaMult = getNatureMult(pwTarget.atkNature||'Hardy', 'special-attack');
+
+  // Weather
   const wmt = pwTarget.moveType;
   let weatherOffMult = 1;
   if (pwTarget.weather === 'rain') { if (wmt === 'water') weatherOffMult = 1.5; if (wmt === 'fire') weatherOffMult = 0.5; }
   else if (pwTarget.weather === 'sun') { if (wmt === 'fire') weatherOffMult = 1.5; if (wmt === 'water') weatherOffMult = 0.5; }
+
+  // Defender item
+  const defItemKey = pwTarget.defItem || 'none';
+  const defScarfSpe = defItemKey === 'scarf';
+  const defSeBerry  = defItemKey === 'seberry';
 
   const defHP  = calcHP(defPoke.stats.hp, pwTarget.evHP||0);
   let D_phys = calcStat(defPoke.stats.defense,            pwTarget.evDef||0,   31, 50, getNatureMult(pwTarget.nature,'defense'));
   let D_spec = calcStat(defPoke.stats['special-defense'], pwTarget.evSpDef||0, 31, 50, getNatureMult(pwTarget.nature,'special-defense'));
   if (pwTarget.weather === 'sand' && defTypes.includes('rock')) D_spec = Math.floor(D_spec * 1.5);
   if (pwTarget.weather === 'snow' && defTypes.includes('ice'))  D_spec = Math.floor(D_spec * 1.5);
+  if (defItemKey === 'assaultvest' || defItemKey === 'eviolite') D_spec = Math.floor(D_spec * 1.5);
+  if (defItemKey === 'eviolite') D_phys = Math.floor(D_phys * 1.5);
   const screenDiv = pwTarget.doubles ? 1.5 : 2;
   if (pwTarget.reflect    || pwTarget.auroraveil) D_phys = Math.floor(D_phys * screenDiv);
   if (pwTarget.lightscreen || pwTarget.auroraveil) D_spec = Math.floor(D_spec * screenDiv);
+  D_phys = Math.floor(D_phys * defStageMult);
+  D_spec = Math.floor(D_spec * spdStageMult);
 
-  // canOHKO: check if a given A stat + move can OHKO at max roll
-  // damage = floor(floor((22 * A * bp / D) / 50 + 2) * stab * typeEff * itemMult * extraMult * weatherOffMult)
-  function canOHKO(A, movePow, D, stabMult, typeEff) {
-    const base = Math.floor(Math.floor(22 * A * movePow / D) / 50 + 2);
-    const dmg = Math.floor(base * stabMult * typeEff * itemMult * extraMult * weatherOffMult);
-    return dmg >= defHP;
-  }
-
-  // First pass: rough filter by base stat (fast rejection)
+  // First pass: generous reject using 120bp STAB 4x
   const allPoke = Object.values(DB.pokemon);
   const candidates = allPoke.filter(p => {
     if (!p.moves || p.moves.length === 0) return false;
-    // Quick check: could any move possibly OHKO at max stat?
-    const maxPhys = calcStat(p.stats.attack, atkEV, 31, 50, 1.1);
-    const maxSpec = calcStat(p.stats['special-attack'], spaEV, 31, 50, 1.1);
-    return canOHKO(maxPhys * 1.5, power, D_phys, 1.5, seMult || 1) ||
-           canOHKO(maxSpec * 1.5, power, D_spec, 1.5, seMult || 1);
+    const maxPhys = calcStat(p.stats.attack, atkEV, 31, 50, 1.1) * atkStageMult * atkNatAtkMult * 1.5;
+    const maxSpec = calcStat(p.stats['special-attack'], spaEV, 31, 50, 1.1) * spaStageMult * atkNatSpaMult * 1.5;
+    const dmgP = Math.floor(Math.floor(Math.floor(22 * maxPhys * 120 / D_phys) / 50 + 2) * 4 * 1.5);
+    const dmgS = Math.floor(Math.floor(Math.floor(22 * maxSpec * 120 / D_spec) / 50 + 2) * 4 * 1.5);
+    return dmgP >= defHP || dmgS >= defHP;
   });
 
   // Second pass: per-move actual damage check
@@ -2735,19 +2873,29 @@ function _doRenderOhkoList(pBase, sBase, power, totalMult, atkEV=0, spaEV=0) {
       // Type effectiveness
       const typeEff = getTypeEff(move.type, defTypes);
       if (typeEff <= 0) continue;
-      if (seMult > 1 && typeEff < seMult) continue;
+      // SE filter:
+      // No SE (seMult=1): neutral moves only (typeEff === 1)
+      // SE 2x (seMult=2): at least 2x effective
+      // SE 4x (seMult=4): exactly 4x effective
+      if (seMult === 1 && typeEff !== 1) continue;
+      if (seMult === 2 && typeEff < 2) continue;
+      if (seMult === 4 && typeEff < 4) continue;
 
-      // Power check
-      if (move.power > power && move.accuracy !== 100) continue;
-
-      // STAB
+      // STAB — if checked, only show moves this poke has STAB on
       const hasStab = (poke.types || []).includes(move.type);
-      const stabMult = hasStab ? (useStab ? 1.5 : 1) : 1;
+      if (useStab && !hasStab) continue;
+      const stabMult = hasStab ? 1.5 : 1;
 
-      // Actual stat with EVs
+      // Attacker item multiplier per move category
+      const moveItemMult = (isPhys && atkItemKey === 'band') ? 1.5
+                         : (!isPhys && atkItemKey === 'specs') ? 1.5
+                         : atkItemKey === 'lifeorb' ? 1.3
+                         : atkItemKey === 'typeplate' ? 1.2 : 1;
+
+      // Actual stat with EVs + stage + nature
       const A = isPhys
-        ? calcStat(poke.stats.attack, atkEV, 31, 50, 1)
-        : calcStat(poke.stats['special-attack'], spaEV, 31, 50, 1);
+        ? calcStat(poke.stats.attack, atkEV, 31, 50, atkNatAtkMult) * atkStageMult
+        : calcStat(poke.stats['special-attack'], spaEV, 31, 50, atkNatSpaMult) * spaStageMult;
       const D = isPhys ? D_phys : D_spec;
 
       // Per-move weather multiplier
@@ -2755,9 +2903,11 @@ function _doRenderOhkoList(pBase, sBase, power, totalMult, atkEV=0, spaEV=0) {
       if (pwTarget.weather === 'rain') { if (move.type === 'water') moveWeatherMult = 1.5; if (move.type === 'fire') moveWeatherMult = 0.5; }
       else if (pwTarget.weather === 'sun') { if (move.type === 'fire') moveWeatherMult = 1.5; if (move.type === 'water') moveWeatherMult = 0.5; }
 
+      // SE berry halves damage on SE hits
+      const seBerryMult = (defSeBerry && typeEff > 1) ? 0.5 : 1;
+
       // Actual max-roll damage
-      const base = Math.floor(Math.floor(22 * A * move.power / D) / 50 + 2);
-      const dmg = Math.floor(base * stabMult * typeEff * itemMult * extraMult * moveWeatherMult);
+      const dmg = Math.floor(Math.floor(Math.floor(22 * A * move.power / D) / 50 + 2) * stabMult * typeEff * moveItemMult * moveWeatherMult * seBerryMult);
       if (dmg < defHP) continue;
 
       matchingMoves.push({ move, typeEff });
@@ -2793,6 +2943,11 @@ function _renderOhkoResults(results, defTypes) {
   const searchVal = (document.getElementById('ohko-search')?.value || '').toLowerCase();
   const sortVal   = document.getElementById('ohko-sort')?.value || 'eff';
 
+  // Defender effective speed
+  const _defPoke2 = DB.pokemon[pwTarget.poke];
+  const defScarfSpeR = (pwTarget.defItem || 'none') === 'scarf';
+  const defEffSpe = _defPoke2 ? effSpeed(_defPoke2.stats.speed, pwTarget.evSpe||0, pwTarget.speStage||0, pwTarget.tailwind||false, defScarfSpeR, pwTarget.unburden||false) : 0;
+
   // ── Filter by name / ability ──
   let filtered = results.filter(({ poke }) => {
     if (!searchVal) return true;
@@ -2800,6 +2955,15 @@ function _renderOhkoResults(results, defTypes) {
     if ((poke.abilities || []).some(a => a.toLowerCase().replace(/-/g,' ').includes(searchVal))) return true;
     return false;
   });
+
+  // ── Is Faster filter ──
+  if (sortVal === 'faster') {
+    const atkScarf2 = (pwTarget.atkItem || 'none') === 'scarf';
+    filtered = filtered.filter(({ poke }) => {
+      const s = effSpeed(poke.stats.speed, pwTarget.evAtkSpe||0, pwTarget.atkSpeStage||0, pwTarget.atkTailwind||false, atkScarf2, pwTarget.atkUnburden||false);
+      return s > defEffSpe;
+    });
+  }
 
   // ── Filter by must-learn moves (full learnset, not just OHKO moves) ──
   const ohkoMoveFilters = window._ohkoMoveFilters || [];
@@ -2818,6 +2982,12 @@ function _renderOhkoResults(results, defTypes) {
   filtered.sort((a, b) => {
     if (sortVal === 'atk') return b.poke.stats.attack - a.poke.stats.attack;
     if (sortVal === 'spa') return b.poke.stats['special-attack'] - a.poke.stats['special-attack'];
+    if (sortVal === 'spe' || sortVal === 'faster') {
+      const atkScarf2 = (pwTarget.atkItem || 'none') === 'scarf';
+      const sa = effSpeed(a.poke.stats.speed, pwTarget.evAtkSpe||0, pwTarget.atkSpeStage||0, pwTarget.atkTailwind||false, atkScarf2, pwTarget.atkUnburden||false);
+      const sb = effSpeed(b.poke.stats.speed, pwTarget.evAtkSpe||0, pwTarget.atkSpeStage||0, pwTarget.atkTailwind||false, atkScarf2, pwTarget.atkUnburden||false);
+      return sb - sa;
+    }
     if (sortVal === 'bst') {
       const bstA = Object.values(a.poke.stats).reduce((s,v)=>s+v,0);
       const bstB = Object.values(b.poke.stats).reduce((s,v)=>s+v,0);
@@ -2890,12 +3060,14 @@ function _renderOhkoResults(results, defTypes) {
     const atkStat = calcStat(poke.stats.attack, atkEV, 31, 50, 1);
     const spaStat = calcStat(poke.stats['special-attack'], spaEV, 31, 50, 1);
     const bst = Object.values(poke.stats).reduce((s,v)=>s+v,0);
-    // Show ability tags
     const abilityTags = (poke.abilities||[]).slice(0,2).map(a =>
       `<span style="font-size:9px;background:var(--bg3);border:1px solid var(--border);border-radius:3px;padding:0 4px;color:var(--text2)">${a.replace(/-/g,' ').replace(/\b\w/g,c=>c.toUpperCase())}</span>`
     ).join('');
+    const atkScarf2 = (pwTarget.atkItem || 'none') === 'scarf';
+    const atkEffSpe = effSpeed(poke.stats.speed, pwTarget.evAtkSpe||0, pwTarget.atkSpeStage||0, pwTarget.atkTailwind||false, atkScarf2, pwTarget.atkUnburden||false);
+    const speInd = atkEffSpe > defEffSpe ? '<span style="color:#16a34a;font-weight:700">▲</span>' : atkEffSpe < defEffSpe ? '<span style="color:#dc2626;font-weight:700">▼</span>' : '<span style="color:#d97706;font-weight:700">=</span>';
     nameRow.innerHTML = `<span style="font-size:12px;font-weight:700">${poke.display}</span>
-      <span style="font-size:10px;color:var(--text3)">Atk ${atkStat} · SpA ${spaStat} · BST ${bst}</span>
+      <span style="font-size:10px;color:var(--text3)">Atk ${atkStat} · SpA ${spaStat} · Spe ${atkEffSpe} ${speInd} · BST ${bst}</span>
       ${abilityTags}`;
     info.appendChild(nameRow);
 
