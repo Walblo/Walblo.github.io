@@ -25,7 +25,7 @@ body{background:var(--bg);color:var(--text);font-family:var(--font);font-size:14
 #data-status span{color:#16a34a;font-weight:600}
 
 /* ── main grid ── */
-#main{display:grid;grid-template-columns:280px 255px 170px 255px 280px;flex:1;overflow-x:auto;overflow-y:auto;min-height:0;min-width:0;align-items:start}
+#main{display:grid;grid-template-columns:minmax(240px,1.2fr) minmax(220px,1fr) minmax(160px,0.7fr) minmax(220px,1fr) minmax(240px,1.2fr);flex:1;overflow-x:auto;overflow-y:auto;min-height:0;min-width:0;align-items:start;width:100%}
 .col{display:flex;flex-direction:column;border-right:1px solid var(--border);min-height:100%}
 .col:last-child{border-right:none}
 .col-body{padding:8px;display:flex;flex-direction:column;gap:7px}
@@ -261,7 +261,10 @@ input[type=range]{width:100%;accent-color:#4f46e5;height:4px}
 .mult-input:focus{border-color:#4f46e580}
 .mult-total{font-size:11px;color:var(--text2);text-align:center;padding:4px;background:var(--bg3);border-radius:4px}
 
-.no-defenders{font-size:13px;color:var(--text3);text-align:center;padding:24px 0}
+.ohko-filter-btn{padding:3px 10px;font-size:12px;font-weight:600;border:1px solid var(--border2);border-radius:5px;background:var(--bg3);color:var(--text2);cursor:pointer;font-family:var(--font);transition:all .12s}
+.ohko-filter-btn:hover{border-color:var(--accent);color:var(--accent)}
+.ohko-filter-btn.active{background:var(--accent);color:#fff;border-color:var(--accent)}
+
 .divider{height:1px;background:var(--border);margin:4px 0}
 
 /* ── collapse ── */
@@ -306,6 +309,11 @@ input[type=range]{width:100%;accent-color:#4f46e5;height:4px}
 .dex-abilities{font-size:11px;color:var(--text2);line-height:1.5}
 #dex-search{width:220px;background:var(--bg3);border:1px solid var(--border);color:var(--text);padding:5px 10px;border-radius:5px;font-size:13px;outline:none;font-family:var(--font)}
 #dex-type-filter{background:var(--bg3);border:1px solid var(--border);color:var(--text);padding:5px 8px;border-radius:5px;font-size:13px;outline:none;font-family:var(--font)}
+.dex-type-pill{font-size:10px;padding:3px 8px;border-radius:4px;color:#fff;font-weight:700;text-transform:uppercase;letter-spacing:.04em;cursor:pointer;border:2px solid transparent;opacity:.6;transition:opacity .1s,border-color .1s}
+.dex-type-pill:hover{opacity:.9}
+.dex-type-pill.active{opacity:1;border-color:rgba(255,255,255,.6);box-shadow:0 0 0 2px rgba(0,0,0,.2)}
+.dex-type-pill-all{font-size:11px;padding:3px 8px;border-radius:4px;font-weight:600;cursor:pointer;background:var(--bg3);border:1px solid var(--border2);color:var(--text2)}
+.dex-type-pill-all.active{background:var(--accent);color:#fff;border-color:var(--accent)}
 #dex-mega-filter{background:var(--bg3);border:1px solid var(--border);color:var(--text);padding:5px 8px;border-radius:5px;font-size:13px;outline:none;font-family:var(--font)}
 #dex-sort{background:var(--bg3);border:1px solid var(--border);color:var(--text);padding:5px 8px;border-radius:5px;font-size:13px;outline:none;font-family:var(--font)}
 #dex-table-wrap{flex:1;overflow:auto;border:1px solid var(--border);border-radius:var(--radius);background:var(--bg2)}
@@ -325,7 +333,32 @@ input[type=range]{width:100%;accent-color:#4f46e5;height:4px}
 .bst-cell{text-align:center;font-size:13px;font-weight:700}
 .type-cell{display:flex;gap:3px;flex-wrap:wrap}
 
-/* ── custom nature dropdown ── */
+/* ── Pokémon detail slide panel ── */
+#poke-detail{position:fixed;top:0;right:0;width:480px;height:100vh;background:var(--bg2);border-left:1px solid var(--border2);z-index:500;display:flex;flex-direction:column;transform:translateX(100%);transition:transform .22s cubic-bezier(.4,0,.2,1);box-shadow:-4px 0 24px rgba(0,0,0,.10)}
+#poke-detail.open{transform:translateX(0)}
+#poke-detail-backdrop{position:fixed;inset:0;z-index:499;display:none;background:rgba(0,0,0,.18)}
+#poke-detail-backdrop.open{display:block}
+#poke-detail-hdr{display:flex;align-items:center;gap:10px;padding:12px 14px;background:var(--bg3);border-bottom:1px solid var(--border);flex-shrink:0}
+#poke-detail-hdr img{width:52px;height:52px;image-rendering:pixelated;object-fit:contain}
+#poke-detail-hdr h2{font-size:18px;font-weight:700;flex:1}
+#poke-detail-close{background:none;border:none;font-size:20px;color:var(--text3);cursor:pointer;line-height:1;padding:4px}
+#poke-detail-close:hover{color:#dc2626}
+#poke-detail-body{flex:1;overflow-y:auto;padding:14px;display:flex;flex-direction:column;gap:14px}
+.detail-section-title{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--text3);margin-bottom:6px}
+.detail-move-row{display:grid;grid-template-columns:1fr 70px 60px 50px 44px;align-items:center;gap:5px;padding:4px 6px;border-radius:5px;font-size:12px}
+.detail-move-row:nth-child(even){background:var(--bg3)}
+.detail-move-row:hover{background:#e8eaff}
+.detail-move-name{font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.detail-move-pp{font-size:11px;color:var(--text3);text-align:right}
+.detail-eff-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:5px}
+.detail-eff-cell{border-radius:5px;padding:5px 3px;display:flex;flex-direction:column;align-items:center;gap:2px}
+.detail-eff-label{font-size:9px;font-weight:700;text-transform:uppercase;color:#fff;letter-spacing:.02em}
+.detail-eff-mult{font-size:13px;font-weight:800;color:#fff;line-height:1}
+.detail-stat-row{display:grid;grid-template-columns:56px 36px 1fr 56px;align-items:center;gap:6px;margin-bottom:4px}
+.detail-stat-name{font-size:11px;color:var(--text2);text-transform:uppercase;letter-spacing:.04em}
+.detail-stat-val{font-size:12px;font-weight:700;text-align:right;color:var(--text)}
+.detail-stat-range{font-size:10px;color:var(--text3);text-align:right}
+
 .nature-wrap{position:relative}
 .nature-display{width:100%;background:var(--bg3);border:1px solid var(--border);color:var(--text);padding:4px 28px 4px 7px;border-radius:5px;font-size:13px;cursor:pointer;display:flex;align-items:center;gap:6px;user-select:none}
 .nature-display:after{content:'▾';position:absolute;right:8px;top:50%;transform:translateY(-50%);color:var(--text2);pointer-events:none;font-size:11px}
@@ -388,21 +421,59 @@ input[type=range]{width:100%;accent-color:#4f46e5;height:4px}
 <div id="view-ohko" style="display:none;flex-direction:row;flex:1;overflow:hidden;min-height:0;gap:0">
   <div id="power-body" style="width:500px;flex-shrink:0;overflow-y:auto;padding:12px;border-right:1px solid var(--border)"></div>
   <div style="flex:1;display:flex;flex-direction:column;overflow:hidden;min-height:0">
-    <div id="ohko-list-controls" style="padding:8px 12px;border-bottom:1px solid var(--border);background:var(--bg2);display:flex;flex-wrap:wrap;gap:6px;align-items:center;flex-shrink:0">
-      <input id="ohko-search" type="text" placeholder="Search name or ability…" style="background:var(--bg3);border:1px solid var(--border);color:var(--text);padding:4px 8px;border-radius:5px;font-size:12px;outline:none;font-family:var(--font);width:170px">
-      <div class="move-filter-wrap" style="position:relative">
-        <input id="ohko-move-input" type="text" placeholder="Must learn move…" autocomplete="off" style="background:var(--bg3);border:1px solid var(--border);color:var(--text);padding:4px 8px;border-radius:5px;font-size:12px;outline:none;font-family:var(--font);width:150px">
-        <div id="ohko-move-suggestions" style="position:absolute;top:100%;left:0;background:var(--bg2);border:1px solid var(--border);border-radius:5px;z-index:50;max-height:200px;overflow-y:auto;min-width:200px;box-shadow:0 4px 12px rgba(0,0,0,.12)"></div>
+    <div id="ohko-list-controls" style="border-bottom:1px solid var(--border);background:var(--bg2);flex-shrink:0">
+      <!-- Row 1: search, move filter, sort, filter buttons -->
+      <div style="padding:8px 12px;display:flex;flex-wrap:wrap;gap:6px;align-items:center">
+        <input id="ohko-search" type="text" placeholder="Search name…" style="background:var(--bg3);border:1px solid var(--border);color:var(--text);padding:4px 8px;border-radius:5px;font-size:12px;outline:none;font-family:var(--font);width:140px">
+        <div class="move-filter-wrap" style="position:relative">
+          <input id="ohko-move-input" type="text" placeholder="Must learn move…" autocomplete="off" style="background:var(--bg3);border:1px solid var(--border);color:var(--text);padding:4px 8px;border-radius:5px;font-size:12px;outline:none;font-family:var(--font);width:140px">
+          <div id="ohko-move-suggestions" style="position:absolute;top:100%;left:0;background:var(--bg2);border:1px solid var(--border2);border-radius:5px;z-index:50;max-height:220px;overflow-y:auto;min-width:220px;box-shadow:0 4px 12px rgba(0,0,0,.12);display:none"></div>
+        </div>
+        <div id="ohko-move-tags" style="display:flex;flex-wrap:wrap;gap:4px"></div>
+        <div class="move-filter-wrap" style="position:relative">
+          <input id="ohko-ability-input" type="text" placeholder="Has ability…" autocomplete="off" style="background:var(--bg3);border:1px solid var(--border);color:var(--text);padding:4px 8px;border-radius:5px;font-size:12px;outline:none;font-family:var(--font);width:130px">
+          <div id="ohko-ability-suggestions" style="position:absolute;top:100%;left:0;background:var(--bg2);border:1px solid var(--border2);border-radius:5px;z-index:50;max-height:220px;overflow-y:auto;min-width:200px;box-shadow:0 4px 12px rgba(0,0,0,.12);display:none"></div>
+        </div>
+        <div id="ohko-ability-tag" style="display:none" class="move-filter-tag"></div>
+        <div style="width:1px;height:20px;background:var(--border2);margin:0 2px"></div>
+        <span style="font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.06em">Sort</span>
+        <select id="ohko-sort" style="background:var(--bg3);border:1px solid var(--border);color:var(--text);padding:4px 8px;border-radius:5px;font-size:12px;outline:none;font-family:var(--font)">
+          <option value="eff">Effectiveness</option>
+          <option value="atk">Atk ↓</option>
+          <option value="spa">SpA ↓</option>
+          <option value="spe">Speed ↓</option>
+          <option value="bst">BST ↓</option>
+          <option value="name">Name A–Z</option>
+        </select>
+        <div style="width:1px;height:20px;background:var(--border2);margin:0 2px"></div>
+        <span style="font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.06em">Filter</span>
+        <button id="ohko-filter-faster" class="ohko-filter-btn" title="Only show Pokémon faster than the target">⚡ Is Faster</button>
+        <button id="ohko-filter-survive" class="ohko-filter-btn" title="Only show Pokémon that survive one hit from the target's selected moves">🛡 Can Survive</button>
+        <button id="ohko-filter-stat" class="ohko-filter-btn" title="Filter by minimum base stat">📊 Stat ≥</button>
+        <div id="ohko-stat-wrap" style="display:none;align-items:center;gap:5px">
+          <select id="ohko-stat-key" style="background:var(--bg3);border:1px solid var(--border);color:var(--text);padding:4px 6px;border-radius:5px;font-size:12px;outline:none;font-family:var(--font)">
+            <option value="hp">HP</option>
+            <option value="attack">Atk</option>
+            <option value="defense">Def</option>
+            <option value="special-attack">SpA</option>
+            <option value="special-defense">SpD</option>
+            <option value="speed">Spe</option>
+            <option value="bst">BST</option>
+          </select>
+          <span style="font-size:11px;color:var(--text2)">≥</span>
+          <input id="ohko-stat-val" type="number" min="0" max="999" value="100" style="background:var(--bg3);border:1px solid var(--border);color:var(--text);padding:4px 6px;border-radius:5px;font-size:12px;outline:none;font-family:var(--font);width:60px">
+        </div>
       </div>
-      <div id="ohko-move-tags" style="display:flex;flex-wrap:wrap;gap:4px"></div>
-      <select id="ohko-sort" style="background:var(--bg3);border:1px solid var(--border);color:var(--text);padding:4px 8px;border-radius:5px;font-size:12px;outline:none;font-family:var(--font)">
-        <option value="eff">Sort: Effectiveness</option>
-        <option value="atk">Sort: Atk stat ↓</option>
-        <option value="spa">Sort: SpA stat ↓</option>
-        <option value="spe">Sort: Speed ↓</option>
-        <option value="bst">Sort: BST ↓</option>
-        <option value="name">Sort: Name A–Z</option>
-      </select>
+      <!-- Row 2: survive move selector (only shown when Can Survive is active) -->
+      <div id="ohko-survive-wrap" style="display:none;padding:6px 12px 8px;border-top:1px solid var(--border);align-items:center;gap:6px;flex-wrap:wrap;background:var(--bg3)">
+        <span style="font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;flex-shrink:0">Must survive</span>
+        <div id="ohko-survive-tags" style="display:flex;flex-wrap:wrap;gap:4px"></div>
+        <div class="move-filter-wrap" style="position:relative">
+          <input id="ohko-survive-input" type="text" placeholder="Add move from target's learnset…" autocomplete="off" style="background:var(--bg2);border:1px solid var(--border);color:var(--text);padding:4px 8px;border-radius:5px;font-size:12px;outline:none;font-family:var(--font);width:220px">
+          <div id="ohko-survive-suggestions" style="position:absolute;top:100%;left:0;background:var(--bg2);border:1px solid var(--border2);border-radius:5px;z-index:50;max-height:200px;overflow-y:auto;min-width:220px;box-shadow:0 4px 12px rgba(0,0,0,.12);display:none"></div>
+        </div>
+        <span style="font-size:11px;color:var(--text2);margin-left:4px">All selected moves must be survived (AND)</span>
+      </div>
     </div>
     <div id="ohko-list-body" style="flex:1;overflow-y:auto;padding:12px"></div>
   </div>
@@ -412,13 +483,22 @@ input[type=range]{width:100%;accent-color:#4f46e5;height:4px}
   <div id="dex-controls" style="display:flex;flex-direction:column;gap:6px;margin-bottom:10px">
     <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
       <input id="dex-search" type="text" placeholder="Search Pokémon…" style="width:200px">
-      <select id="dex-type-filter" style="width:120px"><option value="">All types</option></select>
+      <div style="position:relative" id="dex-type-wrap">
+        <button id="dex-type-btn" style="display:flex;align-items:center;gap:6px;background:var(--bg3);border:1px solid var(--border);color:var(--text);padding:5px 28px 5px 8px;border-radius:5px;font-size:13px;cursor:pointer;font-family:var(--font);min-width:110px;position:relative;text-align:left">
+          <span id="dex-type-label">All types</span>
+          <span style="position:absolute;right:8px;top:50%;transform:translateY(-50%);font-size:10px;color:var(--text3)">▾</span>
+        </button>
+        <div id="dex-type-menu" style="display:none;position:absolute;top:100%;left:0;z-index:100;background:#fff;border:1px solid var(--border2);border-radius:6px;box-shadow:0 4px 14px rgba(0,0,0,.12);padding:4px;min-width:130px;max-height:340px;overflow-y:auto;margin-top:2px"></div>
+      </div>
       <select id="dex-mega-filter" style="width:110px">
         <option value="">All forms</option>
         <option value="mega">Megas only</option>
         <option value="base">No Megas</option>
       </select>
-      <select id="dex-ability-filter" style="width:170px"><option value="">All abilities</option></select>
+      <div class="move-filter-wrap" style="position:relative">
+        <input id="dex-ability-filter" type="text" placeholder="Ability…" autocomplete="off" style="width:150px;background:var(--bg3);border:1px solid var(--border);color:var(--text);padding:5px 8px;border-radius:5px;font-size:13px;outline:none;font-family:var(--font)">
+        <div id="dex-ability-suggestions" style="position:absolute;top:100%;left:0;background:var(--bg2);border:1px solid var(--border);border-radius:5px;z-index:50;max-height:220px;overflow-y:auto;min-width:200px;box-shadow:0 4px 12px rgba(0,0,0,.12);display:none"></div>
+      </div>
       <div class="move-filter-wrap" style="position:relative">
         <input id="dex-move-input" type="text" placeholder="Filter by move…" autocomplete="off" style="width:160px">
         <div id="dex-move-suggestions"></div>
@@ -609,7 +689,7 @@ async function init() {
       if (_ohkoCachedResults.length > 0) _renderOhkoResults(_ohkoCachedResults, _ohkoDefTypes);
     });
 
-    // OHKO move filter (tag-based, filters full learnset)
+    // OHKO move filter — tag-based like Pokédex
     window._ohkoMoveFilters = [];
     const ohkoMoveInput = document.getElementById('ohko-move-input');
     const ohkoMoveSugg  = document.getElementById('ohko-move-suggestions');
@@ -621,7 +701,8 @@ async function init() {
         const move = DB.moves[key];
         const tag = document.createElement('div');
         tag.className = 'move-filter-tag';
-        tag.innerHTML = `<span>${move ? move.display : key}</span><button>×</button>`;
+        const typeColor = move ? getTypeColor(move.type) : '#666';
+        tag.innerHTML = `<span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${typeColor};flex-shrink:0"></span><span>${move ? move.display : key}</span><button>×</button>`;
         tag.querySelector('button').addEventListener('click', () => {
           window._ohkoMoveFilters = window._ohkoMoveFilters.filter(m => m !== key);
           ohkoRenderMoveTags();
@@ -631,33 +712,196 @@ async function init() {
       });
     }
 
-    ohkoMoveInput.addEventListener('input', () => {
-      const q = ohkoMoveInput.value.toLowerCase().trim();
+    function ohkoShowMoveSugg(q) {
       ohkoMoveSugg.innerHTML = '';
-      if (!q) return;
-      Object.values(DB.moves).filter(m => m.display && m.display.toLowerCase().includes(q)).slice(0, 12).forEach(m => {
+      const matches = Object.values(DB.moves)
+        .filter(m => m.display && m.display.toLowerCase().includes(q.toLowerCase()))
+        .sort((a,b) => a.display.localeCompare(b.display))
+        .slice(0, 15);
+      if (!matches.length) { ohkoMoveSugg.style.display = 'none'; return; }
+      matches.forEach(m => {
         const d = document.createElement('div');
-        d.textContent = m.display;
-        d.style.cssText = 'padding:5px 10px;font-size:12px;cursor:pointer;color:var(--text)';
+        d.style.cssText = 'display:flex;align-items:center;gap:6px;padding:5px 9px;cursor:pointer;font-size:12px;color:var(--text)';
+        d.innerHTML = `<span class="type-badge" style="background:${getTypeColor(m.type)};font-size:9px;padding:1px 5px">${m.type}</span><span style="font-weight:600">${m.display}</span><span style="color:var(--text3);font-size:11px;margin-left:auto">${m.power||'—'}bp</span>`;
         d.addEventListener('mouseover', () => d.style.background = 'var(--bg3)');
         d.addEventListener('mouseout',  () => d.style.background = '');
         d.addEventListener('mousedown', e => {
           e.preventDefault();
           const key = m.name;
-          if (!key || window._ohkoMoveFilters.includes(key)) { ohkoMoveSugg.innerHTML=''; ohkoMoveInput.value=''; return; }
+          if (!key || window._ohkoMoveFilters.includes(key)) { ohkoMoveSugg.style.display='none'; ohkoMoveInput.value=''; return; }
           window._ohkoMoveFilters.push(key);
           ohkoMoveInput.value = '';
-          ohkoMoveSugg.innerHTML = '';
+          ohkoMoveSugg.style.display = 'none';
           ohkoRenderMoveTags();
           if (_ohkoCachedResults.length > 0) _renderOhkoResults(_ohkoCachedResults, _ohkoDefTypes);
         });
         ohkoMoveSugg.appendChild(d);
       });
+      ohkoMoveSugg.style.display = 'block';
+    }
+
+    ohkoMoveInput.addEventListener('input', () => {
+      const q = ohkoMoveInput.value.trim();
+      if (!q) { ohkoMoveSugg.style.display = 'none'; return; }
+      ohkoShowMoveSugg(q);
+    });
+    ohkoMoveInput.addEventListener('focus', () => {
+      if (ohkoMoveInput.value.trim()) ohkoShowMoveSugg(ohkoMoveInput.value.trim());
     });
     ohkoMoveInput.addEventListener('keydown', e => {
-      if (e.key === 'Escape') { ohkoMoveSugg.innerHTML=''; ohkoMoveInput.value=''; }
+      if (e.key === 'Escape') { ohkoMoveSugg.style.display='none'; ohkoMoveInput.value=''; }
     });
-    ohkoMoveInput.addEventListener('blur', () => setTimeout(() => { ohkoMoveSugg.innerHTML=''; }, 150));
+    ohkoMoveInput.addEventListener('blur', () => setTimeout(() => { ohkoMoveSugg.style.display='none'; }, 150));
+
+    // ── Filter state ──
+    window._ohkoFilterFaster  = false;
+    window._ohkoFilterSurvive = false;
+    window._ohkoFilterStat    = false;
+    window._ohkoSurviveMoves  = [];
+
+    const ohkoSurviveWrap  = document.getElementById('ohko-survive-wrap');
+    const ohkoSurviveInput = document.getElementById('ohko-survive-input');
+    const ohkoSurviveSugg  = document.getElementById('ohko-survive-suggestions');
+    const ohkoSurviveTags  = document.getElementById('ohko-survive-tags');
+    const ohkoStatWrap     = document.getElementById('ohko-stat-wrap');
+
+    function ohkoRenderSurviveTags() {
+      ohkoSurviveTags.innerHTML = '';
+      (window._ohkoSurviveMoves || []).forEach(key => {
+        const m = DB.moves[key];
+        if (!m) return;
+        const tag = document.createElement('div');
+        tag.className = 'move-filter-tag';
+        tag.innerHTML = `<span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:${getTypeColor(m.type)};flex-shrink:0"></span><span>${m.display}</span><button>×</button>`;
+        tag.querySelector('button').addEventListener('click', () => {
+          window._ohkoSurviveMoves = window._ohkoSurviveMoves.filter(k => k !== key);
+          ohkoRenderSurviveTags();
+          ohkoRerender();
+        });
+        ohkoSurviveTags.appendChild(tag);
+      });
+    }
+
+    function ohkoRerender() {
+      if (_ohkoCachedResults.length > 0) _renderOhkoResults(_ohkoCachedResults, _ohkoDefTypes);
+    }
+
+    // ── Ability filter ──
+    window._ohkoAbilityFilter = null;
+    const ohkoAbilInput = document.getElementById('ohko-ability-input');
+    const ohkoAbilSugg  = document.getElementById('ohko-ability-suggestions');
+    const ohkoAbilTag   = document.getElementById('ohko-ability-tag');
+
+    function ohkoShowAbilSugg(q) {
+      ohkoAbilSugg.innerHTML = '';
+      const allAbils = new Set();
+      Object.values(DB.pokemon).forEach(p => (p.abilities||[]).forEach(a => allAbils.add(a)));
+      const matches = [...allAbils]
+        .filter(a => !q || a.replace(/-/g,' ').toLowerCase().includes(q.toLowerCase()))
+        .sort()
+        .slice(0, 15);
+      if (!matches.length) { ohkoAbilSugg.style.display = 'none'; return; }
+      matches.forEach(a => {
+        const info = getAbilityInfo(a);
+        const d = document.createElement('div');
+        d.style.cssText = 'display:flex;align-items:center;gap:6px;padding:5px 9px;cursor:pointer;font-size:12px;color:var(--text)';
+        d.innerHTML = `<span>${info.icon}</span><span style="font-weight:600">${a.replace(/-/g,' ').replace(/\b\w/g,c=>c.toUpperCase())}</span>`;
+        d.addEventListener('mouseover', () => d.style.background = 'var(--bg3)');
+        d.addEventListener('mouseout',  () => d.style.background = '');
+        d.addEventListener('mousedown', e => {
+          e.preventDefault();
+          window._ohkoAbilityFilter = a;
+          ohkoAbilInput.value = a.replace(/-/g,' ').replace(/\b\w/g,c=>c.toUpperCase());
+          ohkoAbilSugg.style.display = 'none';
+          ohkoAbilTag.style.display = 'inline-flex';
+          ohkoAbilTag.innerHTML = `<span>${info.icon}</span><span>${a.replace(/-/g,' ').replace(/\b\w/g,c=>c.toUpperCase())}</span><button>×</button>`;
+          ohkoAbilTag.querySelector('button').addEventListener('click', () => {
+            window._ohkoAbilityFilter = null;
+            ohkoAbilInput.value = '';
+            ohkoAbilTag.style.display = 'none';
+            ohkoRerender();
+          });
+          ohkoRerender();
+        });
+        ohkoAbilSugg.appendChild(d);
+      });
+      ohkoAbilSugg.style.display = 'block';
+    }
+
+    ohkoAbilInput.addEventListener('input', () => {
+      window._ohkoAbilityFilter = null;
+      ohkoAbilTag.style.display = 'none';
+      const q = ohkoAbilInput.value.trim();
+      if (!q) { ohkoAbilSugg.style.display = 'none'; ohkoRerender(); return; }
+      ohkoShowAbilSugg(q);
+    });
+    ohkoAbilInput.addEventListener('focus', () => ohkoShowAbilSugg(ohkoAbilInput.value.trim()));
+    ohkoAbilInput.addEventListener('blur', () => setTimeout(() => { ohkoAbilSugg.style.display = 'none'; }, 150));
+
+    // Filter buttons — toggle active state
+    document.getElementById('ohko-filter-faster').addEventListener('click', () => {
+      window._ohkoFilterFaster = !window._ohkoFilterFaster;
+      document.getElementById('ohko-filter-faster').classList.toggle('active', window._ohkoFilterFaster);
+      ohkoRerender();
+    });
+
+    document.getElementById('ohko-filter-survive').addEventListener('click', () => {
+      window._ohkoFilterSurvive = !window._ohkoFilterSurvive;
+      document.getElementById('ohko-filter-survive').classList.toggle('active', window._ohkoFilterSurvive);
+      ohkoSurviveWrap.style.display = window._ohkoFilterSurvive ? 'flex' : 'none';
+      ohkoRerender();
+    });
+
+    document.getElementById('ohko-filter-stat').addEventListener('click', () => {
+      window._ohkoFilterStat = !window._ohkoFilterStat;
+      document.getElementById('ohko-filter-stat').classList.toggle('active', window._ohkoFilterStat);
+      ohkoStatWrap.style.display = window._ohkoFilterStat ? 'flex' : 'none';
+      ohkoRerender();
+    });
+
+    document.getElementById('ohko-stat-key').addEventListener('change', ohkoRerender);
+    document.getElementById('ohko-stat-val').addEventListener('input', ohkoRerender);
+
+    function ohkoShowSurviveSugg(q) {
+      ohkoSurviveSugg.innerHTML = '';
+      const defPoke = DB.pokemon[pwTarget.poke];
+      const learnset = defPoke ? (defPoke.moves || []) : [];
+      const candidates = Object.values(DB.moves).filter(m =>
+        m.category !== 'status' && m.power > 0 &&
+        (learnset.length === 0 || learnset.includes(m.name)) &&
+        (!q || m.display.toLowerCase().includes(q.toLowerCase()))
+      ).sort((a,b) => a.display.localeCompare(b.display)).slice(0, 20);
+
+      if (!candidates.length) { ohkoSurviveSugg.style.display = 'none'; return; }
+      candidates.forEach(m => {
+        const already = (window._ohkoSurviveMoves||[]).includes(m.name);
+        const d = document.createElement('div');
+        d.style.cssText = 'display:flex;align-items:center;gap:6px;padding:5px 9px;cursor:pointer;font-size:12px;color:var(--text)';
+        if (already) d.style.opacity = '0.4';
+        d.innerHTML = `<span class="type-badge" style="background:${getTypeColor(m.type)};font-size:9px;padding:1px 5px">${m.type}</span><span style="font-weight:600">${m.display}</span><span style="color:var(--text3);font-size:11px;margin-left:auto">${m.power}bp</span>`;
+        d.addEventListener('mouseover', () => { if (!already) d.style.background = 'var(--bg3)'; });
+        d.addEventListener('mouseout',  () => d.style.background = '');
+        d.addEventListener('mousedown', e => {
+          e.preventDefault();
+          if (already) return;
+          window._ohkoSurviveMoves = [...(window._ohkoSurviveMoves||[]), m.name];
+          ohkoSurviveInput.value = '';
+          ohkoSurviveSugg.style.display = 'none';
+          ohkoRenderSurviveTags();
+          ohkoRerender();
+        });
+        ohkoSurviveSugg.appendChild(d);
+      });
+      ohkoSurviveSugg.style.display = 'block';
+    }
+
+    ohkoSurviveInput.addEventListener('input', () => {
+      const q = ohkoSurviveInput.value.trim();
+      if (!q) { ohkoSurviveSugg.style.display = 'none'; return; }
+      ohkoShowSurviveSugg(q);
+    });
+    ohkoSurviveInput.addEventListener('focus', () => ohkoShowSurviveSugg(ohkoSurviveInput.value.trim()));
+    ohkoSurviveInput.addEventListener('blur', () => setTimeout(() => { ohkoSurviveSugg.style.display = 'none'; }, 150));
   } catch(e) {
     console.error('Init error:', e);
     // Only show error if data never loaded
@@ -683,7 +927,7 @@ const pwTarget = {
   evSpe:0, speStage:0, tailwind:false, unburden:false,
   evAtkSpe:0, atkSpeStage:0, atkTailwind:false, atkUnburden:false,
   // Items
-  atkItem:'none', defItem:'none',
+  atkItem:'none', defItem:'none', atkAbility:'none',
 };
 
 // Condition state
@@ -902,6 +1146,48 @@ function calcDamage(atker, defer, moveKey) {
   if (power === 0) return null;
 
   const moveName = move.name;
+
+  // ── Moves that use non-standard stats ──
+  // Foul Play: uses the DEFENDER's Attack stat instead of attacker's
+  if (moveName === 'foul-play') {
+    const defAtkBase = defPoke.stats.attack;
+    const defAtkEV   = defer.evAtk || 0;
+    const defAtkNat  = getNatureMult(defer.nature, 'attack');
+    let foulA = calcStat(defAtkBase, defAtkEV, 31, LEVEL, defAtkNat);
+    // Apply defender's Atk stage
+    const defAtkStage = parseInt(defer.atkStage) || 0;
+    foulA = Math.floor(foulA * (defAtkStage >= 0 ? (1 + defAtkStage * 0.5) : 1 / (1 + Math.abs(defAtkStage) * 0.5)));
+    // Apply attacker's item boosts that boost attack
+    if (atker.item === 'choice-band') foulA = Math.floor(foulA * 1.5);
+    if (atker.item === 'life-orb')    foulA = Math.floor(foulA * 1.3);
+    A = foulA;
+  }
+
+  // Body Press: uses the ATTACKER's Defense stat instead of Attack
+  if (moveName === 'body-press') {
+    const atkDefBase = atkPoke.stats.defense;
+    const atkDefEV   = atker.evDef || 0;
+    const atkDefNat  = getNatureMult(atker.nature, 'defense');
+    let bodyA = calcStat(atkDefBase, atkDefEV, 31, LEVEL, atkDefNat);
+    const atkDefStage = parseInt(atker.defStage) || 0;
+    bodyA = Math.floor(bodyA * (atkDefStage >= 0 ? (1 + atkDefStage * 0.5) : 1 / (1 + Math.abs(atkDefStage) * 0.5)));
+    if (atker.item === 'choice-band') bodyA = Math.floor(bodyA * 1.5);
+    if (atker.item === 'life-orb')    bodyA = Math.floor(bodyA * 1.3);
+    A = bodyA;
+  }
+
+  // Psyshock / Psystrike / Secret Sword: special category but hits Def (not SpDef)
+  const psyshockMoves = ['psyshock', 'psystrike', 'secret-sword'];
+  if (psyshockMoves.includes(moveName)) {
+    // Recalculate D using defender's physical Defense
+    const defDefBase = defPoke.stats.defense;
+    const defDefEV   = defer.evDef || 0;
+    const defDefNat  = getNatureMult(defer.nature, 'defense');
+    D = calcStat(defDefBase, defDefEV, 31, LEVEL, defDefNat);
+    D = Math.floor(D * defStageMults.def);
+    // Item modifiers on D (physical side)
+    // Eviolite handled below if needed; Assault Vest doesn't apply here
+  }
 
   // Paralysis halves speed for Gyro Ball / Electro Ball
   const atkSpeEff = (atker.status === 'paralysis') ? Math.floor(atkSpe * 0.5) : atkSpe;
@@ -1215,6 +1501,18 @@ function selectPoke(p, input, sprite, list, containerId, panelId, isAtk) {
   // OHKO calc target
   if (panelId === 'pw') {
     pwTarget.poke = p.name;
+    pwTarget.defAbility = (p.abilities||[])[0] || '';
+    // Populate ability dropdown
+    const abWrap = document.getElementById('pw-ability-wrap');
+    const abSel  = document.getElementById('pw-def-ability');
+    if (abSel && p.abilities && p.abilities.length) {
+      abSel.innerHTML = p.abilities.map(a => {
+        const info = getAbilityInfo(a);
+        return `<option value="${a}">${info.icon} ${a.replace(/-/g,' ').replace(/\b\w/g,c=>c.toUpperCase())}</option>`;
+      }).join('');
+      abSel.value = pwTarget.defAbility;
+      if (abWrap) abWrap.style.display = 'block';
+    }
     const typeRow = document.getElementById('pw-poke-types');
     if (typeRow) {
       typeRow.innerHTML = '';
@@ -1227,7 +1525,7 @@ function selectPoke(p, input, sprite, list, containerId, panelId, isAtk) {
       });
     }
     const statsEl = document.getElementById('pw-poke-stats');
-    if (statsEl) statsEl.textContent = `HP ${p.stats.hp} · Def ${p.stats.defense} · SpD ${p.stats['special-defense']} · Spe ${p.stats.speed}`;
+    if (statsEl) updatePwPokeStats(p);
     renderPowerPanel();
     return;
   }
@@ -1499,20 +1797,20 @@ function getMultiHitInfo(move, abilityName, itemName) {
   if (!move) return null;
   const name = move.name;
   const eff  = (move.effect || '').toLowerCase();
-  const skillLink = abilityName && abilityName.toLowerCase() === 'skill-link';
-  const loadedDice = itemName && itemName.toLowerCase() === 'loaded-dice';
+  const skillLink  = abilityName && abilityName.toLowerCase() === 'skill-link';
+  const loadedDice = itemName   && itemName.toLowerCase()   === 'loaded-dice';
 
   // ── Hardcoded escalating-power moves ──
-  // Triple Axel: 20, 40, 60 — each hit can miss independently
   if (name === 'triple-axel') return { minHits:1, maxHits:3, hitPowers:[20,40,60], escalating:true };
-  // Triple Kick: 10, 20, 30
   if (name === 'triple-kick') return { minHits:1, maxHits:3, hitPowers:[10,20,30], escalating:true };
 
-  // ── Hardcoded fixed-hit moves whose effect text doesn't say so ──
+  // ── Hardcoded fixed-hit moves ──
   if (name === 'surging-strikes') return { minHits:3, maxHits:3, hitPowers:null, escalating:false };
   if (name === 'dual-wingbeat')   return { minHits:2, maxHits:2, hitPowers:null, escalating:false };
+  if (name === 'dragon-darts')    return { minHits:2, maxHits:2, hitPowers:null, escalating:false };
+  if (name === 'scale-shot')      return { minHits: skillLink ? 5 : loadedDice ? 4 : 2, maxHits:5, hitPowers:null, escalating:false };
 
-  // Population Bomb: 1-10 hits, Skill Link = always 10, Loaded Dice = minimum 4
+  // Population Bomb: 1-10 hits
   if (name === 'population-bomb') {
     if (skillLink) return { minHits:10, maxHits:10, hitPowers:null, escalating:false };
     return { minHits: loadedDice ? 4 : 1, maxHits:10, hitPowers:null, escalating:false };
@@ -1520,19 +1818,19 @@ function getMultiHitInfo(move, abilityName, itemName) {
 
   // ── Effect-text based detection ──
   // Always 2 hits
-  if (/hits twice|hit twice|hits two|hits 2 times in a row|hits twice in the same|hits 2 times in one turn/.test(eff))
+  if (/hits twice|hit twice in|hits two|hits 2 times|hits twice in the same|twineedle|double.*hit.*one turn/.test(eff))
     return { minHits:2, maxHits:2, hitPowers:null, escalating:false };
 
-  // "Hits three times" fixed
+  // Always 3 hits
   if (/hits three times|three times in one turn/.test(eff))
     return { minHits:3, maxHits:3, hitPowers:null, escalating:false };
 
-  // Variable 2–5
-  if (/2.5 times|2-5 times|2 to 5 times|hits 2–5/.test(eff))
+  // Variable 2–5 (catches "2-5", "2 to 5", "2–5", "two to five")
+  if (/2.5 times|2-5 times|2 to 5 times|hits 2–5|two to five/.test(eff))
     return { minHits: skillLink ? 5 : loadedDice ? 4 : 2, maxHits:5, hitPowers:null, escalating:false };
 
   // Variable 3–5
-  if (/3.5 times|3-5 times/.test(eff))
+  if (/3.5 times|3-5 times|3 to 5 times/.test(eff))
     return { minHits: skillLink ? 5 : loadedDice ? 4 : 3, maxHits:5, hitPowers:null, escalating:false };
 
   return null;
@@ -1562,62 +1860,98 @@ function updateStatsDisplay(panelId, poke, isAtk) {
 
   function refresh() {
     container.innerHTML = '';
+    const ab = (panel?.ability || '').toLowerCase();
+    const weather = conds.weather || 'none';
+    const terrain = conds.terrain || 'none';
+    const status  = panel?.status || '';
+    const types   = poke.types || [];
+
     statMap.forEach(([label, key, color]) => {
       const base = (poke.stats||{})[key] || 0;
       const isHP = key === 'hp';
-
-      // Read current EV for this stat
       const evKey = { hp:'evHP', attack:'evAtk', defense:'evDef', 'special-attack':'evSpAtk', 'special-defense':'evSpDef', speed:'evSpe' }[key];
       const ev = panel ? (panel[evKey]||0) : 0;
-
-      // Nature mult — color the calced value red if boosted, blue if dropped
       const natMult = panel ? getNatureMult(panel.nature, key) : 1;
       const natColor = natMult > 1 ? '#dc2626' : natMult < 1 ? '#2563eb' : 'var(--text2)';
+      let calcedVal = isHP ? calcHP(base, ev) : calcStat(base, ev, 31, 50, natMult);
 
-      const calcedVal = isHP ? calcHP(base, ev) : calcStat(base, ev, 31, 50, natMult);
+      // Ability + condition multipliers on displayed stat
+      let abilMult = 1;
+      let note = '';
 
-      // Status effects on displayed stat
-      let displayVal = calcedVal;
-      let statusNote = '';
-      if (panel && panel.status) {
-        if (key === 'speed' && panel.status === 'paralysis') {
-          displayVal = Math.floor(calcedVal * 0.5);
-          statusNote = ' ⚡';
+      if (!isHP) {
+        // ── Speed ──
+        if (key === 'speed') {
+          if (ab === 'swift-swim'   && weather === 'rain')     { abilMult = 2; note = '💧×2'; }
+          if (ab === 'chlorophyll'  && weather === 'sun')      { abilMult = 2; note = '☀×2'; }
+          if (ab === 'sand-rush'    && weather === 'sand')     { abilMult = 2; note = '🌪×2'; }
+          if (ab === 'slush-rush'   && (weather === 'snow' || weather === 'hail')) { abilMult = 2; note = '❄×2'; }
+          if (ab === 'surge-surfer' && terrain === 'electric') { abilMult = 2; note = '⚡×2'; }
+          if (ab === 'unburden'     && panel?.unburden)        { abilMult = 2; note = '×2'; }
+          if (status === 'paralysis') { abilMult *= 0.5; note += ' ⚡½'; }
         }
-        if (key === 'attack' && panel.status === 'burn') {
-          displayVal = Math.floor(calcedVal * 0.5);
-          statusNote = ' 🔥';
+        // ── Attack ──
+        if (key === 'attack') {
+          if (ab === 'huge-power' || ab === 'pure-power') { abilMult = 2; note = '×2'; }
+          if (ab === 'gorilla-tactics') { abilMult = 1.5; note = '×1.5'; }
+          if (ab === 'hustle')          { abilMult = 1.5; note = '×1.5'; }
+          if (ab === 'guts' && status)  { abilMult = 1.5; note = '×1.5'; }
+          if (status === 'burn' && ab !== 'guts') { abilMult *= 0.5; note += ' 🔥½'; }
+        }
+        // ── Special Attack ──
+        if (key === 'special-attack') {
+          if (ab === 'solar-power'  && weather === 'sun')      { abilMult = 1.5; note = '☀×1.5'; }
+          if (ab === 'hadron-engine'&& terrain === 'electric') { abilMult *= 4/3; note = '⚡×1.3'; }
+          if (ab === 'orichalcum-pulse' && (weather === 'sun' || ab === 'mega-sol')) { abilMult *= 4/3; note = '☀×1.3'; }
+        }
+        // ── Defense ──
+        if (key === 'defense') {
+          if (ab === 'fur-coat')   { abilMult = 2;   note = '×2'; }
+          if (ab === 'marvel-scale' && status) { abilMult = 1.5; note = '×1.5'; }
+          if (ab === 'stamina')    { note = '+stages'; } // situational, just flag it
+        }
+        // ── Special Defense ──
+        if (key === 'special-defense') {
+          if (ab === 'ice-scales') { abilMult = 2; note = '×2'; } // effectively
+          if (types.includes('rock') && weather === 'sand') { abilMult = 1.5; note = '🌪×1.5'; }
+          if (types.includes('ice')  && weather === 'snow') { abilMult = 1.5; note = '❄×1.5'; }
         }
       }
 
+      const displayVal = abilMult !== 1 ? Math.floor(calcedVal * abilMult) : calcedVal;
       const barW = Math.min(100, base/255*100).toFixed(1);
-
       const row = document.createElement('div');
       row.className = 'stat-row';
-      const calcColor = statusNote ? '#f59e0b' : natColor;
+      const calcColor = note ? (abilMult > 1 ? '#16a34a' : abilMult < 1 ? '#dc2626' : '#f59e0b') : natColor;
+      const bold = natMult !== 1 || note ? '700' : '400';
       row.innerHTML = `
         <span class="stat-name">${label}</span>
         <div class="stat-bar-bg"><div class="stat-bar" style="width:${barW}%;background:${color}"></div></div>
         <span class="stat-val" style="color:${color}">${base}</span>
-        <span class="stat-calc" style="color:${calcColor};font-weight:${natMult !== 1 || statusNote ? '700' : '400'}">${displayVal}${statusNote}</span>`;
+        <span class="stat-calc" style="color:${calcColor};font-weight:${bold}">${displayVal}${note ? ` <span style="font-size:9px;opacity:.8">${note}</span>` : ''}</span>`;
       container.appendChild(row);
     });
   }
 
   refresh();
-
-  // Store refresh fn so EV sliders can re-trigger it
   container._refresh = refresh;
 }
 
-// Patch bindEvSlider to also refresh stat display
+// EV keys per panel — used to enforce the 66-total cap
+const EV_STAT_KEYS = ['evHP','evAtk','evDef','evSpAtk','evSpDef','evSpe'];
+
 function bindEvSlider(id, statKey, prefix, panel, panelKey) {
   const slider = document.getElementById(`ev-${prefix}-${statKey}-${id}`);
   const valEl  = document.getElementById(`ev-${prefix}-${statKey}-val-${id}`);
   if (!slider) return;
   slider.addEventListener('input', e => {
-    panel[panelKey] = parseInt(e.target.value)||0;
-    valEl.textContent = e.target.value;
+    const requested = parseInt(e.target.value) || 0;
+    // Enforce 66-total cap across all 6 stats
+    const otherTotal = EV_STAT_KEYS.filter(k => k !== panelKey).reduce((s, k) => s + (panel[k] || 0), 0);
+    const allowed = Math.min(requested, Math.max(0, 66 - otherTotal));
+    if (allowed !== requested) slider.value = allowed;
+    panel[panelKey] = allowed;
+    valEl.textContent = allowed;
     // Refresh live stat display
     const container = document.getElementById(`stats-${prefix}-${id}`);
     if (container && container._refresh) container._refresh();
@@ -1737,20 +2071,47 @@ function buildMovePicker(panelId) {
 
   function renderDropdown(filter) {
     dropdown.innerHTML = '';
-    if (false) {
-      dropdown.classList.remove('open');
-      return;
-    }
     const poke = DB.pokemon[panel.poke];
     const pokeMoves = poke ? (poke.moves || []) : [];
     const allMoves = Object.values(DB.moves).filter(m =>
       m.display.toLowerCase().includes(filter.toLowerCase()) &&
       (pokeMoves.length === 0 || pokeMoves.includes(m.name))
-    ).sort((a,b) => a.display.localeCompare(b.display));
+    );
 
-    const results = allMoves;
+    if (!allMoves.length) {
+      dropdown.classList.remove('open');
+      return;
+    }
 
-    results.slice(0, 60).forEach(m => {
+    // Always group by type
+    const TYPE_ORDER = ['normal','fire','water','electric','grass','ice','fighting','poison','ground','flying','psychic','bug','rock','ghost','dragon','dark','steel','fairy'];
+    const byType = {};
+    allMoves.forEach(m => {
+      const t = m.type || 'normal';
+      if (!byType[t]) byType[t] = [];
+      byType[t].push(m);
+    });
+    TYPE_ORDER.forEach(t => {
+      if (!byType[t] || !byType[t].length) return;
+      const hdr = document.createElement('div');
+      hdr.style.cssText = `display:flex;align-items:center;gap:5px;padding:4px 8px 2px;background:var(--bg3);position:sticky;top:0;z-index:1`;
+      const badge = document.createElement('span');
+      badge.className = 'type-badge';
+      badge.style.cssText = `background:${getTypeColor(t)};font-size:9px;padding:1px 6px`;
+      badge.textContent = t.toUpperCase();
+      hdr.appendChild(badge);
+      const count = document.createElement('span');
+      count.style.cssText = 'font-size:10px;color:var(--text3)';
+      count.textContent = `${byType[t].length}`;
+      hdr.appendChild(count);
+      dropdown.appendChild(hdr);
+      byType[t].sort((a, b) => b.power - a.power).forEach(m => appendMoveOpt(m));
+    });
+
+    dropdown.classList.toggle('open', allMoves.length > 0 && (filter.length > 0 || document.activeElement === input));
+  }
+
+  function appendMoveOpt(m) {
       const already = panel.moves.some(x => x.name === m.name);
       const el = document.createElement('div');
       el.className = 'move-opt';
@@ -1789,7 +2150,6 @@ function buildMovePicker(panelId) {
           panel.moves.push({ name: m.name, active: true });
           renderMoveList();
           recalc();
-          // Refresh pokemon search filter if no pokemon selected yet
           if (!panel.poke) {
             const pokeInput = document.querySelector(`#atk-panel-${panelId} .poke-input, #def-panel-${panelId} .poke-input`);
             if (pokeInput) pokeInput.dispatchEvent(new Event('input'));
@@ -1800,9 +2160,6 @@ function buildMovePicker(panelId) {
       });
 
       dropdown.appendChild(el);
-    });
-
-    dropdown.classList.toggle('open', results.length > 0 && (filter.length > 0 || document.activeElement === input));
   }
 
   input.addEventListener('focus', () => renderDropdown(input.value));
@@ -1829,9 +2186,50 @@ function stageOptions(min=-6, max=6) {
 function evSliderHTML(id, statKey, label, prefix) {
   return `<div class="ev-slider-row">
     <span class="ev-slider-label">${label}</span>
-    <input type="range" id="ev-${prefix}-${statKey}-${id}" min="0" max="252" step="4" value="0">
+    <input type="range" id="ev-${prefix}-${statKey}-${id}" min="0" max="32" step="2" value="0">
     <span class="ev-slider-val" id="ev-${prefix}-${statKey}-val-${id}">0</span>
   </div>`;
+}
+
+function buildItemOptions() {
+  const items = DB.meta.items || {};
+  const groups = [
+    { label: '— None',         keys: ['none'] },
+    { label: 'Recovery',       keys: ['leftovers','black-sludge','sitrus-berry','lum-berry'] },
+    { label: 'Choice',         keys: ['choice-band','choice-specs','choice-scarf'] },
+    { label: 'Power Boost',    keys: ['life-orb','muscle-band','wise-glasses','expert-belt','loaded-dice','punching-glove'] },
+    { label: 'Defensive',      keys: ['assault-vest','eviolite','focus-sash','rocky-helmet','protective-pads','covert-cloak','clear-amulet','safety-goggles','shed-shell','booster-energy'] },
+    { label: 'Status Orbs',    keys: ['flame-orb','toxic-orb','weakness-policy','white-herb','mirror-herb'] },
+    { label: 'Type Boost',     keys: ['charcoal','mystic-water','miracle-seed','magnet','never-melt-ice','black-belt','poison-barb','soft-sand','sharp-beak','twisted-spoon','silverpowder','hard-stone','spell-tag','dragon-fang','black-glasses','metal-coat','silk-scarf','fairy-feather'] },
+    { label: 'Resist Berry',   keys: ['occa-berry','passho-berry','wacan-berry','rindo-berry','yache-berry','chople-berry','kebia-berry','shuca-berry','coba-berry','payapa-berry','tanga-berry','charti-berry','kasib-berry','haban-berry','colbur-berry','babiri-berry','chilan-berry','roseli-berry'] },
+    { label: 'Other',          keys: ['iron-ball','ring-target'] },
+  ];
+
+  // Collect all known keys so nothing is dropped
+  const allKeys = new Set(Object.keys(items));
+  const grouped = new Set();
+
+  let html = '<option value="none">— None —</option>';
+  groups.slice(1).forEach(g => {
+    const validKeys = g.keys.filter(k => allKeys.has(k));
+    if (!validKeys.length) return;
+    html += `<optgroup label="${g.label}">`;
+    validKeys.forEach(k => {
+      grouped.add(k);
+      html += `<option value="${k}">${items[k]?.display || k}</option>`;
+    });
+    html += '</optgroup>';
+  });
+
+  // Anything not grouped yet goes in a fallback group
+  const remaining = [...allKeys].filter(k => !grouped.has(k));
+  if (remaining.length) {
+    html += '<optgroup label="Other">';
+    remaining.forEach(k => { html += `<option value="${k}">${items[k]?.display || k}</option>`; });
+    html += '</optgroup>';
+  }
+
+  return html;
 }
 
 function buildAtkPanel(id) {
@@ -1874,7 +2272,7 @@ function buildAtkPanel(id) {
       <div class="divider"></div>
       <label class="lbl">Held Item</label>
       <select id="item-atk-${id}">
-        ${Object.values((DB.meta.items)||{}).map(it=>`<option value="${it.name}">${it.display}</option>`).join('')}
+        ${buildItemOptions()}
       </select>
       <label class="lbl">Nature</label>
       <select id="nature-atk-${id}"></select>
@@ -1975,7 +2373,7 @@ function buildDefPanel(id) {
       <div id="move-picker-${id}"></div>
       <label class="lbl">Held Item</label>
       <select id="item-def-${id}">
-        ${Object.values((DB.meta.items)||{}).map(it=>`<option value="${it.name}">${it.display}</option>`).join('')}
+        ${buildItemOptions()}
       </select>
       <label class="lbl">Nature</label>
       <select id="nature-def-${id}"></select>
@@ -2225,6 +2623,9 @@ function renderPlots() {
       inner.appendChild(hw);
     }
 
+    // ── Compute all move damage once, store for both labels and bar ──
+    const moveResults = []; // { atk, atkPoke, move, entry, totalMin, totalMax, totalAvg, perHitDmg, mhi, hitLabel, minPct, maxPct, koText }
+
     attackers.forEach(atk => {
       const atkPoke = DB.pokemon[atk.poke];
       if (!atkPoke) return;
@@ -2234,19 +2635,14 @@ function renderPlots() {
       activeMoves.forEach(entry => {
         const dmg = calcDamage(atk, def, entry.name);
         if (!dmg) return;
+        const move = DB.moves[entry.name];
 
         if (dmg.typeEff === 0 || dmg.absorbed) {
-          const wrap = document.createElement('div');
-          wrap.className = 'dmg-bar-wrap';
-          const move = DB.moves[entry.name];
-          wrap.innerHTML = `<div class="dmg-bar-label"><span style="display:flex;align-items:center;gap:5px"><span style="width:8px;height:8px;border-radius:50%;background:${atk.color};display:inline-block"></span>${atkPoke.display} · ${move?.display||entry.name}</span><span style="color:var(--text3);font-size:11px">${dmg.absorbed ? '🛡 Absorbed' : '✗ Immune'}</span></div>`;
-          inner.appendChild(wrap);
+          moveResults.push({ atk, atkPoke, move, entry, absorbed: dmg.absorbed, immune: dmg.typeEff === 0 });
           return;
         }
 
-        const move = DB.moves[entry.name];
         const mhi = getMultiHitInfo(move, atk.ability, atk.item);
-
         const defAbilityName = (def.ability || '').toLowerCase();
         const hasMultiscale = defAbilityName === 'multiscale' || defAbilityName === 'shadow-shield';
         const hasBerry = dmg.berryMult < 1;
@@ -2264,38 +2660,56 @@ function renderPlots() {
 
         let totalMin, totalMax, totalAvg, hitLabel = '';
         let perHitDmg = [];
+        let hitTicks = []; // for variable moves: [{n, pct}] one per possible hit count
 
         if (mhi) {
           if (mhi.escalating && mhi.hitPowers) {
             const hits = mhi.hitPowers.map((hp, i) => oneHit(hp, hasMultiscale && i === 0, hasBerry && i === 0));
             perHitDmg = hits;
-            totalMin = hits[0].min;
+            totalMin = hits.reduce((s, h) => s + h.min, 0);
             totalMax = hits.reduce((s, h) => s + h.max, 0);
             const acc = move.accuracy ? move.accuracy / 100 : 1;
             let avgSum = 0, pAll = 1;
             hits.forEach(h => { pAll *= acc; avgSum += h.avg * pAll; });
             totalAvg = Math.floor(avgSum);
-            hitLabel = ` <span style="font-size:10px;color:var(--text2)">(×1–${mhi.maxHits} esc.${hasMultiscale ? ' · MS' : ''}${hasBerry ? ' · berry' : ''})</span>`;
+            hitLabel = hasMultiscale ? ` <span style="font-size:10px;color:var(--text2)">(MS)</span>` : '';
           } else {
-            const h1 = oneHit(move.power, hasMultiscale, hasBerry);
+            const h1    = oneHit(move.power, hasMultiscale, hasBerry);
             const hRest = oneHit(move.power, false, false);
+            const perHit = hRest; // all hits roughly equal (h1 only differs for MS/berry on first)
             perHitDmg = [];
             for (let i = 0; i < mhi.maxHits; i++) perHitDmg.push(i === 0 ? h1 : hRest);
-            totalMin = h1.min * mhi.minHits;
-            totalMax = h1.max + hRest.max * (mhi.maxHits - 1);
+
+            // For variable-hit moves, min = minHits, max = maxHits
+            const minHitTotal = perHitDmg.slice(0, mhi.minHits).reduce((s, h) => s + h.avg, 0);
+            const maxHitTotal = perHitDmg.reduce((s, h) => s + h.avg, 0);
+            totalMin = perHitDmg.slice(0, mhi.minHits).reduce((s, h) => s + h.min, 0);
+            totalMax = perHitDmg.reduce((s, h) => s + h.max, 0);
             const avgHits = (mhi.minHits + mhi.maxHits) / 2;
             totalAvg = Math.floor(h1.avg + hRest.avg * (avgHits - 1));
-            hitLabel = mhi.minHits === mhi.maxHits
-              ? ` <span style="font-size:10px;color:var(--text2)">(×${mhi.minHits}${hasMultiscale ? ' · MS' : ''}${hasBerry ? ' · berry' : ''})</span>`
-              : ` <span style="font-size:10px;color:var(--text2)">(×${mhi.minHits}–${mhi.maxHits}${hasMultiscale ? ' · MS' : ''}${hasBerry ? ' · berry' : ''})</span>`;
+
+            // Per-hit pct for label
+            const perHitMinPct = (perHit.min / defHP * 100).toFixed(1);
+            const perHitMaxPct = (perHit.max / defHP * 100).toFixed(1);
+
+            if (mhi.minHits !== mhi.maxHits) {
+              hitLabel = ` <span style="font-size:10px;color:var(--text2)">${perHitMinPct}–${perHitMaxPct}% × ${mhi.minHits}–${mhi.maxHits} hits${hasMultiscale ? ' · MS' : ''}</span>`;
+              // Tick marks at each possible hit count (avg cumulative damage %)
+              for (let n = mhi.minHits; n <= mhi.maxHits; n++) {
+                const cumAvg = h1.avg + hRest.avg * (n - 1);
+                hitTicks.push({ n, pct: Math.min(100, cumAvg / defHP * 100) });
+              }
+            } else {
+              hitLabel = ` <span style="font-size:10px;color:var(--text2)">${perHitMinPct}–${perHitMaxPct}% × ${mhi.minHits}${hasMultiscale ? ' · MS' : ''}</span>`;
+            }
           }
         } else {
           totalMin = dmg.min; totalMax = dmg.max; totalAvg = dmg.avg;
           perHitDmg = [{ min: dmg.min, max: dmg.max, avg: dmg.avg }];
         }
 
-        const minPct = Math.min(100, (totalMin / defHP * 100));
-        const maxPct = Math.min(100, (totalMax / defHP * 100));
+        const minPct = Math.min(100, totalMin / defHP * 100);
+        const maxPct = Math.min(100, totalMax / defHP * 100);
         cumulativeMin += totalMin;
         cumulativeMax += totalMax;
         totalAvg = Math.floor((totalMin + totalMax) / 2);
@@ -2306,87 +2720,176 @@ function renderPlots() {
         else if (conds.hz_tsp) { toxicDmg = Math.floor(defHP * 0.125) * hitsToKO; }
         const totalWithHazards = cumulativeMax + toxicDmg;
 
+        // "use" = one action (even if multi-hit)
+        const useWord = mhi ? 'use' : 'hit';
         let koText = '';
         if (totalMin + entryHazardDmg >= defHP) koText = '<span class="ko-badge ko-1">OHKO</span>';
-        else if (totalMax + totalAvg + entryHazardDmg + toxicDmg >= defHP) koText = '<span class="ko-badge ko-2">~2HKO</span>';
+        else if (totalMax + totalAvg + entryHazardDmg + toxicDmg >= defHP) koText = `<span class="ko-badge ko-2">~2 ${useWord}s</span>`;
         else if (totalWithHazards >= defHP) {
           const h = Math.ceil((defHP - entryHazardDmg - toxicDmg) / totalAvg);
-          koText = `<span class="ko-badge ko-2">${h}HKO+haz</span>`;
-        } else { koText = `<span class="ko-badge ko-n">${hitsToKO}HKO</span>`; }
+          koText = `<span class="ko-badge ko-2">${h} ${useWord}s+haz</span>`;
+        } else { koText = `<span class="ko-badge ko-n">${hitsToKO} ${useWord}s</span>`; }
 
-        const wrap = document.createElement('div');
-        wrap.className = 'dmg-bar-wrap';
-
-        const moveTypeBadge = move ? `<span class="type-badge" style="background:${getTypeColor(move.type)};font-size:9px;padding:1px 4px">${move.type}</span>` : '';
-        const catIcon = move ? (move.category === 'physical' ? '⚔' : '✨') : '';
-
-        const lbl = document.createElement('div');
-        lbl.className = 'dmg-bar-label';
-        lbl.innerHTML = `<span style="display:flex;align-items:center;gap:4px"><span style="width:8px;height:8px;border-radius:50%;background:${atk.color};display:inline-block;flex-shrink:0"></span><b>${atkPoke.display}</b>${moveTypeBadge}${catIcon} ${move ? move.display : entry.name}${hitLabel}</span><span>${minPct.toFixed(1)}–${maxPct.toFixed(1)}% ${koText}</span>`;
-
-        const track = document.createElement('div');
-        track.className = 'dmg-track';
-
-        if (mhi && !mhi.escalating) {
-          let cursor = 0;
-          for (let i = 0; i < mhi.maxHits; i++) {
-            const h = perHitDmg[i] || perHitDmg[perHitDmg.length - 1];
-            const segMinPct = Math.min(100 - cursor, h.min / defHP * 100);
-            const segMaxPct = Math.min(100 - cursor, h.max / defHP * 100);
-            const seg = document.createElement('div');
-            seg.style.cssText = `position:absolute;top:0;height:100%;border-radius:2px;`;
-            seg.style.left = `${cursor + segMinPct}%`;
-            seg.style.width = `${Math.max(0.3, segMaxPct - segMinPct)}%`;
-            seg.style.background = atk.color;
-            seg.style.opacity = i >= mhi.minHits ? '0.35' : (i === 0 && hasMultiscale ? '0.5' : '0.85');
-            track.appendChild(seg);
-            cursor += segMinPct;
-          }
-        } else if (mhi && mhi.escalating) {
-          let cursor = 0;
-          perHitDmg.forEach((h, i) => {
-            const segMinPct = Math.min(100 - cursor, h.min / defHP * 100);
-            const segMaxPct = Math.min(100 - cursor, h.max / defHP * 100);
-            const seg = document.createElement('div');
-            seg.style.cssText = `position:absolute;top:0;height:100%;border-radius:2px;`;
-            seg.style.left = `${cursor + segMinPct}%`;
-            seg.style.width = `${Math.max(0.3, segMaxPct - segMinPct)}%`;
-            seg.style.background = atk.color;
-            seg.style.opacity = i === 0 && hasMultiscale ? '0.45' : String(0.65 + i * 0.1);
-            track.appendChild(seg);
-            cursor += segMinPct;
-          });
-        } else {
-          const bar = document.createElement('div');
-          bar.className = 'dmg-range';
-          bar.style.left = `${minPct}%`;
-          bar.style.width = `${Math.max(0.5, maxPct - minPct)}%`;
-          bar.style.background = atk.color;
-          track.appendChild(bar);
-        }
-
-        const val = document.createElement('div');
-        val.className = 'dmg-val';
-        val.textContent = `${totalAvg}`;
-        track.appendChild(val);
-        wrap.appendChild(lbl);
-        wrap.appendChild(track);
-        inner.appendChild(wrap);
+        moveResults.push({ atk, atkPoke, move, entry, totalMin, totalMax, totalAvg, perHitDmg, mhi, hitLabel, hitTicks, minPct, maxPct, koText, hasMultiscale });
       });
     });
 
-    // Build HP bar with damage range now that we know totals
+    // ── Label rows ──
+    moveResults.forEach(r => {
+      const wrap = document.createElement('div');
+      wrap.className = 'dmg-bar-wrap';
+      if (r.immune || r.absorbed) {
+        wrap.innerHTML = `<div class="dmg-bar-label"><span style="display:flex;align-items:center;gap:5px"><span style="width:8px;height:8px;border-radius:50%;background:${r.atk.color};display:inline-block"></span>${r.atkPoke.display} · ${r.move?.display||r.entry.name}</span><span style="color:var(--text3);font-size:11px">${r.absorbed ? '🛡 Absorbed' : '✗ Immune'}</span></div>`;
+      } else {
+        const moveTypeBadge = r.move ? `<span class="type-badge" style="background:${getTypeColor(r.move.type)};font-size:9px;padding:1px 4px">${r.move.type}</span>` : '';
+        const catIcon = r.move ? (r.move.category === 'physical' ? '⚔' : '✨') : '';
+        const lbl = document.createElement('div');
+        lbl.className = 'dmg-bar-label';
+        lbl.innerHTML = `<span style="display:flex;align-items:center;gap:4px"><span style="width:8px;height:8px;border-radius:50%;background:${r.atk.color};display:inline-block;flex-shrink:0"></span><b>${r.atkPoke.display}</b>${moveTypeBadge}${catIcon} ${r.move ? r.move.display : r.entry.name}${r.hitLabel}</span><span>${r.minPct.toFixed(1)}–${r.maxPct.toFixed(1)}% ${r.koText}</span>`;
+        wrap.appendChild(lbl);
+      }
+      inner.appendChild(wrap);
+    });
+
+    // ── HP bar + distribution ──
     const minPctHp = Math.min(100, cumulativeMin / defHP * 100);
     const maxPctHp = Math.min(100, cumulativeMax / defHP * 100);
-    const remainPct = Math.max(0, 100 - maxPctHp);
-    const hpColor = remainPct > 50 ? '#16a34a' : remainPct > 25 ? '#d97706' : '#dc2626';
-    const hpBarWrap = document.createElement('div');
-    hpBarWrap.style.cssText = 'position:relative;height:12px;background:var(--bg4);border-radius:5px;overflow:hidden;margin-bottom:3px;border:1px solid var(--border)';
-    hpBarWrap.innerHTML = `
-      <div style="position:absolute;top:0;left:0;width:${100 - minPctHp}%;height:100%;background:${hpColor};border-radius:5px"></div>
-      <div style="position:absolute;top:0;left:${100 - maxPctHp}%;width:${Math.max(0.5, maxPctHp - minPctHp)}%;height:100%;background:rgba(255,255,255,0.3);border-radius:2px"></div>
-      <div style="position:absolute;right:4px;top:50%;transform:translateY(-50%);font-size:10px;font-weight:600;color:#fff;text-shadow:0 1px 2px rgba(0,0,0,.5)">${defHP} HP</div>`;
-    inner.insertBefore(hpBarWrap, inner.firstChild);
+    const avgTotalDmg = Math.floor((cumulativeMin + cumulativeMax) / 2);
+    const avgPctHp = avgTotalDmg / defHP * 100;
+
+    const hpBarLabel = document.createElement('div');
+    hpBarLabel.style.cssText = 'font-size:11px;font-weight:700;color:var(--text);margin-bottom:2px;display:flex;justify-content:space-between';
+    hpBarLabel.innerHTML = `<span>${defHP} HP</span><span style="color:var(--text2)">−${avgTotalDmg} (${minPctHp.toFixed(1)}–${maxPctHp.toFixed(1)}%)</span>`;
+    inner.insertBefore(hpBarLabel, inner.firstChild);
+
+    // ── HP bar ──
+    // Layout left to right = remaining HP after attack:
+    //   [dark green: survives all rolls] [light green: survives fewer hits] [grey: unreachable] [red: damage zone]
+    //
+    // guarRemain  = 100 - maxPctHp  → safe even on max hits / worst roll
+    // worstRemain = 100 - minPctHp  → safe only on min hits / best roll
+    // avgRemain   = 100 - avgPctHp  → expected remaining HP
+
+    const guarRemain  = Math.max(0, 100 - maxPctHp);
+    const worstRemain = Math.max(0, 100 - minPctHp);
+    const avgRemain   = Math.max(0, 100 - avgPctHp);
+    const gradW       = worstRemain - guarRemain;
+    const isVariable  = gradW > 0.5;
+
+    const BAR_H = 22;
+    const hpBar = document.createElement('div');
+    hpBar.style.cssText = `position:relative;height:${BAR_H}px;border-radius:5px;overflow:hidden;margin-bottom:5px;border:1px solid var(--border);background:#d1d5db`;
+
+    // Layer 1: light green from 0 → worstRemain (alive on at least the best roll)
+    if (worstRemain > 0.3) {
+      const gAll = document.createElement('div');
+      gAll.style.cssText = `position:absolute;top:0;left:0;width:${worstRemain}%;height:100%;background:#86efac`;
+      hpBar.appendChild(gAll);
+    }
+
+    // Layer 2: dark green from 0 → guarRemain (alive no matter what)
+    if (guarRemain > 0.3) {
+      const gColor = guarRemain > 50 ? '#16a34a' : guarRemain > 25 ? '#22c55e' : '#4ade80';
+      const gSolid = document.createElement('div');
+      gSolid.style.cssText = `position:absolute;top:0;left:0;width:${guarRemain}%;height:100%;background:${gColor}`;
+      hpBar.appendChild(gSolid);
+    }
+
+    // Layer 3: red damage zone — sits in the grey area (right of worstRemain)
+    // For fixed moves: solid red block = all damage
+    // For variable: nothing extra — the grey vs light-green boundary already signals the range
+    if (!isVariable && maxPctHp > 0.3) {
+      const r = document.createElement('div');
+      r.style.cssText = `position:absolute;top:0;right:0;width:${maxPctHp}%;height:100%;background:#dc2626`;
+      hpBar.appendChild(r);
+    } else if (isVariable && minPctHp > 0.3) {
+      // Faint red starting at worstRemain (right edge of green), solid at far right
+      const r = document.createElement('div');
+      r.style.cssText = `position:absolute;top:0;left:${worstRemain}%;width:${100 - worstRemain}%;height:100%;background:linear-gradient(to right,#dc262660,#dc2626)`;
+      hpBar.appendChild(r);
+    }
+
+    // Layer 4: distribution curve over the light green variable zone
+    if (isVariable) {
+      const mu  = avgRemain;
+      const lo  = guarRemain;
+      const hi  = worstRemain;
+      const sig = Math.max((hi - lo) / 6, 0.1);
+
+      const W = 500, H = BAR_H;
+      const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+      svg.setAttribute('width', '100%');
+      svg.setAttribute('height', String(H));
+      svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
+      svg.setAttribute('preserveAspectRatio', 'none');
+      svg.style.cssText = 'position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none';
+
+      const steps = 80;
+      const pts = [];
+      let peakPdf = 0;
+      for (let s = 0; s <= steps; s++) {
+        const remPct = lo + (hi - lo) * s / steps;
+        const x = remPct / 100 * W;
+        const z = (remPct - mu) / sig;
+        const pdf = Math.exp(-0.5 * z * z);
+        if (pdf > peakPdf) peakPdf = pdf;
+        pts.push({ x, pdf });
+      }
+      const scale = (H * 0.85) / peakPdf;
+      const loX = (lo / 100 * W).toFixed(1);
+      const hiX = (hi / 100 * W).toFixed(1);
+
+      const pathD = pts.map((p, i) => {
+        const py = H - p.pdf * scale;
+        return (i === 0 ? 'M' : 'L') + `${p.x.toFixed(1)},${py.toFixed(1)}`;
+      }).join(' ');
+
+      const fillPath = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+      fillPath.setAttribute('d', `${pathD} L${hiX},${H} L${loX},${H} Z`);
+      fillPath.setAttribute('fill', 'rgba(0,80,0,0.18)');
+      svg.appendChild(fillPath);
+
+      const linePath = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+      linePath.setAttribute('d', pathD);
+      linePath.setAttribute('fill', 'none');
+      linePath.setAttribute('stroke', 'rgba(0,60,0,0.55)');
+      linePath.setAttribute('stroke-width', '1.5');
+      svg.appendChild(linePath);
+
+      const meanX = (mu / 100 * W).toFixed(1);
+      const tick = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+      tick.setAttribute('x1', meanX); tick.setAttribute('x2', meanX);
+      tick.setAttribute('y1', '1'); tick.setAttribute('y2', String(H));
+      tick.setAttribute('stroke', 'rgba(0,60,0,0.6)');
+      tick.setAttribute('stroke-width', '1.2');
+      tick.setAttribute('stroke-dasharray', '3,2');
+      svg.appendChild(tick);
+
+      // Hit count tick marks — vertical lines at each possible hit count's cumulative damage
+      const allTicks = moveResults.flatMap(r => r.hitTicks || []);
+      allTicks.forEach(({ n, pct }) => {
+        const tx = ((100 - pct) / 100 * W).toFixed(1); // position = remaining HP after n hits
+        const tl = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+        tl.setAttribute('x1', tx); tl.setAttribute('x2', tx);
+        tl.setAttribute('y1', '0'); tl.setAttribute('y2', String(H));
+        tl.setAttribute('stroke', 'rgba(0,0,0,0.3)');
+        tl.setAttribute('stroke-width', '1');
+        svg.appendChild(tl);
+        // Label: hit count number
+        const txt = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+        txt.setAttribute('x', String(parseFloat(tx) + 2));
+        txt.setAttribute('y', String(H - 3));
+        txt.setAttribute('font-size', '7');
+        txt.setAttribute('fill', 'rgba(0,0,0,0.45)');
+        txt.setAttribute('font-family', 'sans-serif');
+        txt.textContent = `${n}`;
+        svg.appendChild(txt);
+      });
+
+      hpBar.appendChild(svg);
+    }
+
+    inner.insertBefore(hpBar, hpBarLabel.nextSibling);
 
     block.appendChild(inner);
     body.appendChild(block);
@@ -2454,7 +2957,7 @@ function buildPowerPanel() {
               var evId=r[0],stgId=r[1],stgValId=r[2],label=r[3],color=r[4];
               return '<div style="display:grid;grid-template-columns:28px 1fr 28px 60px 28px;align-items:center;gap:3px;margin-bottom:3px">'
                 +'<span style="font-size:11px;color:var(--text2)">'+label+'</span>'
-                +'<input type="range" id="'+evId+'" min="0" max="252" step="4" value="0" style="accent-color:#4f46e5">'
+                +'<input type="range" id="'+evId+'" min="0" max="32" step="2" value="0" style="accent-color:#4f46e5">'
                 +'<span id="'+evId+'-val" style="font-size:10px;font-weight:600;text-align:right">0</span>'
                 +'<input type="range" id="'+stgId+'" min="-6" max="6" step="1" value="0" style="accent-color:'+color+'">'
                 +'<span id="'+stgValId+'" style="font-size:10px;font-weight:700;text-align:right;color:'+color+'">0</span>'
@@ -2486,6 +2989,10 @@ function buildPowerPanel() {
           <div id="pw-poke-search"></div>
           <div class="type-row" id="pw-poke-types" style="margin-top:4px"></div>
           <div id="pw-poke-stats" style="font-size:11px;color:var(--text2);margin-top:4px"></div>
+          <div id="pw-ability-wrap" style="display:none;margin-top:6px;margin-bottom:2px">
+            <div style="font-size:10px;color:var(--text3);font-weight:600;margin-bottom:3px">DEFENDER ABILITY</div>
+            <select id="pw-def-ability" style="width:100%;background:var(--bg3);border:1px solid var(--border);color:var(--text);padding:3px 6px;border-radius:5px;font-size:12px;outline:none;font-family:var(--font)"></select>
+          </div>
 
           <div style="margin-top:6px;margin-bottom:6px">
             <div style="font-size:10px;color:var(--text3);font-weight:600;margin-bottom:3px">DEFENDER NATURE</div>
@@ -2528,12 +3035,12 @@ function buildPowerPanel() {
 
           <div style="border-top:1px solid var(--border);padding-top:6px;margin-bottom:4px">
             <div style="font-size:10px;color:var(--text3);font-weight:600;margin-bottom:4px">DEFENDER EVs & STAGES</div>
-            ${[['pw-ev-hp','','','HP','#6b7280'],['pw-ev-def','pw-def-stage','pw-def-stage-val','Def','#2563eb'],['pw-ev-spd','pw-spd-stage','pw-spd-stage-val','SpD','#0891b2'],['pw-spe-ev','pw-spe-stage','pw-spe-stage-val','Spe','#d97706']].map(function(r){
+            ${[['pw-ev-hp','','','HP','#6b7280'],['pw-ev-atk-def','pw-atk-def-stage','pw-atk-def-stage-val','Atk','#dc2626'],['pw-ev-spa-def','pw-spa-def-stage','pw-spa-def-stage-val','SpA','#9333ea'],['pw-ev-def','pw-def-stage','pw-def-stage-val','Def','#2563eb'],['pw-ev-spd','pw-spd-stage','pw-spd-stage-val','SpD','#0891b2'],['pw-spe-ev','pw-spe-stage','pw-spe-stage-val','Spe','#d97706']].map(function(r){
               var evId=r[0],stgId=r[1],stgValId=r[2],label=r[3],color=r[4];
               var stageHtml = stgId ? '<input type="range" id="'+stgId+'" min="-6" max="6" step="1" value="0" style="accent-color:'+color+'"><span id="'+stgValId+'" style="font-size:10px;font-weight:700;text-align:right;color:'+color+'">0</span>' : '<span></span><span></span>';
               return '<div style="display:grid;grid-template-columns:28px 1fr 28px 60px 28px;align-items:center;gap:3px;margin-bottom:3px">'
                 +'<span style="font-size:11px;color:var(--text2)">'+label+'</span>'
-                +'<input type="range" id="'+evId+'" min="0" max="252" step="4" value="0" style="accent-color:#4f46e5">'
+                +'<input type="range" id="'+evId+'" min="0" max="32" step="2" value="0" style="accent-color:#4f46e5">'
                 +'<span id="'+evId+'-val" style="font-size:10px;font-weight:600;text-align:right">0</span>'
                 +stageHtml
                 +'</div>';
@@ -2562,7 +3069,7 @@ function buildPowerPanel() {
 
   // Simple selects — no custom dropdown
   document.getElementById('pw-nature').addEventListener('change', e => { pwTarget.nature = e.target.value; renderPowerPanel(); });
-  document.getElementById('pw-atk-nature').addEventListener('change', e => { pwTarget.atkNature = e.target.value; renderPowerPanel(); });
+  document.getElementById('pw-def-ability')?.addEventListener('change', e => { pwTarget.defAbility = e.target.value; renderPowerPanel(); });
   document.getElementById('pw-atk-item').addEventListener('change', e => { pwTarget.atkItem = e.target.value; renderPowerPanel(); });
   document.getElementById('pw-def-item').addEventListener('change', e => { pwTarget.defItem = e.target.value; renderPowerPanel(); });
   document.getElementById('pw-movetype').addEventListener('change', e => { pwTarget.moveType = e.target.value; renderPowerPanel(); });
@@ -2589,7 +3096,7 @@ function buildPowerPanel() {
 
   // EV sliders
   [['pw-ev-atk','evAtk'],['pw-ev-spa','evSpA'],['pw-ev-hp','evHP'],['pw-ev-def','evDef'],['pw-ev-spd','evSpDef'],
-   ['pw-spe-ev','evSpe'],['pw-atk-spe-ev','evAtkSpe']].forEach(([id,key]) => {
+   ['pw-spe-ev','evSpe'],['pw-atk-spe-ev','evAtkSpe'],['pw-ev-atk-def','evAtkDef'],['pw-ev-spa-def','evSpADef']].forEach(([id,key]) => {
     const el = document.getElementById(id);
     if (el) el.addEventListener('input', e => {
       pwTarget[key] = parseInt(e.target.value)||0;
@@ -2600,7 +3107,8 @@ function buildPowerPanel() {
 
   // Stage sliders
   [['pw-atk-stage','atkStage'],['pw-spa-stage','spaStage'],['pw-def-stage','defStage'],['pw-spd-stage','spdStage'],
-   ['pw-spe-stage','speStage'],['pw-atk-spe-stage','atkSpeStage']].forEach(([id,key]) => {
+   ['pw-spe-stage','speStage'],['pw-atk-spe-stage','atkSpeStage'],
+   ['pw-atk-def-stage','atkDefStage'],['pw-spa-def-stage','spaDefStage']].forEach(([id,key]) => {
     const el = document.getElementById(id);
     if (el) el.addEventListener('input', e => {
       pwTarget[key] = parseInt(e.target.value)||0;
@@ -2673,6 +3181,12 @@ function renderPowerPanel() {
   // Assault Vest / Eviolite
   if (defItemKey === 'assaultvest' || defItemKey === 'eviolite') D_spec = Math.floor(D_spec * 1.5);
   if (defItemKey === 'eviolite') D_phys = Math.floor(D_phys * 1.5);
+
+  // Ability modifiers on defender stats
+  const defAb = (pwTarget.defAbility || (defPoke.abilities||[])[0] || '').toLowerCase();
+  if (defAb === 'fur-coat')    D_phys = Math.floor(D_phys * 2);
+  if (defAb === 'marvel-scale' && pwTarget.defStatus) D_phys = Math.floor(D_phys * 1.5);
+  if (defAb === 'ice-scales')  D_spec = Math.floor(D_spec * 2);
 
   // Sand: Rock-types get 1.5× SpDef
   if (pwTarget.weather === 'sand' && (defPoke.types||[]).includes('rock')) D_spec = Math.floor(D_spec * 1.5);
@@ -2762,9 +3276,17 @@ function renderPowerPanel() {
 
    const note = document.createElement('div');
    note.style.cssText = 'font-size:10px;color:var(--text3)';
-   const defEffSpePanel = effSpeed(defPoke.stats.speed, pwTarget.evSpe||0, pwTarget.speStage||0, pwTarget.tailwind||false, defScarfSpe, pwTarget.unburden||false);
-   note.textContent = `${defPoke.display}: ${defHP} HP · ${D_phys} Def · ${D_spec} SpD · ${defEffSpePanel} eff. Spe`;
+   const w = pwTarget.weather || 'none';
+   const defAbNote = pwTarget.defAbility || (defPoke.abilities||[])[0] || '';
+   const defTypes = defPoke.types || [];
+   const defNat = pwTarget.nature || 'Hardy';
+   const dispDef = applyAbilCondMult('defense', defPoke.stats.defense, pwTarget.evDef||0, defAbNote, defTypes, w, conds.terrain||'none', '', defNat);
+   const dispSpD = applyAbilCondMult('special-defense', defPoke.stats['special-defense'], pwTarget.evSpDef||0, defAbNote, defTypes, w, conds.terrain||'none', '', defNat);
+   const dispSpe = applyAbilCondMult('speed', defPoke.stats.speed, pwTarget.evSpe||0, defAbNote, defTypes, w, conds.terrain||'none', '', defNat);
+   note.textContent = `${defPoke.display}: ${defHP} HP · ${dispDef.val} Def${dispDef.note?' ('+dispDef.note+')':''} · ${dispSpD.val} SpD${dispSpD.note?' ('+dispSpD.note+')':''} · ${dispSpe.val} Spe${dispSpe.note?' ('+dispSpe.note+')':''}`;
    body.appendChild(note);
+
+   updatePwPokeStats(defPoke);
 
    renderOhkoList(pBase, sBase, totalMult, atkEV, spaEV);
 }
@@ -2798,6 +3320,14 @@ function _doRenderOhkoList(pBase, sBase, totalMult, atkEV=0, spaEV=0) {
   }
 
   body.innerHTML = '<div style="font-size:11px;color:var(--text3);padding:8px 0">Searching…</div>';
+
+  // Defer the actual computation so the "Searching…" message renders first
+  setTimeout(() => _computeOhkoList(pBase, sBase, totalMult, atkEV, spaEV), 10);
+}
+
+function _computeOhkoList(pBase, sBase, totalMult, atkEV=0, spaEV=0) {
+  const body = document.getElementById('ohko-list-body');
+  if (!body) return;
 
   const defPoke = DB.pokemon[pwTarget.poke];
   if (!defPoke) { body.innerHTML = ''; return; }
@@ -2839,6 +3369,11 @@ function _doRenderOhkoList(pBase, sBase, totalMult, atkEV=0, spaEV=0) {
   if (pwTarget.weather === 'snow' && defTypes.includes('ice'))  D_spec = Math.floor(D_spec * 1.5);
   if (defItemKey === 'assaultvest' || defItemKey === 'eviolite') D_spec = Math.floor(D_spec * 1.5);
   if (defItemKey === 'eviolite') D_phys = Math.floor(D_phys * 1.5);
+  // Defender ability
+  const defAbList = (pwTarget.defAbility || (defPoke.abilities||[])[0] || '').toLowerCase();
+  if (defAbList === 'fur-coat')  D_phys = Math.floor(D_phys * 2);
+  if (defAbList === 'ice-scales') D_spec = Math.floor(D_spec * 2);
+  if (defAbList === 'marvel-scale' && pwTarget.defStatus) D_phys = Math.floor(D_phys * 1.5);
   const screenDiv = pwTarget.doubles ? 1.5 : 2;
   if (pwTarget.reflect    || pwTarget.auroraveil) D_phys = Math.floor(D_phys * screenDiv);
   if (pwTarget.lightscreen || pwTarget.auroraveil) D_spec = Math.floor(D_spec * screenDiv);
@@ -2846,17 +3381,23 @@ function _doRenderOhkoList(pBase, sBase, totalMult, atkEV=0, spaEV=0) {
   D_spec = Math.floor(D_spec * spdStageMult);
 
   // First pass: generous reject using 120bp STAB 4x
+  const atkAbFirst = 'none';
+  const atkAbPhysMult = 1;
+  const atkAbPowMult  = 1;
+  const stabMultFirst = 1.5;
+
   const allPoke = Object.values(DB.pokemon);
   const candidates = allPoke.filter(p => {
     if (!p.moves || p.moves.length === 0) return false;
-    const maxPhys = calcStat(p.stats.attack, atkEV, 31, 50, 1.1) * atkStageMult * atkNatAtkMult * 1.5;
+    const maxPhys = calcStat(p.stats.attack, atkEV, 31, 50, 1.1) * atkStageMult * atkNatAtkMult * atkAbPhysMult * 1.5;
     const maxSpec = calcStat(p.stats['special-attack'], spaEV, 31, 50, 1.1) * spaStageMult * atkNatSpaMult * 1.5;
-    const dmgP = Math.floor(Math.floor(Math.floor(22 * maxPhys * 120 / D_phys) / 50 + 2) * 4 * 1.5);
-    const dmgS = Math.floor(Math.floor(Math.floor(22 * maxSpec * 120 / D_spec) / 50 + 2) * 4 * 1.5);
+    const dmgP = Math.floor(Math.floor(Math.floor(22 * maxPhys * 120 / D_phys) / 50 + 2) * 4 * stabMultFirst * atkAbPowMult);
+    const dmgS = Math.floor(Math.floor(Math.floor(22 * maxSpec * 120 / D_spec) / 50 + 2) * 4 * stabMultFirst * atkAbPowMult);
     return dmgP >= defHP || dmgS >= defHP;
   });
 
   // Second pass: per-move actual damage check
+  const atkAb = 'none'; // ability boosts are now handled as post-filters, not calc assumptions
   const results = [];
   for (const poke of candidates) {
     const matchingMoves = [];
@@ -2873,18 +3414,13 @@ function _doRenderOhkoList(pBase, sBase, totalMult, atkEV=0, spaEV=0) {
       // Type effectiveness
       const typeEff = getTypeEff(move.type, defTypes);
       if (typeEff <= 0) continue;
-      // SE filter:
-      // No SE (seMult=1): neutral moves only (typeEff === 1)
-      // SE 2x (seMult=2): at least 2x effective
-      // SE 4x (seMult=4): exactly 4x effective
       if (seMult === 1 && typeEff !== 1) continue;
       if (seMult === 2 && typeEff < 2) continue;
       if (seMult === 4 && typeEff < 4) continue;
 
-      // STAB — if checked, only show moves this poke has STAB on
       const hasStab = (poke.types || []).includes(move.type);
       if (useStab && !hasStab) continue;
-      const stabMult = hasStab ? 1.5 : 1;
+      const stabMult = hasStab ? (atkAb === 'adaptability' ? 2 : 1.5) : 1;
 
       // Attacker item multiplier per move category
       const moveItemMult = (isPhys && atkItemKey === 'band') ? 1.5
@@ -2892,10 +3428,25 @@ function _doRenderOhkoList(pBase, sBase, totalMult, atkEV=0, spaEV=0) {
                          : atkItemKey === 'lifeorb' ? 1.3
                          : atkItemKey === 'typeplate' ? 1.2 : 1;
 
-      // Actual stat with EVs + stage + nature
-      const A = isPhys
+      // Ability power multipliers
+      let abilPowMult = 1;
+      if (atkAb === 'sheer-force' || atkAb === 'tough-claws') abilPowMult = 1.3;
+      if ((atkAb === 'steely-spirit' && move.type === 'steel')   ||
+          (atkAb === 'transistor'    && move.type === 'electric') ||
+          (atkAb === 'dragons-maw'   && move.type === 'dragon')  ||
+          (atkAb === 'rocky-payload' && move.type === 'rock')    ||
+          (atkAb === 'strong-jaw'))  abilPowMult = 1.5;
+      if (atkAb === 'analytic') abilPowMult = 1.3;
+      if (atkAb === 'technician' && move.power <= 60) abilPowMult = 1.5;
+
+      // Actual stat with EVs + stage + nature + ability
+      let A = isPhys
         ? calcStat(poke.stats.attack, atkEV, 31, 50, atkNatAtkMult) * atkStageMult
         : calcStat(poke.stats['special-attack'], spaEV, 31, 50, atkNatSpaMult) * spaStageMult;
+      // Ability multipliers on A
+      if (isPhys && atkAb === 'huge-power')     A *= 2;
+      if (isPhys && (atkAb === 'guts' || atkAb === 'gorilla-tactics' || atkAb === 'hustle')) A = Math.floor(A * 1.5);
+      if (!isPhys && atkAb === 'solar-power' && pwTarget.weather === 'sun') A = Math.floor(A * 1.5);
       const D = isPhys ? D_phys : D_spec;
 
       // Per-move weather multiplier
@@ -2907,7 +3458,7 @@ function _doRenderOhkoList(pBase, sBase, totalMult, atkEV=0, spaEV=0) {
       const seBerryMult = (defSeBerry && typeEff > 1) ? 0.5 : 1;
 
       // Actual max-roll damage
-      const dmg = Math.floor(Math.floor(Math.floor(22 * A * move.power / D) / 50 + 2) * stabMult * typeEff * moveItemMult * moveWeatherMult * seBerryMult);
+      const dmg = Math.floor(Math.floor(Math.floor(22 * A * move.power / D) / 50 + 2) * stabMult * typeEff * moveItemMult * moveWeatherMult * seBerryMult * abilPowMult);
       if (dmg < defHP) continue;
 
       matchingMoves.push({ move, typeEff });
@@ -2957,7 +3508,7 @@ function _renderOhkoResults(results, defTypes) {
   });
 
   // ── Is Faster filter ──
-  if (sortVal === 'faster') {
+  if (window._ohkoFilterFaster) {
     const atkScarf2 = (pwTarget.atkItem || 'none') === 'scarf';
     filtered = filtered.filter(({ poke }) => {
       const s = effSpeed(poke.stats.speed, pwTarget.evAtkSpe||0, pwTarget.atkSpeStage||0, pwTarget.atkTailwind||false, atkScarf2, pwTarget.atkUnburden||false);
@@ -2965,7 +3516,62 @@ function _renderOhkoResults(results, defTypes) {
     });
   }
 
-  // ── Filter by must-learn moves (full learnset, not just OHKO moves) ──
+  // ── Can Survive filter — must survive ALL selected moves ──
+  if (window._ohkoFilterSurvive && (window._ohkoSurviveMoves||[]).length > 0) {
+    const defPoke2 = DB.pokemon[pwTarget.poke];
+    if (defPoke2) {
+      const LEVEL = 50;
+      const defTypes2 = defPoke2.types || [];
+      const w = pwTarget.weather || 'none';
+      const screenMult = pwTarget.doubles ? 2/3 : 0.5;
+
+      filtered = filtered.filter(({ poke }) => {
+        return window._ohkoSurviveMoves.every(moveKey => {
+          const survMove = DB.moves[moveKey];
+          if (!survMove) return true;
+          const isPhys = survMove.category === 'physical';
+
+          const defAtkEV = isPhys ? (pwTarget.evAtkDef||0) : (pwTarget.evSpADef||0);
+          const defNatMult = getNatureMult(pwTarget.nature||'Hardy', isPhys ? 'attack' : 'special-attack');
+          let defA = calcStat(isPhys ? defPoke2.stats.attack : defPoke2.stats['special-attack'], defAtkEV, 31, LEVEL, defNatMult);
+          const defAtkStg = isPhys ? (pwTarget.atkDefStage||0) : (pwTarget.spaDefStage||0);
+          defA = Math.floor(defA * (defAtkStg >= 0 ? (1 + defAtkStg*0.5) : 1/(1+Math.abs(defAtkStg)*0.5)));
+          if (isPhys && pwTarget.defItem === 'band') defA = Math.floor(defA * 1.5);
+          if (!isPhys && pwTarget.defItem === 'specs') defA = Math.floor(defA * 1.5);
+          if (pwTarget.defItem === 'lifeorb') defA = Math.floor(defA * 1.3);
+
+          const survStab = defTypes2.includes(survMove.type) ? 1.5 : 1;
+          let survWeather = 1;
+          if (w === 'sun'  && survMove.type === 'fire')   survWeather = 1.5;
+          if (w === 'sun'  && survMove.type === 'water')  survWeather = 0.5;
+          if (w === 'rain' && survMove.type === 'water')  survWeather = 1.5;
+          if (w === 'rain' && survMove.type === 'fire')   survWeather = 0.5;
+          const screenFactor = (isPhys && (pwTarget.reflect || pwTarget.auroraveil)) ? screenMult
+                             : (!isPhys && (pwTarget.lightscreen || pwTarget.auroraveil)) ? screenMult : 1;
+
+          const typeEff = getTypeEff(survMove.type, poke.types || []);
+          if (typeEff === 0) return true;
+          const candD = calcStat(isPhys ? poke.stats.defense : poke.stats['special-defense'], 0, 31, LEVEL, 1);
+          const candHP = calcHP(poke.stats.hp, 0, 31, LEVEL);
+          const base = Math.floor(Math.floor(Math.floor(22 * defA * survMove.power / candD) / 50) + 2);
+          const dmg = Math.floor(Math.floor(base * survStab * typeEff) * survWeather * screenFactor);
+          return dmg < candHP;
+        });
+      });
+    }
+  }
+
+  // ── Stat threshold filter ──
+  if (window._ohkoFilterStat) {
+    const statKey = document.getElementById('ohko-stat-key')?.value || 'attack';
+    const statMin = parseInt(document.getElementById('ohko-stat-val')?.value) || 0;
+    filtered = filtered.filter(({ poke }) => {
+      if (statKey === 'bst') return Object.values(poke.stats).reduce((s,v)=>s+v,0) >= statMin;
+      return (poke.stats[statKey] || 0) >= statMin;
+    });
+  }
+
+  // ── Filter by must-learn moves ──
   const ohkoMoveFilters = window._ohkoMoveFilters || [];
   if (ohkoMoveFilters.length > 0) {
     filtered = filtered.filter(({ poke }) =>
@@ -2973,8 +3579,16 @@ function _renderOhkoResults(results, defTypes) {
     );
   }
 
+  // ── Filter by ability ──
+  const ohkoAbilFilter = window._ohkoAbilityFilter;
+  if (ohkoAbilFilter) {
+    filtered = filtered.filter(({ poke }) =>
+      (poke.abilities || []).some(a => a.toLowerCase() === ohkoAbilFilter.toLowerCase())
+    );
+  }
+
   if (filtered.length === 0) {
-    body.innerHTML = '<div style="font-size:12px;color:var(--text3);padding:12px 0">No Pokémon match.</div>';
+    body.innerHTML = '<div style="font-size:12px;color:var(--text3);padding:12px 0">No Pokémon match the current filters.</div>';
     return;
   }
 
@@ -2982,7 +3596,7 @@ function _renderOhkoResults(results, defTypes) {
   filtered.sort((a, b) => {
     if (sortVal === 'atk') return b.poke.stats.attack - a.poke.stats.attack;
     if (sortVal === 'spa') return b.poke.stats['special-attack'] - a.poke.stats['special-attack'];
-    if (sortVal === 'spe' || sortVal === 'faster') {
+    if (sortVal === 'spe') {
       const atkScarf2 = (pwTarget.atkItem || 'none') === 'scarf';
       const sa = effSpeed(a.poke.stats.speed, pwTarget.evAtkSpe||0, pwTarget.atkSpeStage||0, pwTarget.atkTailwind||false, atkScarf2, pwTarget.atkUnburden||false);
       const sb = effSpeed(b.poke.stats.speed, pwTarget.evAtkSpe||0, pwTarget.atkSpeStage||0, pwTarget.atkTailwind||false, atkScarf2, pwTarget.atkUnburden||false);
@@ -3118,71 +3732,50 @@ function switchTab(tab) {
 const statLabel = { attack:'Atk', defense:'Def', 'special-attack':'SpA', 'special-defense':'SpD', speed:'Spe' };
 
 function buildNatureDropdown(selectId, panel) {
-  const orig = document.getElementById(selectId);
-  if (!orig) return;
+  const sel = document.getElementById(selectId);
+  if (!sel) return;
   const natures = DB.meta.natures || [];
 
-  const wrap = document.createElement('div');
-  wrap.className = 'nature-wrap';
+  // Build readable options: neutral first, then grouped by boosted stat
+  sel.innerHTML = '';
+  const neutral = natures.find(n => !n.boost && !n.drop);
+  if (neutral) {
+    const o = document.createElement('option');
+    o.value = neutral.name;
+    o.textContent = `${neutral.name} — Neutral`;
+    sel.appendChild(o);
+  }
 
-  const display = document.createElement('div');
-  display.className = 'nature-display';
-  display.tabIndex = 0;
-  display.id = selectId + '-display';
+  // Group by boosted stat in a consistent order
+  const boostOrder = ['attack','defense','special-attack','special-defense','speed'];
+  boostOrder.forEach(boostStat => {
+    const group = natures.filter(n => n.boost === boostStat);
+    if (!group.length) return;
+    const og = document.createElement('optgroup');
+    og.label = `+${statLabel[boostStat]}`;
+    group.forEach(n => {
+      const o = document.createElement('option');
+      o.value = n.name;
+      const dropText = n.drop ? ` / -${statLabel[n.drop]}` : '';
+      o.textContent = `${n.name}  (+${statLabel[boostStat]}${dropText})`;
+      og.appendChild(o);
+    });
+    sel.appendChild(og);
+  });
 
-  const menu = document.createElement('div');
-  menu.className = 'nature-menu';
+  sel.value = 'Hardy';
+  panel.nature = 'Hardy';
 
-  function setNature(n) {
-    panel.nature = n.name;
+  sel.addEventListener('change', e => {
+    panel.nature = e.target.value;
     if (panel === pwTarget) renderPowerPanel();
-    display.innerHTML = '';
-    const nm = document.createElement('span');
-    nm.className = 'nat-name';
-    nm.textContent = n.name;
-    display.appendChild(nm);
-    if (n.boost) {
-      const up = document.createElement('span');
-      up.className = 'nat-up';
-      up.textContent = '▲' + statLabel[n.boost];
-      display.appendChild(up);
-    }
-    if (n.drop) {
-      const dn = document.createElement('span');
-      dn.className = 'nat-dn';
-      dn.textContent = '▼' + statLabel[n.drop];
-      display.appendChild(dn);
-    }
-    menu.querySelectorAll('.nature-opt').forEach(o => o.classList.toggle('selected', o.dataset.name === n.name));
-    menu.classList.remove('open');
-    // Refresh live stat display when nature changes
+    // Refresh live stat display
     const isAtk = selectId.startsWith('nature-atk-');
     const pid = parseInt(selectId.replace('nature-atk-','').replace('nature-def-',''));
     const statContainer = document.getElementById(`stats-${isAtk?'atk':'def'}-${pid}`);
     if (statContainer && statContainer._refresh) statContainer._refresh();
     recalc();
-  }
-
-  natures.forEach(n => {
-    const opt = document.createElement('div');
-    opt.className = 'nature-opt';
-    opt.dataset.name = n.name;
-    const nm = document.createElement('span'); nm.className = 'nat-name'; nm.textContent = n.name;
-    const up = document.createElement('span'); up.className = 'nat-up'; up.textContent = n.boost ? '▲'+statLabel[n.boost] : '';
-    const dn = document.createElement('span'); dn.className = 'nat-dn'; dn.textContent = n.drop  ? '▼'+statLabel[n.drop]  : '';
-    opt.appendChild(nm); opt.appendChild(up); opt.appendChild(dn);
-    opt.addEventListener('mousedown', e => { e.preventDefault(); setNature(n); });
-    menu.appendChild(opt);
   });
-
-  display.addEventListener('click', () => menu.classList.toggle('open'));
-  display.addEventListener('blur',  () => setTimeout(() => menu.classList.remove('open'), 150));
-
-  wrap.appendChild(display);
-  wrap.appendChild(menu);
-
-  orig.replaceWith(wrap);
-  setNature(natures[0]);
 }
 
 // ─────────────────────────────────────────────────────────
@@ -3201,9 +3794,9 @@ let dexMoveFilters = [];
 
 function renderDex() {
   const search = (document.getElementById('dex-search').value||'').toLowerCase();
-  const typeF  = document.getElementById('dex-type-filter').value;
+  const typeF  = window._dexTypeFilter ? window._dexTypeFilter() : '';
   const megaF  = document.getElementById('dex-mega-filter').value;
-  const abilF  = document.getElementById('dex-ability-filter').value;
+  const abilF  = window._dexAbilFilter ? window._dexAbilFilter() : '';
   const sort   = document.getElementById('dex-sort').value;
 
   let rows = Object.values(DB.pokemon);
@@ -3268,34 +3861,122 @@ function renderDex() {
       }).join('')}
       <td class="bst-cell" style="color:${bstColor}">${bst}</td>`;
 
+    tr.style.cursor = 'pointer';
+    tr.addEventListener('click', () => openDexDetail(p.name));
     tbody.appendChild(tr);
   });
 }
 
 function initDex() {
-  // Populate type filter options via JS so template literals work correctly
-  const typeSelect = document.getElementById('dex-type-filter');
-  ['normal','fire','water','electric','grass','ice','fighting','poison','ground','flying','psychic','bug','rock','ghost','dragon','dark','steel','fairy'].forEach(t => {
-    const opt = document.createElement('option');
-    opt.value = t;
-    opt.textContent = t.charAt(0).toUpperCase() + t.slice(1);
-    typeSelect.appendChild(opt);
+  // ── Type filter — custom colored dropdown ──
+  const typeBtn   = document.getElementById('dex-type-btn');
+  const typeMenu  = document.getElementById('dex-type-menu');
+  const typeLabel = document.getElementById('dex-type-label');
+  const ALL_TYPES_DEX = ['normal','fire','water','electric','grass','ice','fighting','poison','ground','flying','psychic','bug','rock','ghost','dragon','dark','steel','fairy'];
+  let dexTypeFilter = '';
+
+  function setType(t) {
+    dexTypeFilter = t;
+    if (!t) {
+      typeLabel.innerHTML = 'All types';
+    } else {
+      typeLabel.innerHTML = `<span style="display:inline-block;width:9px;height:9px;border-radius:50%;background:${getTypeColor(t)};margin-right:4px;vertical-align:middle"></span>${t.charAt(0).toUpperCase()+t.slice(1)}`;
+    }
+    typeMenu.style.display = 'none';
+    renderDex();
+  }
+
+  // "All" option
+  const allOpt = document.createElement('div');
+  allOpt.style.cssText = 'padding:4px 8px;font-size:12px;cursor:pointer;border-radius:4px;color:var(--text);font-weight:600;margin-bottom:2px';
+  allOpt.textContent = 'All types';
+  allOpt.addEventListener('mouseover', () => allOpt.style.background = 'var(--bg3)');
+  allOpt.addEventListener('mouseout',  () => allOpt.style.background = '');
+  allOpt.addEventListener('mousedown', e => { e.preventDefault(); setType(''); });
+  typeMenu.appendChild(allOpt);
+
+  ALL_TYPES_DEX.forEach(t => {
+    const opt = document.createElement('div');
+    opt.style.cssText = 'display:flex;align-items:center;gap:7px;padding:4px 8px;font-size:12px;cursor:pointer;border-radius:4px;color:var(--text)';
+    const dot = document.createElement('span');
+    dot.style.cssText = `width:10px;height:10px;border-radius:50%;background:${getTypeColor(t)};flex-shrink:0`;
+    const badge = document.createElement('span');
+    badge.className = 'type-badge';
+    badge.style.cssText = `background:${getTypeColor(t)};font-size:9px;padding:1px 6px`;
+    badge.textContent = t.toUpperCase();
+    opt.appendChild(dot);
+    opt.appendChild(badge);
+    opt.addEventListener('mouseover', () => opt.style.background = 'var(--bg3)');
+    opt.addEventListener('mouseout',  () => opt.style.background = '');
+    opt.addEventListener('mousedown', e => { e.preventDefault(); setType(t); });
+    typeMenu.appendChild(opt);
   });
 
-  // Populate ability filter
-  const abilSelect = document.getElementById('dex-ability-filter');
+  typeBtn.addEventListener('click', () => {
+    typeMenu.style.display = typeMenu.style.display === 'none' ? 'block' : 'none';
+  });
+  document.addEventListener('click', e => {
+    if (!document.getElementById('dex-type-wrap').contains(e.target)) typeMenu.style.display = 'none';
+  });
+
+  window._dexTypeFilter = () => dexTypeFilter;
+
+  // ── Ability combobox — shows full list on focus, filters on type ──
+  const abilInput = document.getElementById('dex-ability-filter');
+  const abilSugg  = document.getElementById('dex-ability-suggestions');
   const allAbils = new Set();
   Object.values(DB.pokemon).forEach(p => (p.abilities||[]).forEach(a => allAbils.add(a)));
-  [...allAbils].sort().forEach(a => {
-    const opt = document.createElement('option');
-    opt.value = a;
-    opt.textContent = a.replace(/-/g,' ').replace(/\b\w/g,c=>c.toUpperCase());
-    abilSelect.appendChild(opt);
+  const abilList = [...allAbils].sort();
+  let dexAbilFilter = '';
+  window._dexAbilFilter = () => dexAbilFilter;
+
+  function showAbilSugg(q) {
+    abilSugg.innerHTML = '';
+    const matches = q
+      ? abilList.filter(a => a.replace(/-/g,' ').toLowerCase().includes(q.toLowerCase()))
+      : abilList;
+    if (!matches.length) { abilSugg.style.display = 'none'; return; }
+    const clearDiv = document.createElement('div');
+    clearDiv.style.cssText = 'padding:4px 10px;font-size:11px;color:var(--text3);cursor:pointer;border-bottom:1px solid var(--border)';
+    clearDiv.textContent = '— All abilities —';
+    clearDiv.addEventListener('mouseover', () => clearDiv.style.background = 'var(--bg3)');
+    clearDiv.addEventListener('mouseout',  () => clearDiv.style.background = '');
+    clearDiv.addEventListener('mousedown', e => {
+      e.preventDefault();
+      dexAbilFilter = '';
+      abilInput.value = '';
+      abilSugg.style.display = 'none';
+      renderDex();
+    });
+    abilSugg.appendChild(clearDiv);
+    matches.forEach(a => {
+      const info = getAbilityInfo(a);
+      const d = document.createElement('div');
+      d.style.cssText = 'display:flex;align-items:center;gap:6px;padding:5px 10px;font-size:12px;cursor:pointer;color:var(--text)';
+      d.innerHTML = `<span style="font-size:12px;flex-shrink:0">${info.icon}</span><span>${a.replace(/-/g,' ').replace(/\b\w/g,c=>c.toUpperCase())}</span>`;
+      d.addEventListener('mouseover', () => d.style.background = 'var(--bg3)');
+      d.addEventListener('mouseout',  () => d.style.background = '');
+      d.addEventListener('mousedown', e => {
+        e.preventDefault();
+        dexAbilFilter = a;
+        abilInput.value = a.replace(/-/g,' ').replace(/\b\w/g,c=>c.toUpperCase());
+        abilSugg.style.display = 'none';
+        renderDex();
+      });
+      abilSugg.appendChild(d);
+    });
+    abilSugg.style.display = 'block';
+  }
+
+  abilInput.addEventListener('focus', () => showAbilSugg(abilInput.value.trim()));
+  abilInput.addEventListener('input', () => {
+    const q = abilInput.value.trim();
+    if (!q) { dexAbilFilter = ''; renderDex(); }
+    showAbilSugg(q);
   });
-  abilSelect.addEventListener('change', renderDex);
+  abilInput.addEventListener('blur', () => setTimeout(() => { abilSugg.style.display = 'none'; }, 150));
 
   document.getElementById('dex-search').addEventListener('input', renderDex);
-  document.getElementById('dex-type-filter').addEventListener('change', renderDex);
   document.getElementById('dex-mega-filter').addEventListener('change', renderDex);
   document.getElementById('dex-sort').addEventListener('change', e => { dexSortKey = e.target.value; renderDex(); });
 
@@ -3363,8 +4044,70 @@ function initDex() {
   console.log('initDex: moveInput=', moveInput, 'moveSugg=', moveSugg, 'moveTags=', moveTags);
   moveInput.addEventListener('input', () => console.log('dex move input fired, value=', moveInput.value, 'DB.moves keys=', Object.keys(DB.moves).length));
 }
+function applyAbilCondMult(statKey, base, ev, ability, types, weather, terrain, status, nature) {
+  const ab = (ability || '').toLowerCase();
+  let val = statKey === 'hp' ? calcHP(base, ev) : calcStat(base, ev, 31, 50, getNatureMult(nature || 'Hardy', statKey));
+  let note = '';
+  if (statKey === 'speed') {
+    if (ab === 'swift-swim'    && weather === 'rain')                           { val *= 2; note = '×2 Swift Swim'; }
+    else if (ab === 'chlorophyll'   && weather === 'sun')                       { val *= 2; note = '×2 Chlorophyll'; }
+    else if (ab === 'sand-rush'     && weather === 'sand')                      { val *= 2; note = '×2 Sand Rush'; }
+    else if (ab === 'slush-rush'    && (weather === 'snow' || weather === 'hail')) { val *= 2; note = '×2 Slush Rush'; }
+    else if (ab === 'surge-surfer'  && terrain === 'electric')                  { val *= 2; note = '×2 Surge Surfer'; }
+    if (status === 'paralysis') { val = Math.floor(val * 0.5); note += (note ? ', ' : '') + '½ para'; }
+  }
+  if (statKey === 'attack') {
+    if (ab === 'huge-power' || ab === 'pure-power')  { val *= 2; note = '×2'; }
+    else if (ab === 'gorilla-tactics')               { val *= 1.5; note = '×1.5 GT'; }
+    else if (ab === 'hustle')                        { val *= 1.5; note = '×1.5 Hustle'; }
+    else if (ab === 'guts' && status)                { val *= 1.5; note = '×1.5 Guts'; }
+    if (status === 'burn' && ab !== 'guts')          { val = Math.floor(val * 0.5); note += (note ? ', ' : '') + '½ burn'; }
+  }
+  if (statKey === 'special-attack') {
+    if (ab === 'solar-power' && weather === 'sun')   { val *= 1.5; note = '×1.5 Solar Power'; }
+  }
+  if (statKey === 'defense') {
+    if (ab === 'fur-coat')                           { val *= 2; note = '×2 Fur Coat'; }
+    else if (ab === 'marvel-scale' && status)        { val *= 1.5; note = '×1.5 Marvel Scale'; }
+  }
+  if (statKey === 'special-defense') {
+    if (types.includes('rock') && weather === 'sand') { val *= 1.5; note = '×1.5 Sand'; }
+    else if (types.includes('ice') && weather === 'snow') { val *= 1.5; note = '×1.5 Snow'; }
+  }
+  return { val: Math.floor(val), note };
+}
+
+function updatePwPokeStats(poke) {
+  const el = document.getElementById('pw-poke-stats');
+  if (!el || !poke) return;
+  const w = pwTarget.weather || 'none';
+  const t = conds.terrain || 'none';
+  const ab = pwTarget.defAbility || (poke.abilities || [])[0] || '';
+  const types = poke.types || [];
+  const nat = pwTarget.nature || 'Hardy';
+
+  const def  = applyAbilCondMult('defense',          poke.stats.defense,            pwTarget.evDef||0,  ab, types, w, t, '', nat);
+  const spd  = applyAbilCondMult('special-defense',  poke.stats['special-defense'], pwTarget.evSpDef||0, ab, types, w, t, '', nat);
+  const spe  = applyAbilCondMult('speed',            poke.stats.speed,              pwTarget.evSpe||0,  ab, types, w, t, '', nat);
+
+  const parts = [`HP ${calcHP(poke.stats.hp, pwTarget.evHP||0)}`, `Def ${def.val}${def.note ? ` (${def.note})` : ''}`, `SpD ${spd.val}${spd.note ? ` (${spd.note})` : ''}`, `Spe ${spe.val}${spe.note ? ` (${spe.note})` : ''}`];
+  el.textContent = parts.join(' · ');
+}
+
+function refreshAllStatDisplays() {
+  atkPanels.forEach(p => {
+    const poke = DB.pokemon[p.poke];
+    if (poke) { const c = document.getElementById(`stats-atk-${p.id}`); if (c && c._refresh) c._refresh(); }
+  });
+  defPanels.forEach(p => {
+    const poke = DB.pokemon[p.poke];
+    if (poke) { const c = document.getElementById(`stats-def-${p.id}`); if (c && c._refresh) c._refresh(); }
+  });
+}
+
 function recalc() {
   if (!loaded) return;
+  refreshAllStatDisplays();
   renderPlots();
   renderPowerPanel();
 }
@@ -4109,7 +4852,185 @@ function optRun() {
   });
 }
 
+// ─────────────────────────────────────────────────────────
+// POKÉMON DETAIL PANEL
+// ─────────────────────────────────────────────────────────
+function openDexDetail(pokeName) {
+  const p = DB.pokemon[pokeName];
+  if (!p) return;
+
+  // Header
+  document.getElementById('pd-sprite').src = `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${p.dex_id}.png`;
+  document.getElementById('pd-name').textContent = p.display;
+  const typesEl = document.getElementById('pd-types');
+  typesEl.innerHTML = '';
+  (p.types || []).forEach(t => {
+    const b = document.createElement('span');
+    b.className = 'type-badge';
+    b.style.background = getTypeColor(t);
+    b.textContent = t;
+    typesEl.appendChild(b);
+  });
+
+  const body = document.getElementById('poke-detail-body');
+  body.innerHTML = '';
+
+  // ── Stats ──
+  const statsSection = document.createElement('div');
+  const STAT_KEYS = ['hp','attack','defense','special-attack','special-defense','speed'];
+  const STAT_LABELS = ['HP','Atk','Def','SpA','SpD','Spe'];
+  const STAT_COLORS = ['#16a34a','#dc2626','#2563eb','#9333ea','#0891b2','#d97706'];
+  const bst = STAT_KEYS.reduce((s, k) => s + (p.stats[k] || 0), 0);
+
+  const stTitle = document.createElement('div');
+  stTitle.className = 'detail-section-title';
+  stTitle.textContent = `Base Stats · BST ${bst}`;
+  statsSection.appendChild(stTitle);
+
+  STAT_KEYS.forEach((k, i) => {
+    const base = p.stats[k] || 0;
+    const isHP = k === 'hp';
+    const barW = Math.round(base / 255 * 100);
+    const barColor = STAT_COLORS[i];
+    const minVal = isHP ? calcHP(base, 0, 31, 50) : calcStat(base, 0, 31, 50, 0.9);
+    const maxVal = isHP ? calcHP(base, 32, 31, 50) : calcStat(base, 32, 31, 50, 1.1);
+    const row = document.createElement('div');
+    row.className = 'detail-stat-row';
+    row.innerHTML = `
+      <span class="detail-stat-name">${STAT_LABELS[i]}</span>
+      <span class="detail-stat-val" style="color:${barColor}">${base}</span>
+      <div style="background:var(--bg3);border-radius:3px;overflow:hidden;height:6px;border:1px solid var(--border)">
+        <div style="height:100%;width:${barW}%;background:${barColor};border-radius:3px"></div>
+      </div>
+      <span class="detail-stat-range">${minVal}–${maxVal}</span>`;
+    statsSection.appendChild(row);
+  });
+  body.appendChild(statsSection);
+
+  // ── Type Effectiveness ──
+  const effSection = document.createElement('div');
+  const effTitle = document.createElement('div');
+  effTitle.className = 'detail-section-title';
+  effTitle.textContent = 'Type Effectiveness (taking damage)';
+  effSection.appendChild(effTitle);
+
+  const ALL_TYPES = ['normal','fire','water','electric','grass','ice','fighting','poison','ground','flying','psychic','bug','rock','ghost','dragon','dark','steel','fairy'];
+  const effGroups = { '4×':[], '2×':[], '1×':[], '½×':[], '¼×':[], '0×':[] };
+
+  ALL_TYPES.forEach(at => {
+    const eff = getTypeEff(at, p.types || []);
+    const label = eff >= 4 ? '4×' : eff >= 2 ? '2×' : eff <= 0 ? '0×' : eff <= 0.26 ? '¼×' : eff <= 0.51 ? '½×' : '1×';
+    effGroups[label].push(at);
+  });
+
+  const effBgs = { '4×':'#b91c1c', '2×':'#dc2626', '1×':'#6b7280', '½×':'#2563eb', '¼×':'#1e3a8a', '0×':'#111' };
+
+  Object.entries(effGroups).forEach(([mult, types]) => {
+    if (!types.length) return;
+    const row = document.createElement('div');
+    row.style.cssText = 'display:flex;align-items:center;gap:5px;flex-wrap:wrap;margin-bottom:4px';
+    const label = document.createElement('span');
+    label.style.cssText = `font-size:11px;font-weight:700;min-width:24px;color:${effBgs[mult]}`;
+    label.textContent = mult;
+    row.appendChild(label);
+    types.forEach(t => {
+      const chip = document.createElement('span');
+      chip.className = 'type-badge';
+      chip.style.background = getTypeColor(t);
+      chip.style.opacity = mult === '0×' ? '0.5' : '1';
+      chip.textContent = t;
+      row.appendChild(chip);
+    });
+    effSection.appendChild(row);
+  });
+  body.appendChild(effSection);
+
+  // ── Abilities ──
+  if ((p.abilities || []).length) {
+    const abSection = document.createElement('div');
+    const abTitle = document.createElement('div');
+    abTitle.className = 'detail-section-title';
+    abTitle.textContent = 'Abilities';
+    abSection.appendChild(abTitle);
+    p.abilities.forEach(a => {
+      const info = getAbilityInfo(a);
+      const row = document.createElement('div');
+      row.style.cssText = 'display:flex;align-items:flex-start;gap:6px;padding:4px 0;border-bottom:1px solid var(--border)';
+      row.innerHTML = `<span style="font-size:14px;flex-shrink:0">${info.icon}</span>
+        <div>
+          <div style="font-size:12px;font-weight:700">${a.replace(/-/g,' ').replace(/\b\w/g,c=>c.toUpperCase())}</div>
+          <div style="font-size:11px;color:var(--text2);margin-top:1px">${info.desc}</div>
+        </div>`;
+      abSection.appendChild(row);
+    });
+    body.appendChild(abSection);
+  }
+
+  // ── Learnset ──
+  const moves = (p.moves || []).map(mk => DB.moves[mk]).filter(Boolean);
+  moves.sort((a, b) => {
+    // Status last, then by type, then by power desc
+    if (a.category === 'status' && b.category !== 'status') return 1;
+    if (b.category === 'status' && a.category !== 'status') return -1;
+    if (a.type !== b.type) return a.type.localeCompare(b.type);
+    return b.power - a.power;
+  });
+
+  const moveSection = document.createElement('div');
+  const mvTitle = document.createElement('div');
+  mvTitle.className = 'detail-section-title';
+  mvTitle.textContent = `Learnset · ${moves.length} moves`;
+  moveSection.appendChild(mvTitle);
+
+  // Column headers
+  const hdr = document.createElement('div');
+  hdr.className = 'detail-move-row';
+  hdr.style.cssText += ';font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--text3)';
+  hdr.innerHTML = `<span>Move</span><span style="text-align:center">Type</span><span style="text-align:center">Cat</span><span style="text-align:right">BP</span><span style="text-align:right">Acc</span>`;
+  moveSection.appendChild(hdr);
+
+  moves.forEach(m => {
+    const row = document.createElement('div');
+    row.className = 'detail-move-row';
+    row.title = m.effect || '';
+    const catIcon = m.category === 'physical' ? '⚔' : m.category === 'special' ? '✦' : '—';
+    const accText = m.accuracy ? `${m.accuracy}%` : '—';
+    const bpText = m.power > 0 ? m.power : '—';
+    row.innerHTML = `
+      <span class="detail-move-name">${m.display || m.name}</span>
+      <span><span class="type-badge" style="background:${getTypeColor(m.type)};font-size:9px;padding:1px 5px">${m.type}</span></span>
+      <span style="text-align:center;font-size:13px" title="${m.category}">${catIcon}</span>
+      <span style="text-align:right;font-weight:600;color:var(--text)">${bpText}</span>
+      <span class="detail-move-pp">${accText}</span>`;
+    moveSection.appendChild(row);
+  });
+
+  body.appendChild(moveSection);
+
+  // Open
+  document.getElementById('poke-detail').classList.add('open');
+  document.getElementById('poke-detail-backdrop').classList.add('open');
+}
+
+function closeDexDetail() {
+  document.getElementById('poke-detail').classList.remove('open');
+  document.getElementById('poke-detail-backdrop').classList.remove('open');
+}
+
 init();
 </script>
+<!-- Pokémon detail slide panel -->
+<div id="poke-detail-backdrop" onclick="closeDexDetail()"></div>
+<div id="poke-detail">
+  <div id="poke-detail-hdr">
+    <img id="pd-sprite" src="" alt="">
+    <div style="flex:1;min-width:0">
+      <h2 id="pd-name"></h2>
+      <div id="pd-types" style="display:flex;gap:4px;margin-top:3px"></div>
+    </div>
+    <button id="poke-detail-close" onclick="closeDexDetail()">×</button>
+  </div>
+  <div id="poke-detail-body"></div>
+</div>
+
 </body>
-</html>
