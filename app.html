@@ -25,7 +25,7 @@ body{background:var(--bg);color:var(--text);font-family:var(--font);font-size:14
 #data-status span{color:#16a34a;font-weight:600}
 
 /* ── main grid ── */
-#main{display:grid;grid-template-columns:minmax(240px,1.2fr) minmax(220px,1fr) minmax(160px,0.7fr) minmax(220px,1fr) minmax(240px,1.2fr);flex:1;overflow-x:auto;overflow-y:auto;min-height:0;min-width:0;align-items:start;width:100%}
+#main{display:grid;grid-template-columns:minmax(220px,1fr) minmax(220px,1fr) minmax(150px,0.65fr) minmax(220px,1fr) minmax(220px,1fr);flex:1;overflow-x:auto;overflow-y:auto;min-height:0;min-width:0;align-items:start;width:100%}
 .col{display:flex;flex-direction:column;border-right:1px solid var(--border);min-height:100%}
 .col:last-child{border-right:none}
 .col-body{padding:8px;display:flex;flex-direction:column;gap:7px}
@@ -999,19 +999,21 @@ function getNatureMult(natureName, statName) {
   if (n.drop === statName) return 0.9;
   return 1;
 }
+function stageMult(s) { return s >= 0 ? (1 + Math.min(s,6)*0.5) : 1/(1 + Math.min(Math.abs(s),6)*0.5); }
 function getStatMults(panel) {
-  const statBoosts = [1,1.5,2,2.5,3,3.5,4,0.25,0.28,0.33,0.4,0.5,0.67];
-  const atkStage = parseInt(panel.atkStage)||0;
-  const defStage = parseInt(panel.defStage)||0;
   return {
-    atk: atkStage >= 0 ? (1 + atkStage*0.5) : 1/(1 + Math.abs(atkStage)*0.5),
-    def: defStage >= 0 ? (1 + defStage*0.5) : 1/(1 + Math.abs(defStage)*0.5),
+    atk:   stageMult(parseInt(panel.atkStage)||0),
+    spa:   stageMult(parseInt(panel.spaStage)||0),
+    def:   stageMult(parseInt(panel.defStage)||0),
+    spd:   stageMult(parseInt(panel.spdStage)||0),
+    spe:   stageMult(parseInt(panel.speStage)||0),
   };
 }
 
 // ─────────────────────────────────────────────────────────
 // DAMAGE FORMULA (Gen IX)
 // ─────────────────────────────────────────────────────────
+const SPREAD_MOVES = new Set(['earthquake','discharge','surf','muddy-water','magnitude','rock-slide','heat-wave','blizzard','hyper-voice','dazzling-gleam','glacial-lance','breaking-swipe','dragon-energy','eruption','water-spout','explosion','self-destruct','lava-plume','sludge-wave','petal-blizzard','boomburst','alluring-voice','mystical-fire','icy-wind','electroweb','bulldoze','thousand-arrows','synchronoise','swift','torch-song','razor-wind']);
 function calcDamage(atker, defer, moveKey) {
   const atkPoke = DB.pokemon[atker.poke];
   const defPoke = DB.pokemon[defer.poke];
@@ -1123,8 +1125,8 @@ function calcDamage(atker, defer, moveKey) {
   // Stage boosts
   const stageMults = getStatMults(atker);
   const defStageMults = getStatMults(defer);
-  A = Math.floor(A * stageMults.atk);
-  D = Math.floor(D * defStageMults.def);
+  A = Math.floor(A * (isPhys ? stageMults.atk : stageMults.spa));
+  D = Math.floor(D * (isPhys ? defStageMults.def : defStageMults.spd));
 
   // Items on A
   if (isPhys  && atker.item === 'choice-band')  A = Math.floor(A * 1.5);
@@ -1156,7 +1158,7 @@ function calcDamage(atker, defer, moveKey) {
     let foulA = calcStat(defAtkBase, defAtkEV, 31, LEVEL, defAtkNat);
     // Apply defender's Atk stage
     const defAtkStage = parseInt(defer.atkStage) || 0;
-    foulA = Math.floor(foulA * (defAtkStage >= 0 ? (1 + defAtkStage * 0.5) : 1 / (1 + Math.abs(defAtkStage) * 0.5)));
+    foulA = Math.floor(foulA * stageMult(defAtkStage));
     // Apply attacker's item boosts that boost attack
     if (atker.item === 'choice-band') foulA = Math.floor(foulA * 1.5);
     if (atker.item === 'life-orb')    foulA = Math.floor(foulA * 1.3);
@@ -1170,7 +1172,7 @@ function calcDamage(atker, defer, moveKey) {
     const atkDefNat  = getNatureMult(atker.nature, 'defense');
     let bodyA = calcStat(atkDefBase, atkDefEV, 31, LEVEL, atkDefNat);
     const atkDefStage = parseInt(atker.defStage) || 0;
-    bodyA = Math.floor(bodyA * (atkDefStage >= 0 ? (1 + atkDefStage * 0.5) : 1 / (1 + Math.abs(atkDefStage) * 0.5)));
+    bodyA = Math.floor(bodyA * stageMult(atkDefStage));
     if (atker.item === 'choice-band') bodyA = Math.floor(bodyA * 1.5);
     if (atker.item === 'life-orb')    bodyA = Math.floor(bodyA * 1.3);
     A = bodyA;
@@ -1319,12 +1321,15 @@ function calcDamage(atker, defer, moveKey) {
   // Combined defender ability multiplier
   const defAbilMult = thickFatMult * heatproofMult * drySkinMult * multiscaleMult * iceScalesMult * purifyingSaltMult;
 
+  // ── Doubles spread move modifier (×0.75) ──
+  const spreadMult = (conds.doubles && SPREAD_MOVES.has(move.name)) ? 0.75 : 1;
+
   // ── Base damage ──
   const base = Math.floor(Math.floor((Math.floor(2*LEVEL/5+2) * power * A / D) / 50) + 2);
   const preMult = base * weather * terrain;
 
-  const min = Math.floor(Math.floor(Math.floor(preMult * 85/100) * stab * typeEff * filterMult * expertMult * tintedLensMult * neuroforceMult * typeItemMult) * defAbilMult * berryMult * supremeMult * rivalryMult * screenFactor * manualMult);
-  const max = Math.floor(Math.floor(Math.floor(preMult * 100/100) * stab * typeEff * filterMult * expertMult * tintedLensMult * neuroforceMult * typeItemMult) * defAbilMult * berryMult * supremeMult * rivalryMult * screenFactor * manualMult);
+  const min = Math.floor(Math.floor(Math.floor(Math.floor(preMult * 85/100) * stab * typeEff * filterMult * expertMult * tintedLensMult * neuroforceMult * typeItemMult) * defAbilMult * berryMult * supremeMult * rivalryMult * screenFactor * manualMult) * spreadMult);
+  const max = Math.floor(Math.floor(Math.floor(Math.floor(preMult * 100/100) * stab * typeEff * filterMult * expertMult * tintedLensMult * neuroforceMult * typeItemMult) * defAbilMult * berryMult * supremeMult * rivalryMult * screenFactor * manualMult) * spreadMult);
   const avg = Math.floor((min+max)/2);
 
   return { min, max, avg, typeEff, defHP, stab, A, D, power, berryMult };
@@ -1875,12 +1880,18 @@ function updateStatsDisplay(panelId, poke, isAtk) {
       const natColor = natMult > 1 ? '#dc2626' : natMult < 1 ? '#2563eb' : 'var(--text2)';
       let calcedVal = isHP ? calcHP(base, ev) : calcStat(base, ev, 31, 50, natMult);
 
+      // Stat stage multiplier for display
+      const stageKey = { attack:'atkStage', 'special-attack':'spaStage', defense:'defStage', 'special-defense':'spdStage', speed:'speStage' }[key];
+      const stageVal = stageKey ? (parseInt(panel?.[stageKey])||0) : 0;
+      const stageMul = stageMult(stageVal);
+      const stageColor = stageVal > 0 ? '#16a34a' : stageVal < 0 ? '#dc2626' : null;
+      const stageNote = stageVal !== 0 ? ` ${stageVal > 0 ? '+' : ''}${stageVal}` : '';
+
       // Ability + condition multipliers on displayed stat
       let abilMult = 1;
       let note = '';
 
       if (!isHP) {
-        // ── Speed ──
         if (key === 'speed') {
           if (ab === 'swift-swim'   && weather === 'rain')     { abilMult = 2; note = '💧×2'; }
           if (ab === 'chlorophyll'  && weather === 'sun')      { abilMult = 2; note = '☀×2'; }
@@ -1918,17 +1929,18 @@ function updateStatsDisplay(panelId, poke, isAtk) {
         }
       }
 
-      const displayVal = abilMult !== 1 ? Math.floor(calcedVal * abilMult) : calcedVal;
+      const displayVal = isHP ? calcedVal : Math.floor(calcedVal * abilMult * (isHP ? 1 : stageMul));
+      const finalColor = note ? (abilMult > 1 ? '#16a34a' : abilMult < 1 ? '#dc2626' : '#f59e0b') : stageVal !== 0 ? stageColor : natColor;
+      const bold = natMult !== 1 || note || stageVal !== 0 ? '700' : '400';
+      const displayNote = note + stageNote;
       const barW = Math.min(100, base/255*100).toFixed(1);
       const row = document.createElement('div');
       row.className = 'stat-row';
-      const calcColor = note ? (abilMult > 1 ? '#16a34a' : abilMult < 1 ? '#dc2626' : '#f59e0b') : natColor;
-      const bold = natMult !== 1 || note ? '700' : '400';
       row.innerHTML = `
         <span class="stat-name">${label}</span>
         <div class="stat-bar-bg"><div class="stat-bar" style="width:${barW}%;background:${color}"></div></div>
         <span class="stat-val" style="color:${color}">${base}</span>
-        <span class="stat-calc" style="color:${calcColor};font-weight:${bold}">${displayVal}${note ? ` <span style="font-size:9px;opacity:.8">${note}</span>` : ''}</span>`;
+        <span class="stat-calc" style="color:${finalColor};font-weight:${bold}">${displayVal}${displayNote ? ` <span style="font-size:9px;opacity:.8">${displayNote}</span>` : ''}</span>`;
       container.appendChild(row);
     });
   }
@@ -2235,7 +2247,7 @@ function buildItemOptions() {
 function buildAtkPanel(id) {
   const color = COLORS[(id-1) % COLORS.length];
   const panel = { id, poke:'', move:'', item:'none', nature:'Hardy', ability:'',
-    evAtk:0, evSpAtk:0, evSpe:0, evHP:0, evDef:0, evSpDef:0, atkStage:0, color,
+    evAtk:0, evSpAtk:0, evSpe:0, evHP:0, evDef:0, evSpDef:0, atkStage:0, spaStage:0, defStage:0, spdStage:0, speStage:0, color,
     faintedAllies:0, gender:'none' };
   atkPanels.push(panel);
 
@@ -2291,11 +2303,12 @@ function buildAtkPanel(id) {
       </div>
 
       <div class="divider"></div>
-      <label class="lbl">Stat Stage</label>
-      <div class="stage-row">
-        <label>Atk/SpA</label>
-        <select id="atkstage-${id}">${stageOptions()}</select>
-      </div>
+      <label class="lbl">Stat Stages</label>
+      <div class="stage-row"><label>Atk</label><select id="atkstage-${id}">${stageOptions()}</select></div>
+      <div class="stage-row"><label>SpA</label><select id="spastage-${id}">${stageOptions()}</select></div>
+      <div class="stage-row"><label>Def</label><select id="defstage-atk-${id}">${stageOptions()}</select></div>
+      <div class="stage-row"><label>SpD</label><select id="spdstage-atk-${id}">${stageOptions()}</select></div>
+      <div class="stage-row"><label>Spe</label><select id="spestage-atk-${id}">${stageOptions()}</select></div>
       <div class="divider"></div>
       <label class="lbl">Status</label>
       <select id="status-atk-${id}" style="width:100%;background:var(--bg3);border:1px solid var(--border);color:var(--text);padding:4px 7px;border-radius:5px;font-size:13px;outline:none;font-family:var(--font)">
@@ -2325,7 +2338,11 @@ function buildAtkPanel(id) {
     recalc();
   });
   document.getElementById(`item-atk-${id}`).addEventListener('change', e => { panel.item = e.target.value; recalc(); });
-  document.getElementById(`atkstage-${id}`).addEventListener('change', e => { panel.atkStage = parseInt(e.target.value)||0; recalc(); });
+  document.getElementById(`atkstage-${id}`).addEventListener('change', e => { panel.atkStage = parseInt(e.target.value)||0; const c = document.getElementById(`stats-atk-${id}`); if(c&&c._refresh)c._refresh(); recalc(); });
+  document.getElementById(`spastage-${id}`).addEventListener('change', e => { panel.spaStage = parseInt(e.target.value)||0; const c = document.getElementById(`stats-atk-${id}`); if(c&&c._refresh)c._refresh(); recalc(); });
+  document.getElementById(`defstage-atk-${id}`).addEventListener('change', e => { panel.defStage = parseInt(e.target.value)||0; const c = document.getElementById(`stats-atk-${id}`); if(c&&c._refresh)c._refresh(); recalc(); });
+  document.getElementById(`spdstage-atk-${id}`).addEventListener('change', e => { panel.spdStage = parseInt(e.target.value)||0; const c = document.getElementById(`stats-atk-${id}`); if(c&&c._refresh)c._refresh(); recalc(); });
+  document.getElementById(`spestage-atk-${id}`).addEventListener('change', e => { panel.speStage = parseInt(e.target.value)||0; const c = document.getElementById(`stats-atk-${id}`); if(c&&c._refresh)c._refresh(); recalc(); });
   document.getElementById(`status-atk-${id}`).addEventListener('change', e => { panel.status = e.target.value; recalc(); });
 
   bindEvSlider(id,'hp',  'atk', panel, 'evHP');
@@ -2338,7 +2355,7 @@ function buildAtkPanel(id) {
 
 function buildDefPanel(id) {
   const panel = { id, poke:'', item:'none', nature:'Hardy', ability:'', moves:[],
-    evHP:0, evAtk:0, evDef:0, evSpAtk:0, evSpDef:0, evSpe:0, defStage:0, atkStage:0 };
+    evHP:0, evAtk:0, evDef:0, evSpAtk:0, evSpDef:0, evSpe:0, defStage:0, spdStage:0, atkStage:0, spaStage:0, speStage:0 };
   defPanels.push(panel);
 
   const div = document.createElement('div');
@@ -2371,6 +2388,7 @@ function buildDefPanel(id) {
       </div>
       <label class="lbl">Moves</label>
       <div id="move-picker-${id}"></div>
+      <div class="divider"></div>
       <label class="lbl">Held Item</label>
       <select id="item-def-${id}">
         ${buildItemOptions()}
@@ -2392,15 +2410,13 @@ function buildDefPanel(id) {
       </div>
 
       <div class="divider"></div>
-      <label class="lbl">Stat Stage</label>
-      <div class="stage-row">
-        <label>Atk/SpA</label>
-        <select id="atkstage-def-${id}">${stageOptions()}</select>
-      </div>
-      <div class="stage-row">
-        <label>Def/SpD</label>
-        <select id="defstage-${id}">${stageOptions()}</select>
-      </div>
+      <label class="lbl">Stat Stages</label>
+      <div class="stage-row"><label>Atk</label><select id="atkstage-def-${id}">${stageOptions()}</select></div>
+      <div class="stage-row"><label>SpA</label><select id="spastage-def-${id}">${stageOptions()}</select></div>
+      <div class="stage-row"><label>Def</label><select id="defstage-${id}">${stageOptions()}</select></div>
+      <div class="stage-row"><label>SpD</label><select id="spdstage-def-${id}">${stageOptions()}</select></div>
+      <div class="stage-row"><label>Spe</label><select id="spestage-def-${id}">${stageOptions()}</select></div>
+      <div class="stage-row"><label>Spe</label><select id="spestage-def-${id}">${stageOptions()}</select></div>
       <div class="divider"></div>
       <label class="lbl">Status</label>
       <select id="status-def-${id}" style="width:100%;background:var(--bg3);border:1px solid var(--border);color:var(--text);padding:4px 7px;border-radius:5px;font-size:13px;outline:none;font-family:var(--font)">
@@ -2429,8 +2445,12 @@ function buildDefPanel(id) {
     recalc();
   });
   document.getElementById(`item-def-${id}`).addEventListener('change', e => { panel.item = e.target.value; recalc(); });
-  document.getElementById(`defstage-${id}`).addEventListener('change', e => { panel.defStage = parseInt(e.target.value)||0; recalc(); });
-  document.getElementById(`atkstage-def-${id}`).addEventListener('change', e => { panel.atkStage = parseInt(e.target.value)||0; recalc(); });
+  document.getElementById(`atkstage-def-${id}`).addEventListener('change', e => { panel.atkStage = parseInt(e.target.value)||0; const c = document.getElementById(`stats-def-${id}`); if(c&&c._refresh)c._refresh(); recalc(); });
+  document.getElementById(`spastage-def-${id}`).addEventListener('change', e => { panel.spaStage = parseInt(e.target.value)||0; const c = document.getElementById(`stats-def-${id}`); if(c&&c._refresh)c._refresh(); recalc(); });
+  document.getElementById(`defstage-${id}`).addEventListener('change', e => { panel.defStage = parseInt(e.target.value)||0; const c = document.getElementById(`stats-def-${id}`); if(c&&c._refresh)c._refresh(); recalc(); });
+  document.getElementById(`spdstage-def-${id}`).addEventListener('change', e => { panel.spdStage = parseInt(e.target.value)||0; const c = document.getElementById(`stats-def-${id}`); if(c&&c._refresh)c._refresh(); recalc(); });
+  document.getElementById(`spestage-def-${id}`).addEventListener('change', e => { panel.speStage = parseInt(e.target.value)||0; const c = document.getElementById(`stats-def-${id}`); if(c&&c._refresh)c._refresh(); recalc(); });
+  document.getElementById(`spestage-def-${id}`).addEventListener('change', e => { panel.speStage = parseInt(e.target.value)||0; const c = document.getElementById(`stats-def-${id}`); if(c&&c._refresh)c._refresh(); recalc(); });
   document.getElementById(`status-def-${id}`).addEventListener('change', e => { panel.status = e.target.value; recalc(); });
 
   bindEvSlider(id,'hp',  'def', panel, 'evHP');
@@ -2497,7 +2517,7 @@ function buildConditions() {
         <span class="cond-section">🛡 Screens</span>
         <label class="cond-item" style="font-size:12px;margin-bottom:2px">
           <input type="checkbox" id="cond-doubles">
-          <b>Doubles</b> <span style="font-size:10px;color:var(--text2)">(÷1.5 vs ÷2)</span>
+          <b>Doubles</b> <span style="font-size:10px;color:var(--text2)">(screens ÷1.5 · spread ×0.75)</span>
         </label>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:2px 6px">
           <div style="font-size:10px;font-weight:700;color:var(--text2);padding:2px 0">SIDE A</div>
@@ -3458,7 +3478,8 @@ function _computeOhkoList(pBase, sBase, totalMult, atkEV=0, spaEV=0) {
       const seBerryMult = (defSeBerry && typeEff > 1) ? 0.5 : 1;
 
       // Actual max-roll damage
-      const dmg = Math.floor(Math.floor(Math.floor(22 * A * move.power / D) / 50 + 2) * stabMult * typeEff * moveItemMult * moveWeatherMult * seBerryMult * abilPowMult);
+      const spreadMult = (pwTarget.doubles && SPREAD_MOVES.has(move.name)) ? 0.75 : 1;
+      const dmg = Math.floor(Math.floor(Math.floor(22 * A * move.power / D) / 50 + 2) * stabMult * typeEff * moveItemMult * moveWeatherMult * seBerryMult * abilPowMult * spreadMult);
       if (dmg < defHP) continue;
 
       matchingMoves.push({ move, typeEff });
