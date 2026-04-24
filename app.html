@@ -186,12 +186,25 @@ input[type=range]{width:100%;accent-color:#4f46e5;height:4px}
 .hp-label{position:absolute;right:4px;top:50%;transform:translateY(-50%);font-size:10px;font-weight:600;color:#fff;text-shadow:0 1px 2px rgba(0,0,0,.5)}
 
 /* ── coverage tab ── */
-#view-cov{display:none;flex-direction:column;flex:1;overflow-y:auto;min-height:0}
-.cov-left{width:310px;flex-shrink:0;padding:12px;border-right:1px solid var(--border);overflow-y:auto;display:flex;flex-direction:column;gap:8px}
-.cov-right{flex:1;padding:14px;overflow-y:auto}
-.cov-section-title{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:var(--text2);margin-bottom:4px}
-.cov-slot{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden}
-.cov-slot-bar{display:flex;align-items:center;gap:6px;padding:5px 8px;background:var(--bg3);border-bottom:1px solid var(--border)}
+#view-cov{display:none;flex-direction:column;flex:1;overflow:hidden;min-height:0}
+#tc-team-bar{flex-shrink:0;border-bottom:1px solid var(--border);background:var(--bg2);display:flex;flex-direction:column}
+#tc-team-bar-hdr{display:flex;align-items:center;justify-content:space-between;padding:5px 12px;border-bottom:1px solid var(--border);background:var(--bg3);flex-shrink:0}
+#tc-slots{display:flex;flex:1}
+.tc-slot{flex:1;min-width:152px;padding:7px 8px;display:flex;flex-direction:column;gap:4px;border-right:1px solid var(--border)}
+.tc-slot:last-child{border-right:none}
+.tc-slot-excluded{opacity:0.35;filter:grayscale(0.4)}
+#tc-charts-area{flex:1;overflow-y:auto;display:flex;flex-direction:row;min-height:0}
+.tc-chart-section{flex:1;padding:14px;display:flex;flex-direction:column;gap:10px;border-right:1px solid var(--border)}
+.tc-chart-section:last-child{border-right:none}
+.tc-slot-header{display:flex;align-items:center;gap:5px}
+.tc-slot-num{font-size:10px;font-weight:700;color:var(--text3);width:13px;flex-shrink:0;text-align:center}
+.tc-poke-inp{flex:1;min-width:0;font-size:12px;padding:3px 5px;border:1px solid var(--border2);border-radius:4px;background:var(--bg);color:var(--text);font-family:var(--font)}
+.tc-poke-sprite-mini{width:24px;height:24px;object-fit:contain;image-rendering:pixelated;flex-shrink:0}
+.tc-icon-btn{background:none;border:1px solid var(--border2);border-radius:4px;cursor:pointer;font-size:10px;padding:2px 6px;color:var(--text2);font-family:var(--font);flex-shrink:0;line-height:1.4;font-weight:600}
+.tc-btn-excl{background:#fef3c7;border-color:#d97706;color:#78350f}
+.tc-moves{display:flex;flex-direction:column;gap:3px}
+.tc-move-sel{font-size:11px;padding:3px 4px;width:100%;background:var(--bg);border:1px solid var(--border);border-radius:4px;color:var(--text);font-family:var(--font)}
+.tc-move-sel:disabled{opacity:0.4;cursor:not-allowed}
 .cov-slot-check{accent-color:#4f46e5;width:14px;height:14px;cursor:pointer;flex-shrink:0}
 .cov-slot-num{font-size:11px;color:var(--text3);font-weight:600;min-width:16px}
 .cov-slot-sprite{width:26px;height:26px;object-fit:contain;image-rendering:pixelated;flex-shrink:0}
@@ -545,88 +558,55 @@ input[type=range]{width:100%;accent-color:#4f46e5;height:4px}
 
 <div id="view-cov">
 
-  <!-- top: type picker + coverage side by side -->
-  <div style="display:grid;grid-template-columns:1fr 1fr;border-bottom:1px solid var(--border)">
-
-    <div style="padding:14px;border-right:1px solid var(--border);display:flex;flex-direction:column;gap:10px">
-      <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:var(--text2)">Attack types</div>
-      <div id="tc-attack-grid" style="display:grid;grid-template-columns:repeat(6,1fr);gap:5px"></div>
-      <button onclick="tcClearAll()" style="font-size:11px;color:var(--text2);background:none;border:1px solid var(--border2);border-radius:5px;padding:4px 10px;cursor:pointer;font-family:var(--font);align-self:flex-start">Clear all</button>
+  <!-- TOP: Team row -->
+  <div id="tc-team-bar">
+    <div id="tc-team-bar-hdr">
+      <span style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--text2)">Your Team</span>
+      <button onclick="tcClearAll()" style="font-size:11px;color:var(--text2);background:none;border:1px solid var(--border2);border-radius:5px;padding:3px 8px;cursor:pointer;font-family:var(--font)">Clear all</button>
     </div>
-
-    <div style="padding:14px;display:flex;flex-direction:column;gap:10px">
-      <div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap">
-        <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:var(--text2)">Super effective against</div>
-        <div style="display:flex;gap:10px;flex-wrap:wrap">
-          <div style="display:flex;align-items:center;gap:5px;font-size:11px;color:var(--text2)"><div style="width:10px;height:10px;border-radius:2px;background:#d1fae5;border:1px solid #2e7d4f"></div>1 type</div>
-          <div style="display:flex;align-items:center;gap:5px;font-size:11px;color:var(--text2)"><div style="width:10px;height:10px;border-radius:2px;background:#86efac;border:1px solid #2e7d4f"></div>2 types</div>
-          <div style="display:flex;align-items:center;gap:5px;font-size:11px;color:var(--text2)"><div style="width:10px;height:10px;border-radius:2px;background:#4ade80;border:1px solid #166534"></div>3+</div>
-          <div style="display:flex;align-items:center;gap:5px;font-size:11px;color:var(--text2)"><div style="width:10px;height:10px;border-radius:2px;background:var(--bg3);border:1px solid var(--border2)"></div>not covered</div>
-        </div>
-      </div>
-      <div id="tc-results-grid" style="display:grid;grid-template-columns:repeat(6,1fr);gap:5px"></div>
-      <div style="font-size:11px;color:var(--text2)">Red badge = overlap count. Hover a chip to see which types hit it.</div>
-    </div>
-
+    <div id="tc-slots"></div>
   </div>
 
-  <!-- bottom: move optimizer -->
-  <div style="border-top:1px solid var(--border);display:grid;grid-template-columns:220px 1fr;min-height:0">
+  <!-- BOTTOM: Coverage grids side by side -->
+  <div id="tc-charts-area">
 
-    <!-- left: compact controls -->
-    <div style="padding:14px;border-right:1px solid var(--border);background:var(--bg3);display:flex;flex-direction:column;gap:10px">
-      <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:var(--text2)">Move Optimizer</div>
-
+    <!-- Offensive Coverage -->
+    <div class="tc-chart-section">
       <div>
-        <label class="lbl">Pokemon</label>
-        <div style="position:relative">
-          <input type="text" id="opt-poke-input" placeholder="Search..." autocomplete="off" oninput="optPokeSearch(this.value)" style="width:100%;padding-right:28px">
-          <img id="opt-poke-sprite" src="" style="position:absolute;right:4px;top:50%;transform:translateY(-50%);width:22px;height:22px;object-fit:contain;image-rendering:pixelated;display:none">
-          <div id="opt-poke-list" class="poke-list"></div>
+        <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:8px">
+          <div style="font-size:13px;font-weight:700;color:var(--text)">Offensive Coverage</div>
+          <div style="font-size:11px;color:var(--text2)">Types your team hits super-effectively</div>
+          <div style="display:flex;gap:7px;flex-wrap:wrap;margin-left:auto">
+            <div style="display:flex;align-items:center;gap:4px;font-size:11px;color:var(--text2)"><div style="width:9px;height:9px;border-radius:2px;background:#d1fae5;border:1px solid #6ee7b7"></div>1</div>
+            <div style="display:flex;align-items:center;gap:4px;font-size:11px;color:var(--text2)"><div style="width:9px;height:9px;border-radius:2px;background:#6ee7b7;border:1px solid #059669"></div>2</div>
+            <div style="display:flex;align-items:center;gap:4px;font-size:11px;color:var(--text2)"><div style="width:9px;height:9px;border-radius:2px;background:#10b981;border:1px solid #059669"></div>3+</div>
+            <div style="display:flex;align-items:center;gap:4px;font-size:11px;color:var(--text2)"><div style="width:9px;height:9px;border-radius:2px;background:var(--bg3);border:1px solid var(--border2)"></div>none</div>
+          </div>
         </div>
+        <div id="tc-offense-grid" style="display:grid;grid-template-columns:repeat(3,1fr);gap:4px"></div>
       </div>
-
-      <div>
-        <label class="lbl">Move slots</label>
-        <div style="display:flex;gap:5px">
-          <button id="opt-slots-1" class="opt-slot-btn" onclick="optSetSlots(1)">1</button>
-          <button id="opt-slots-2" class="opt-slot-btn" onclick="optSetSlots(2)">2</button>
-          <button id="opt-slots-3" class="opt-slot-btn opt-slot-active" onclick="optSetSlots(3)">3</button>
-          <button id="opt-slots-4" class="opt-slot-btn" onclick="optSetSlots(4)">4</button>
-        </div>
-      </div>
-
-      <div>
-        <label class="lbl">Move category</label>
-        <div style="display:flex;gap:5px;flex-wrap:wrap">
-          <button id="opt-cat-all" class="opt-slot-btn opt-slot-active" onclick="optSetCat('all')">All</button>
-          <button id="opt-cat-physical" class="opt-slot-btn" onclick="optSetCat('physical')">⚔ Phys</button>
-          <button id="opt-cat-special" class="opt-slot-btn" onclick="optSetCat('special')">✦ Spec</button>
-        </div>
-      </div>
-
-      <button onclick="optRun()" style="margin-top:auto;padding:7px 0;background:#4f46e5;color:#fff;border:none;border-radius:5px;font-size:13px;font-weight:600;cursor:pointer;font-family:var(--font)">Find best combos</button>
+      <div style="font-size:11px;color:var(--text3)">Number = # of Pokémon with SE coverage. Hover for names.</div>
     </div>
 
-    <!-- right: priority filters + results -->
-    <div style="padding:14px;display:flex;flex-direction:column;gap:12px;overflow-y:auto">
-
-      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px">
-        <div>
-          <label class="lbl">Prioritize attack types</label>
-          <div id="opt-atk-priority" style="display:grid;grid-template-columns:repeat(6,1fr);gap:4px;margin-top:4px"></div>
+    <!-- Defensive Coverage -->
+    <div class="tc-chart-section">
+      <div>
+        <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:8px">
+          <div style="font-size:13px;font-weight:700;color:var(--text)">Defensive Coverage</div>
+          <div style="font-size:11px;color:var(--text2)">Net score: weaknesses (+) vs resistances (−)</div>
+          <div style="display:flex;gap:6px;flex-wrap:wrap;margin-left:auto;align-items:center">
+            <div style="display:flex;align-items:center;gap:4px;font-size:11px;color:var(--text2)"><div style="width:9px;height:9px;border-radius:2px;background:#1d4ed8"></div>−4+</div>
+            <div style="display:flex;align-items:center;gap:4px;font-size:11px;color:var(--text2)"><div style="width:9px;height:9px;border-radius:2px;background:#93c5fd"></div>−2</div>
+            <div style="display:flex;align-items:center;gap:4px;font-size:11px;color:var(--text2)"><div style="width:9px;height:9px;border-radius:2px;background:#dbeafe"></div>−1</div>
+            <div style="display:flex;align-items:center;gap:4px;font-size:11px;color:var(--text2)"><div style="width:9px;height:9px;border-radius:2px;background:var(--bg3);border:1px solid var(--border)"></div>0</div>
+            <div style="display:flex;align-items:center;gap:4px;font-size:11px;color:var(--text2)"><div style="width:9px;height:9px;border-radius:2px;background:#fee2e2"></div>+1</div>
+            <div style="display:flex;align-items:center;gap:4px;font-size:11px;color:var(--text2)"><div style="width:9px;height:9px;border-radius:2px;background:#f87171"></div>+3</div>
+            <div style="display:flex;align-items:center;gap:4px;font-size:11px;color:var(--text2)"><div style="width:9px;height:9px;border-radius:2px;background:#b91c1c"></div>+5+</div>
+          </div>
         </div>
-        <div>
-          <label class="lbl">Must-cover enemy types</label>
-          <div id="opt-enemy-priority" style="display:grid;grid-template-columns:repeat(6,1fr);gap:4px;margin-top:4px"></div>
-        </div>
-        <div>
-          <label class="lbl" style="color:#dc2626">Exclude attack types</label>
-          <div id="opt-exclude-atk" style="display:grid;grid-template-columns:repeat(6,1fr);gap:4px;margin-top:4px"></div>
-        </div>
+        <div id="tc-defense-grid" style="display:grid;grid-template-columns:repeat(3,1fr);gap:4px"></div>
       </div>
-
-      <div id="opt-results" style="display:grid;grid-template-columns:repeat(5,1fr);gap:8px"></div>
+      <div style="font-size:11px;color:var(--text3)">Score = weaknesses minus resistances per type. Hover for Pokémon breakdown.</div>
     </div>
 
   </div>
@@ -3737,7 +3717,7 @@ function toggleSection(id) {
 function switchTab(tab) {
   document.getElementById('view-calc').style.display = tab === 'calc' ? 'flex' : 'none';
   document.getElementById('view-dex').style.display  = tab === 'dex'  ? 'flex' : 'none';
-  document.getElementById('view-cov').style.display  = tab === 'cov'  ? 'block' : 'none';
+  document.getElementById('view-cov').style.display  = tab === 'cov'  ? 'flex' : 'none';
   document.getElementById('view-ohko').style.display = tab === 'ohko' ? 'flex' : 'none';
   document.getElementById('tab-calc').classList.toggle('active', tab === 'calc');
   document.getElementById('tab-dex').classList.toggle('active',  tab === 'dex');
@@ -4523,70 +4503,477 @@ function renderDefensive(content, activeSlots) {
 }
 
 // ─────────────────────────────────────────────────────────
-// TYPE CHART OVERLAP TAB
+// TYPE CHART / TEAM COVERAGE TAB
 // ─────────────────────────────────────────────────────────
 const TC_TYPES = ['Normal','Fire','Water','Electric','Grass','Ice','Fighting','Poison','Ground','Flying','Psychic','Bug','Rock','Ghost','Dragon','Dark','Steel','Fairy'];
-const TC_SE = {
-  Normal:[],Fire:['Grass','Ice','Bug','Steel'],Water:['Fire','Ground','Rock'],
-  Electric:['Water','Flying'],Grass:['Water','Ground','Rock'],
-  Ice:['Grass','Ground','Flying','Dragon'],Fighting:['Normal','Ice','Rock','Dark','Steel'],
-  Poison:['Grass','Fairy'],Ground:['Fire','Electric','Poison','Rock','Steel'],
-  Flying:['Grass','Fighting','Bug'],Psychic:['Fighting','Poison'],Bug:['Grass','Psychic','Dark'],
-  Rock:['Fire','Ice','Flying','Bug'],Ghost:['Psychic','Ghost'],Dragon:['Dragon'],
-  Dark:['Psychic','Ghost'],Steel:['Ice','Rock','Fairy'],Fairy:['Fighting','Dragon','Dark']
+
+const tcTeam = Array.from({length: 6}, (_, i) => ({
+  id: i, poke: null, moves: [null, null, null, null], ability: null, excluded: false
+}));
+
+const TC_ABILITY_IMMUNITIES = {
+  'levitate':'ground', 'earth-eater':'ground',
+  'water-absorb':'water', 'storm-drain':'water', 'dry-skin':'water',
+  'flash-fire':'fire', 'well-baked-body':'fire',
+  'volt-absorb':'electric', 'lightning-rod':'electric', 'motor-drive':'electric',
+  'sap-sipper':'grass',
 };
-let tcSelected = new Set();
+const TC_TYPE_CHANGE_ABILITIES = {
+  'pixilate':'fairy', 'aerilate':'flying', 'galvanize':'electric', 'refrigerate':'ice'
+};
+
+function tcEffectiveMoveType(moveKey, ability) {
+  const move = DB.moves[moveKey];
+  if (!move) return null;
+  if (ability === 'normalize') return 'normal';
+  const change = TC_TYPE_CHANGE_ABILITIES[ability];
+  return (change && move.type === 'normal') ? change : move.type;
+}
+
+function tcAbilityGrantsImmunity(ability, atkTypeLower) {
+  return !!ability && TC_ABILITY_IMMUNITIES[ability] === atkTypeLower;
+}
+
+const TC_TYPE_ORDER = ['normal','fire','water','electric','grass','ice','fighting','poison','ground','flying','psychic','bug','rock','ghost','dragon','dark','steel','fairy'];
 
 function tcRender() {
-  const ag = document.getElementById('tc-attack-grid');
-  const rg = document.getElementById('tc-results-grid');
-  if (!ag || !rg) return;
-  ag.innerHTML = '';
-  rg.innerHTML = '';
+  tcBuildSlots();
+  tcUpdate();
+}
 
-  TC_TYPES.forEach(t => {
-    const col = getTypeColor(t.toLowerCase());
-    const btn = document.createElement('button');
-    btn.style.cssText = `display:flex;align-items:center;gap:6px;padding:5px 7px;border-radius:5px;cursor:pointer;font-size:12px;font-weight:600;font-family:var(--font);border:1px solid ${tcSelected.has(t) ? col : 'var(--border)'};background:${tcSelected.has(t) ? col+'22' : 'var(--bg2)'};color:var(--text);opacity:${tcSelected.has(t) ? '1' : '0.5'};transition:all .1s`;
-    const dot = document.createElement('span');
-    dot.style.cssText = `width:10px;height:10px;border-radius:50%;background:${col};flex-shrink:0`;
-    btn.appendChild(dot);
-    btn.appendChild(document.createTextNode(t));
-    btn.onclick = () => { tcSelected.has(t) ? tcSelected.delete(t) : tcSelected.add(t); tcRender(); };
-    ag.appendChild(btn);
-  });
-
-  const coverage = {};
-  TC_TYPES.forEach(def => { coverage[def] = []; });
-  tcSelected.forEach(atk => { (TC_SE[atk]||[]).forEach(def => coverage[def].push(atk)); });
-
-  TC_TYPES.forEach(def => {
-    const col = getTypeColor(def.toLowerCase());
-    const hitters = coverage[def];
-    const count = hitters.length;
-    let bg, border, textColor;
-    if (tcSelected.size === 0 || count === 0) { bg='var(--bg3)'; border='var(--border)'; textColor='var(--text2)'; }
-    else if (count === 1) { bg='#d1fae5'; border='#2e7d4f'; textColor='#14532d'; }
-    else if (count === 2) { bg='#86efac'; border='#2e7d4f'; textColor='#14532d'; }
-    else { bg='#4ade80'; border='#166534'; textColor='#14532d'; }
-    const chip = document.createElement('div');
-    chip.style.cssText = `display:flex;align-items:center;gap:5px;padding:5px 7px;border-radius:5px;font-size:12px;font-weight:600;border:1px solid ${border};background:${bg};color:${textColor};position:relative;cursor:default`;
-    chip.title = count > 0 ? 'Hit by: ' + hitters.join(', ') : 'Not covered';
-    const dot = document.createElement('span');
-    dot.style.cssText = `width:10px;height:10px;border-radius:50%;background:${col};flex-shrink:0`;
-    chip.appendChild(dot);
-    chip.appendChild(document.createTextNode(def));
-    if (count >= 2) {
-      const badge = document.createElement('div');
-      badge.textContent = count;
-      badge.style.cssText = 'position:absolute;top:-5px;right:-5px;background:#dc2626;color:#fff;font-size:9px;border-radius:50%;width:14px;height:14px;display:flex;align-items:center;justify-content:center;font-weight:700';
-      chip.appendChild(badge);
-    }
-    rg.appendChild(chip);
+function tcBuildSlots() {
+  const container = document.getElementById('tc-slots');
+  if (!container) return;
+  container.innerHTML = '';
+  tcTeam.forEach(slot => {
+    const slotEl = document.createElement('div');
+    slotEl.id = `tc-slot-${slot.id}`;
+    container.appendChild(slotEl);
+    tcRenderSlot(slot.id);
   });
 }
 
-function tcClearAll() { tcSelected.clear(); tcRender(); }
+function tcRenderSlot(slotId) {
+  const slot = tcTeam[slotId];
+  const slotEl = document.getElementById(`tc-slot-${slotId}`);
+  if (!slotEl) return;
+  slotEl.className = 'tc-slot' + (slot.excluded ? ' tc-slot-excluded' : '');
+  slotEl.innerHTML = '';
+
+  const poke = slot.poke ? DB.pokemon[slot.poke] : null;
+
+  // Header row
+  const header = document.createElement('div');
+  header.className = 'tc-slot-header';
+
+  const numEl = document.createElement('span');
+  numEl.className = 'tc-slot-num';
+  numEl.textContent = slot.id + 1;
+  header.appendChild(numEl);
+
+  if (poke && poke.sprite) {
+    const sprite = document.createElement('img');
+    sprite.src = poke.sprite;
+    sprite.className = 'tc-poke-sprite-mini';
+    header.appendChild(sprite);
+  }
+
+  const pokeWrap = document.createElement('div');
+  pokeWrap.style.cssText = 'position:relative;flex:1;min-width:0';
+  const pokeInput = document.createElement('input');
+  pokeInput.type = 'text';
+  pokeInput.className = 'tc-poke-inp';
+  pokeInput.id = `tc-pi-${slotId}`;
+  pokeInput.value = poke ? poke.display : '';
+  pokeInput.placeholder = 'Pokémon…';
+  pokeInput.autocomplete = 'off';
+  const pokeList = document.createElement('div');
+  pokeList.className = 'poke-list';
+  pokeList.id = `tc-pl-${slotId}`;
+  pokeWrap.appendChild(pokeInput);
+  pokeWrap.appendChild(pokeList);
+  header.appendChild(pokeWrap);
+
+  const excludeBtn = document.createElement('button');
+  excludeBtn.className = 'tc-icon-btn' + (slot.excluded ? ' tc-btn-excl' : '');
+  excludeBtn.title = slot.excluded ? 'Re-include in chart' : 'Exclude from chart';
+  excludeBtn.textContent = slot.excluded ? 'OFF' : 'ON';
+  excludeBtn.onclick = () => tcToggleExclude(slotId);
+  header.appendChild(excludeBtn);
+
+  if (slot.poke) {
+    const clearBtn = document.createElement('button');
+    clearBtn.className = 'tc-icon-btn';
+    clearBtn.title = 'Clear slot';
+    clearBtn.textContent = '✕';
+    clearBtn.onclick = () => tcClearSlot(slotId);
+    header.appendChild(clearBtn);
+  }
+
+  slotEl.appendChild(header);
+
+  if (slot.poke && poke) {
+    // Ability row
+    const abilRow = document.createElement('div');
+    abilRow.style.cssText = 'display:flex;align-items:center;gap:5px';
+    const abilLbl = document.createElement('span');
+    abilLbl.style.cssText = 'font-size:10px;color:var(--text3);flex-shrink:0;width:38px';
+    abilLbl.textContent = 'Ability';
+    const abilSel = document.createElement('select');
+    abilSel.className = 'tc-move-sel';
+    abilSel.style.flex = '1';
+    const abilNone = document.createElement('option');
+    abilNone.value = '';
+    abilNone.textContent = '— Ability —';
+    abilSel.appendChild(abilNone);
+    (poke.abilities || []).forEach(ab => {
+      const info = getAbilityInfo(ab);
+      const opt = document.createElement('option');
+      opt.value = ab;
+      opt.textContent = ab.replace(/-/g,' ').replace(/\b\w/g, c => c.toUpperCase());
+      opt.title = info.desc || '';
+      if (slot.ability === ab) opt.selected = true;
+      abilSel.appendChild(opt);
+    });
+    abilSel.onchange = () => { slot.ability = abilSel.value || null; tcUpdate(); };
+    if (slot.ability) abilSel.title = (getAbilityInfo(slot.ability).desc || '');
+    abilRow.appendChild(abilLbl);
+    abilRow.appendChild(abilSel);
+    slotEl.appendChild(abilRow);
+
+    // Move rows with custom typed dropdowns
+    const learnset = (poke.moves || []).filter(mk => {
+      const m = DB.moves[mk];
+      return m && m.category !== 'status';
+    });
+    const movesDiv = document.createElement('div');
+    movesDiv.className = 'tc-moves';
+    for (let mi = 0; mi < 4; mi++) {
+      movesDiv.appendChild(tcBuildMoveRow(slotId, mi, learnset));
+    }
+    slotEl.appendChild(movesDiv);
+  }
+
+  tcAttachPokeSearch(slotId);
+}
+
+function tcBuildMoveRow(slotId, moveIdx, learnset) {
+  const slot = tcTeam[slotId];
+  const wrap = document.createElement('div');
+  wrap.style.cssText = 'position:relative';
+
+  const input = document.createElement('input');
+  input.type = 'text';
+  input.className = 'tc-poke-inp';
+  input.style.cssText = 'font-size:11px;padding:2px 20px 2px 5px;width:100%';
+  input.placeholder = `Move ${moveIdx + 1}…`;
+  input.autocomplete = 'off';
+
+  const curKey = slot.moves[moveIdx];
+  if (curKey && DB.moves[curKey]) input.value = DB.moves[curKey].display || curKey;
+
+  const xBtn = document.createElement('button');
+  xBtn.style.cssText = 'position:absolute;right:2px;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--text3);cursor:pointer;font-size:11px;padding:0 3px;line-height:1;display:' + (curKey ? 'block' : 'none');
+  xBtn.textContent = '×';
+
+  const dropdown = document.createElement('div');
+  dropdown.className = 'poke-list';
+  dropdown.style.maxHeight = '210px';
+
+  function renderDrop(filter) {
+    dropdown.innerHTML = '';
+    const fl = (filter || '').toLowerCase();
+    const filtered = fl
+      ? learnset.filter(mk => { const m = DB.moves[mk]; return m && (m.display||mk).toLowerCase().includes(fl); })
+      : learnset;
+    if (!filtered.length) { dropdown.classList.remove('open'); return; }
+
+    const byType = {};
+    filtered.forEach(mk => {
+      const m = DB.moves[mk]; if (!m) return;
+      const t = m.type || 'normal';
+      if (!byType[t]) byType[t] = [];
+      byType[t].push({ mk, m });
+    });
+
+    TC_TYPE_ORDER.forEach(t => {
+      if (!byType[t] || !byType[t].length) return;
+      const hdr = document.createElement('div');
+      hdr.style.cssText = 'display:flex;align-items:center;gap:5px;padding:3px 8px 2px;background:var(--bg3);position:sticky;top:0;z-index:1';
+      const badge = document.createElement('span');
+      badge.className = 'type-badge';
+      badge.style.cssText = `background:${getTypeColor(t)};font-size:9px;padding:1px 5px`;
+      badge.textContent = t.toUpperCase();
+      hdr.appendChild(badge);
+      const cnt = document.createElement('span');
+      cnt.style.cssText = 'font-size:10px;color:var(--text3)';
+      cnt.textContent = byType[t].length;
+      hdr.appendChild(cnt);
+      dropdown.appendChild(hdr);
+
+      byType[t].sort((a,b) => (b.m.power||0) - (a.m.power||0)).forEach(({mk, m}) => {
+        const opt = document.createElement('div');
+        opt.className = 'move-opt';
+        if (slot.moves[moveIdx] === mk) opt.style.background = '#e0e7ff';
+
+        const nameEl = document.createElement('span');
+        nameEl.className = 'move-opt-name';
+        nameEl.textContent = m.display || mk;
+
+        const typeEl = document.createElement('span');
+        typeEl.className = 'type-badge';
+        typeEl.style.cssText = `background:${getTypeColor(m.type)};font-size:9px;padding:1px 5px`;
+        typeEl.textContent = m.type.toUpperCase();
+
+        const catEl = document.createElement('span');
+        catEl.className = 'move-cat-icon';
+        catEl.textContent = m.category === 'physical' ? '⚔' : '✨';
+        catEl.title = m.category;
+
+        const bpEl = document.createElement('span');
+        bpEl.className = 'move-bp';
+        bpEl.textContent = m.power ? `${m.power}bp` : '—';
+
+        opt.appendChild(nameEl);
+        opt.appendChild(typeEl);
+        opt.appendChild(catEl);
+        opt.appendChild(bpEl);
+
+        opt.addEventListener('mousedown', e => {
+          e.preventDefault();
+          slot.moves[moveIdx] = mk;
+          input.value = m.display || mk;
+          xBtn.style.display = 'block';
+          dropdown.classList.remove('open');
+          tcUpdate();
+        });
+        dropdown.appendChild(opt);
+      });
+    });
+    dropdown.classList.add('open');
+  }
+
+  xBtn.addEventListener('mousedown', e => {
+    e.preventDefault();
+    slot.moves[moveIdx] = null;
+    input.value = '';
+    xBtn.style.display = 'none';
+    dropdown.classList.remove('open');
+    tcUpdate();
+  });
+
+  input.addEventListener('focus', () => renderDrop(input.value));
+  input.addEventListener('input', () => renderDrop(input.value));
+  input.addEventListener('blur', () => setTimeout(() => dropdown.classList.remove('open'), 150));
+
+  wrap.appendChild(input);
+  wrap.appendChild(xBtn);
+  wrap.appendChild(dropdown);
+  return wrap;
+}
+
+function tcAttachPokeSearch(slotId) {
+  const input = document.getElementById(`tc-pi-${slotId}`);
+  const list = document.getElementById(`tc-pl-${slotId}`);
+  if (!input || !list) return;
+
+  function renderList(q) {
+    const ql = (q || '').toLowerCase().trim();
+    if (!ql) { list.classList.remove('open'); return; }
+    const matches = Object.entries(DB.pokemon)
+      .filter(([k, v]) => v.display.toLowerCase().includes(ql) || k.includes(ql))
+      .slice(0, 20);
+    list.innerHTML = '';
+    if (!matches.length) { list.classList.remove('open'); return; }
+    matches.forEach(([key, poke]) => {
+      const opt = document.createElement('div');
+      opt.className = 'poke-opt';
+      const img = document.createElement('img');
+      img.src = poke.sprite || `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${poke.dex_id}.png`;
+      img.style.cssText = 'width:20px;height:20px;object-fit:contain;image-rendering:pixelated';
+      const name = document.createElement('span');
+      name.textContent = poke.display;
+      opt.appendChild(img);
+      opt.appendChild(name);
+      (poke.types || []).forEach(t => {
+        const pip = document.createElement('span');
+        pip.className = 'type-pip';
+        pip.textContent = t;
+        pip.setAttribute('data-type', t);
+        pip.style.background = getTypeColor(t);
+        opt.appendChild(pip);
+      });
+      opt.addEventListener('mousedown', () => tcSelectPoke(slotId, key));
+      list.appendChild(opt);
+    });
+    list.classList.add('open');
+  }
+
+  input.addEventListener('input', () => renderList(input.value));
+  input.addEventListener('focus', () => renderList(input.value));
+  input.addEventListener('blur', () => setTimeout(() => list.classList.remove('open'), 150));
+}
+
+function tcSelectPoke(slotId, pokeKey) {
+  const slot = tcTeam[slotId];
+  slot.poke = pokeKey;
+  slot.moves = [null, null, null, null];
+  slot.ability = null;
+  tcRenderSlot(slotId);
+  tcUpdate();
+}
+
+function tcToggleExclude(slotId) {
+  tcTeam[slotId].excluded = !tcTeam[slotId].excluded;
+  tcRenderSlot(slotId);
+  tcUpdate();
+}
+
+function tcClearSlot(slotId) {
+  const slot = tcTeam[slotId];
+  slot.poke = null;
+  slot.moves = [null, null, null, null];
+  slot.ability = null;
+  slot.excluded = false;
+  tcRenderSlot(slotId);
+  tcUpdate();
+}
+
+function tcClearAll() {
+  tcTeam.forEach(s => { s.poke = null; s.moves = [null, null, null, null]; s.ability = null; s.excluded = false; });
+  tcBuildSlots();
+  tcUpdate();
+}
+
+function tcUpdate() {
+  tcRenderOffensive();
+  tcRenderDefensive();
+}
+
+function tcRenderOffensive() {
+  const grid = document.getElementById('tc-offense-grid');
+  if (!grid) return;
+  grid.innerHTML = '';
+
+  const active = tcTeam.filter(s => !s.excluded && s.poke);
+
+  TC_TYPES.forEach(defType => {
+    const coveringMons = [];
+    active.forEach(slot => {
+      const hasSE = slot.moves.some(mk => {
+        if (!mk) return false;
+        const effType = tcEffectiveMoveType(mk, slot.ability);
+        if (!effType) return false;
+        return getTypeEff(effType, [defType.toLowerCase()]) > 1;
+      });
+      if (hasSE) coveringMons.push(DB.pokemon[slot.poke]?.display || slot.poke);
+    });
+
+    const count = coveringMons.length;
+    const col = getTypeColor(defType.toLowerCase());
+    let bg, border, textColor;
+    if (active.length === 0 || count === 0) { bg='var(--bg3)'; border='var(--border)'; textColor='var(--text3)'; }
+    else if (count === 1) { bg='#d1fae5'; border='#6ee7b7'; textColor='#065f46'; }
+    else if (count === 2) { bg='#6ee7b7'; border='#059669'; textColor='#064e3b'; }
+    else { bg='#10b981'; border='#059669'; textColor='#fff'; }
+
+    const chip = document.createElement('div');
+    chip.style.cssText = `display:flex;align-items:center;gap:6px;padding:5px 9px;border-radius:5px;font-size:12px;font-weight:600;border:1px solid ${border};background:${bg};color:${textColor};cursor:default;width:100%;box-sizing:border-box`;
+    chip.title = count > 0 ? `Covered by: ${coveringMons.join(', ')}` : 'No coverage';
+    const dot = document.createElement('span');
+    dot.style.cssText = `width:9px;height:9px;border-radius:50%;background:${col};flex-shrink:0`;
+    chip.appendChild(dot);
+    const lbl = document.createElement('span');
+    lbl.style.flex = '1';
+    lbl.textContent = defType;
+    chip.appendChild(lbl);
+    if (count > 0) {
+      const badge = document.createElement('span');
+      badge.textContent = count;
+      badge.style.cssText = `font-size:11px;font-weight:700;opacity:0.7`;
+      chip.appendChild(badge);
+    }
+    grid.appendChild(chip);
+  });
+}
+
+function tcDefScore(eff) {
+  if (eff === 0)    return -2; // immune
+  if (eff <= 0.25)  return -2; // 0.25x double resist
+  if (eff < 1)      return -1; // 0.5x resist
+  if (eff === 1)    return  0;
+  if (eff < 4)      return  1; // 2x weak
+  return 2;                    // 4x double weak
+}
+
+function tcDefColor(score) {
+  if (score <= -5) return { bg:'#1e3a8a', border:'#1e40af', text:'#fff' };
+  if (score === -4) return { bg:'#1d4ed8', border:'#1e40af', text:'#fff' };
+  if (score === -3) return { bg:'#3b82f6', border:'#1d4ed8', text:'#fff' };
+  if (score === -2) return { bg:'#93c5fd', border:'#3b82f6', text:'#1e3a8a' };
+  if (score === -1) return { bg:'#dbeafe', border:'#93c5fd', text:'#1e3a8a' };
+  if (score ===  0) return { bg:'var(--bg3)', border:'var(--border)', text:'var(--text2)' };
+  if (score ===  1) return { bg:'#fee2e2', border:'#fca5a5', text:'#7f1d1d' };
+  if (score ===  2) return { bg:'#fca5a5', border:'#f87171', text:'#7f1d1d' };
+  if (score ===  3) return { bg:'#f87171', border:'#ef4444', text:'#fff' };
+  if (score ===  4) return { bg:'#ef4444', border:'#dc2626', text:'#fff' };
+  return                       { bg:'#b91c1c', border:'#991b1b', text:'#fff' };
+}
+
+function tcRenderDefensive() {
+  const grid = document.getElementById('tc-defense-grid');
+  if (!grid) return;
+  grid.innerHTML = '';
+
+  const active = tcTeam.filter(s => !s.excluded && s.poke);
+
+  TC_TYPES.forEach(atkType => {
+    let score = 0;
+    const weakMons = [], resistMons = [], immuneMons = [];
+
+    active.forEach(slot => {
+      const poke = DB.pokemon[slot.poke];
+      if (!poke) return;
+      if (tcAbilityGrantsImmunity(slot.ability, atkType.toLowerCase())) {
+        score -= 2; immuneMons.push(poke.display); return;
+      }
+      const eff = getTypeEff(atkType.toLowerCase(), poke.types || []);
+      score += tcDefScore(eff);
+      if (eff === 0)      immuneMons.push(poke.display);
+      else if (eff >= 2)  weakMons.push(`${poke.display}${eff >= 4 ? ' (4×)' : ''}`);
+      else if (eff < 1)   resistMons.push(poke.display);
+    });
+
+    const col = getTypeColor(atkType.toLowerCase());
+    const { bg, border, text: textColor } = active.length === 0
+      ? { bg:'var(--bg3)', border:'var(--border)', text:'var(--text2)' }
+      : tcDefColor(score);
+
+    const chip = document.createElement('div');
+    chip.style.cssText = `display:flex;align-items:center;gap:6px;padding:5px 9px;border-radius:5px;font-size:12px;font-weight:600;border:1px solid ${border};background:${bg};color:${textColor};cursor:default;width:100%;box-sizing:border-box`;
+
+    let tooltip = `${atkType} — net score: ${score > 0 ? '+' : ''}${score}`;
+    if (weakMons.length)   tooltip += `\nWeak:   ${weakMons.join(', ')}`;
+    if (resistMons.length) tooltip += `\nResist: ${resistMons.join(', ')}`;
+    if (immuneMons.length) tooltip += `\nImmune: ${immuneMons.join(', ')}`;
+    chip.title = tooltip;
+
+    const dot = document.createElement('span');
+    dot.style.cssText = `width:9px;height:9px;border-radius:50%;background:${col};flex-shrink:0`;
+    chip.appendChild(dot);
+    const lbl = document.createElement('span');
+    lbl.style.flex = '1';
+    lbl.textContent = atkType;
+    chip.appendChild(lbl);
+    if (active.length > 0 && score !== 0) {
+      const badge = document.createElement('span');
+      badge.textContent = (score > 0 ? '+' : '') + score;
+      badge.style.cssText = `font-size:11px;font-weight:700;opacity:0.75`;
+      chip.appendChild(badge);
+    }
+    grid.appendChild(chip);
+  });
+}
 
 // ─────────────────────────────────────────────────────────
 // MOVE OPTIMIZER
