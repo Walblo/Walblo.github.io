@@ -476,6 +476,10 @@ input[type=range]{width:100%;accent-color:#4f46e5;height:4px}
           <span style="font-size:11px;color:var(--text2)">≥</span>
           <input id="ohko-stat-val" type="number" min="0" max="999" value="100" style="background:var(--bg3);border:1px solid var(--border);color:var(--text);padding:4px 6px;border-radius:5px;font-size:12px;outline:none;font-family:var(--font);width:60px">
         </div>
+        <div style="width:1px;height:20px;background:var(--border2);margin:0 2px"></div>
+        <span style="font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.06em">Dmg</span>
+        <input type="range" id="ohko-dmg-threshold" min="1" max="100" step="1" value="100" style="width:72px;accent-color:#4f46e5">
+        <span id="ohko-dmg-threshold-val" style="font-size:11px;font-weight:700;color:var(--accent);min-width:72px;white-space:nowrap">100% OHKO</span>
       </div>
       <!-- Row 2: survive move selector (only shown when Can Survive is active) -->
       <div id="ohko-survive-wrap" style="display:none;padding:6px 12px 8px;border-top:1px solid var(--border);align-items:center;gap:6px;flex-wrap:wrap;background:var(--bg3)">
@@ -662,11 +666,22 @@ async function init() {
     recalc();
 
     // OHKO list control listeners
+    window._ohkoDmgThreshold = 100;
+
     document.getElementById('ohko-search').addEventListener('input', () => {
       if (_ohkoCachedResults.length > 0) _renderOhkoResults(_ohkoCachedResults, _ohkoDefTypes);
     });
     document.getElementById('ohko-sort').addEventListener('change', () => {
       if (_ohkoCachedResults.length > 0) _renderOhkoResults(_ohkoCachedResults, _ohkoDefTypes);
+    });
+
+    document.getElementById('ohko-dmg-threshold').addEventListener('input', e => {
+      const v = parseInt(e.target.value);
+      window._ohkoDmgThreshold = v;
+      const nHko = Math.ceil(100 / v);
+      const lbl = v >= 100 ? '100% OHKO' : v >= 50 ? `${v}% 2HKO` : `${v}% ${nHko}HKO`;
+      document.getElementById('ohko-dmg-threshold-val').textContent = lbl;
+      if (pwTarget.poke) renderPowerPanel();
     });
 
     // OHKO move filter — tag-based like Pokédex
@@ -996,6 +1011,12 @@ function getStatMults(panel) {
 // DAMAGE FORMULA (Gen IX)
 // ─────────────────────────────────────────────────────────
 const SPREAD_MOVES = new Set(['earthquake','discharge','surf','muddy-water','magnitude','rock-slide','heat-wave','blizzard','hyper-voice','dazzling-gleam','glacial-lance','breaking-swipe','dragon-energy','eruption','water-spout','explosion','self-destruct','lava-plume','sludge-wave','petal-blizzard','boomburst','alluring-voice','mystical-fire','icy-wind','electroweb','bulldoze','thousand-arrows','synchronoise','swift','torch-song','razor-wind']);
+const NON_CONTACT_PHYSICAL = new Set(['earthquake','bulldoze','magnitude','bone-rush','bonemerang','bone-club','rock-slide','rock-blast','rock-throw','stone-edge','rock-wrecker','smack-down','bullet-seed','pin-missile','spike-cannon','icicle-spear','twineedle','barrage','self-destruct','explosion','misty-explosion','thousand-arrows','thousand-waves','dragon-darts']);
+const PUNCH_MOVES  = new Set(['ice-punch','fire-punch','thunder-punch','mach-punch','drain-punch','bullet-punch','focus-punch','shadow-punch','sky-uppercut','comet-punch','meteor-mash','plasma-fists','surging-strikes','wicked-blow','power-up-punch','hammer-arm']);
+const BITE_MOVES   = new Set(['bite','crunch','fire-fang','ice-fang','thunder-fang','poison-fang','psychic-fangs','hyper-fang','fishious-rend','jaw-lock','pluck','leech-life']);
+const RECOIL_MOVES = new Set(['double-edge','brave-bird','flare-blitz','wild-charge','head-smash','volt-tackle','take-down','submission','jump-kick','high-jump-kick','wood-hammer','head-charge','light-of-ruin','chloroblast','wave-crash']);
+const SOUND_MOVES  = new Set(['boomburst','hyper-voice','sparkling-aria','clanging-scales','clangorous-soul','overdrive','disarming-voice','echoed-voice','round','snore','uproar','chatter','bug-buzz','metal-sound','screech','growl','roar','sing','supersonic','perish-song','noble-roar','torch-song','alluring-voice']);
+const PULSE_MOVES  = new Set(['aura-sphere','dark-pulse','dragon-pulse','heal-pulse','origin-pulse','water-pulse']);
 function calcDamage(atker, defer, moveKey) {
   const atkPoke = DB.pokemon[atker.poke];
   const defPoke = DB.pokemon[defer.poke];
@@ -3437,11 +3458,12 @@ function _computeOhkoList(pBase, sBase, totalMult, atkEV=0, spaEV=0) {
   D_phys = Math.floor(D_phys * defStageMult);
   D_spec = Math.floor(D_spec * spdStageMult);
 
-  // First pass: generous reject using 120bp STAB 4x
-  const atkAbFirst = 'none';
+  // First pass: generous reject using 120bp STAB 4x, scaled by damage threshold
   const atkAbPhysMult = 1;
   const atkAbPowMult  = 1;
   const stabMultFirst = 1.5;
+  const _thrFactor = (window._ohkoDmgThreshold || 100) / 100;
+  const _thrHP = defHP * _thrFactor; // min-roll must reach this
 
   const allPoke = Object.values(DB.pokemon);
   const candidates = allPoke.filter(p => {
@@ -3450,7 +3472,7 @@ function _computeOhkoList(pBase, sBase, totalMult, atkEV=0, spaEV=0) {
     const maxSpec = calcStat(p.stats['special-attack'], spaEV, 31, 50, 1.1) * spaStageMult * atkNatSpaMult * 1.5;
     const dmgP = Math.floor(Math.floor(Math.floor(22 * maxPhys * 120 / D_phys) / 50 + 2) * 4 * stabMultFirst * atkAbPowMult);
     const dmgS = Math.floor(Math.floor(Math.floor(22 * maxSpec * 120 / D_spec) / 50 + 2) * 4 * stabMultFirst * atkAbPowMult);
-    return dmgP >= defHP || dmgS >= defHP;
+    return Math.floor(dmgP * 0.85) >= _thrHP || Math.floor(dmgS * 0.85) >= _thrHP;
   });
 
   // Second pass: per-move actual damage check
@@ -3514,10 +3536,12 @@ function _computeOhkoList(pBase, sBase, totalMult, atkEV=0, spaEV=0) {
       // SE berry halves damage on SE hits
       const seBerryMult = (defSeBerry && typeEff > 1) ? 0.5 : 1;
 
-      // Actual max-roll damage
+      // Damage: check min roll (85%) against the threshold
       const spreadMult = (pwTarget.doubles && SPREAD_MOVES.has(move.name)) ? 0.75 : 1;
-      const dmg = Math.floor(Math.floor(Math.floor(22 * A * move.power / D) / 50 + 2) * stabMult * typeEff * moveItemMult * moveWeatherMult * seBerryMult * abilPowMult * spreadMult);
-      if (dmg < defHP) continue;
+      const dmgMax = Math.floor(Math.floor(Math.floor(22 * A * move.power / D) / 50 + 2) * stabMult * typeEff * moveItemMult * moveWeatherMult * seBerryMult * abilPowMult * spreadMult);
+      const dmgMin = Math.floor(dmgMax * 0.85);
+      const dmgRequired = Math.ceil(defHP * (window._ohkoDmgThreshold || 100) / 100);
+      if (dmgMin < dmgRequired) continue;
 
       matchingMoves.push({ move, typeEff });
     }
@@ -3543,8 +3567,11 @@ function _renderOhkoResults(results, defTypes) {
 
   body.innerHTML = '';
 
+  const _thr = window._ohkoDmgThreshold || 100;
+  const _thrLabel = _thr >= 100 ? 'OHKO' : _thr >= 50 ? '2HKO' : `${Math.ceil(100/_thr)}HKO`;
+
   if (results.length === 0) {
-    body.innerHTML = '<div style="font-size:12px;color:var(--text3);padding:12px 0">No Pokémon found that can OHKO this target with the current settings.</div>';
+    body.innerHTML = `<div style="font-size:12px;color:var(--text3);padding:12px 0">No Pokémon found that can ${_thrLabel} this target with the current settings (min roll ≥ ${_thr}% HP).</div>`;
     return;
   }
 
@@ -3593,14 +3620,27 @@ function _renderOhkoResults(results, defTypes) {
       };
       function _survStageMult(s) { return s >= 0 ? (2+s)/2 : 2/(2-s); }
 
+      const defAbStr = (pwTarget.defAbility || (defPoke2.abilities||[])[0] || '').toLowerCase();
+
       filtered = filtered.filter(({ poke }) => {
         return window._ohkoSurviveMoves.every(moveKey => {
           const survMove = DB.moves[moveKey];
           if (!survMove) return true;
           const isPhys = survMove.category === 'physical';
 
-          // Attacker (candidate) immunity from ability
-          if (abilImmune[atkAb3] === survMove.type) return true;
+          // Resolve effective move type from defender ability (Pixilate / Aerilate / Galvanize / Refrigerate / Normalize)
+          let survType = survMove.type;
+          let survAbPowMult = 1;
+          if (survMove.type === 'normal') {
+            if      (defAbStr === 'pixilate')    { survType = 'fairy';    survAbPowMult = 1.2; }
+            else if (defAbStr === 'aerilate')    { survType = 'flying';   survAbPowMult = 1.2; }
+            else if (defAbStr === 'galvanize')   { survType = 'electric'; survAbPowMult = 1.2; }
+            else if (defAbStr === 'refrigerate') { survType = 'ice';      survAbPowMult = 1.2; }
+          }
+          if (defAbStr === 'normalize') { survType = 'normal'; survAbPowMult = 1.2; }
+
+          // Candidate (attacker) immunity from its own ability — use effective type
+          if (abilImmune[atkAb3] === survType) return true;
 
           const defAtkEV = isPhys ? (pwTarget.evAtkDef||0) : (pwTarget.evSpADef||0);
           const defNatMult = getNatureMult(pwTarget.nature||'Hardy', isPhys ? 'attack' : 'special-attack');
@@ -3611,19 +3651,24 @@ function _renderOhkoResults(results, defTypes) {
           if (!isPhys && pwTarget.defItem === 'specs') defA = Math.floor(defA * 1.5);
           if (pwTarget.defItem === 'lifeorb') defA = Math.floor(defA * 1.3);
 
-          const survStab = defTypes2.includes(survMove.type) ? 1.5 : 1;
+          // STAB uses effective type; Adaptability gives 2× instead of 1.5×
+          const survStabBase = defAbStr === 'adaptability' ? 2.0 : 1.5;
+          const survStab = defTypes2.includes(survType) ? survStabBase : 1;
+
+          // Weather uses effective type
           let survWeather = 1;
-          if (w === 'sun'  && survMove.type === 'fire')   survWeather = 1.5;
-          if (w === 'sun'  && survMove.type === 'water')  survWeather = 0.5;
-          if (w === 'rain' && survMove.type === 'water')  survWeather = 1.5;
-          if (w === 'rain' && survMove.type === 'fire')   survWeather = 0.5;
+          if (w === 'sun'  && survType === 'fire')   survWeather = 1.5;
+          if (w === 'sun'  && survType === 'water')  survWeather = 0.5;
+          if (w === 'rain' && survType === 'water')  survWeather = 1.5;
+          if (w === 'rain' && survType === 'fire')   survWeather = 0.5;
           const screenFactor = (isPhys && (pwTarget.reflect || pwTarget.auroraveil)) ? screenMult
                              : (!isPhys && (pwTarget.lightscreen || pwTarget.auroraveil)) ? screenMult : 1;
 
-          const typeEff = getTypeEff(survMove.type, poke.types || []);
+          // Type effectiveness uses effective type
+          const typeEff = getTypeEff(survType, poke.types || []);
           if (typeEff === 0) return true;
 
-          // Use attacker defensive EVs, nature, and stages
+          // Candidate defensive EVs, nature, and stages
           const candDefEV  = isPhys ? (pwTarget.evAtkDefStat||0) : (pwTarget.evAtkSpD||0);
           const candDefNat = getNatureMult(pwTarget.atkNature||'Hardy', isPhys ? 'defense' : 'special-defense');
           const candDefStg = isPhys ? (pwTarget.atkDefStg||0) : (pwTarget.atkSpdStg||0);
@@ -3632,7 +3677,7 @@ function _renderOhkoResults(results, defTypes) {
           const candHP = calcHP(poke.stats.hp, pwTarget.evAtkHP||0, 31, LEVEL);
 
           const base = Math.floor(Math.floor(Math.floor(22 * defA * survMove.power / candD) / 50) + 2);
-          const dmg = Math.floor(Math.floor(base * survStab * typeEff) * survWeather * screenFactor);
+          const dmg = Math.floor(Math.floor(base * survStab * typeEff * survAbPowMult) * survWeather * screenFactor);
           return dmg < candHP;
         });
       });
@@ -3698,7 +3743,7 @@ function _renderOhkoResults(results, defTypes) {
   // ── Header ──
   const hdr = document.createElement('div');
   hdr.style.cssText = 'font-size:11px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.08em;margin-bottom:10px;padding-bottom:6px;border-bottom:1px solid var(--border)';
-  hdr.textContent = `${filtered.length}${filtered.length !== results.length ? ' of ' + results.length : ''} Pokémon can OHKO ${DB.pokemon[pwTarget.poke]?.display || ''}`;
+  hdr.textContent = `${filtered.length}${filtered.length !== results.length ? ' of ' + results.length : ''} Pokémon can ${_thrLabel} ${DB.pokemon[pwTarget.poke]?.display || ''} (min roll ≥ ${_thr}%)`;
   body.appendChild(hdr);
 
   // ── Group by move type (when sorting by effectiveness) ──
