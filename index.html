@@ -1,0 +1,641 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Jeremy Seebohm</title>
+  <meta name="description" content="Personal website of Jeremy Seebohm — data & statistics student.">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --accent:        #4f46e5;
+      --accent-light:  #eef2ff;
+      --accent-hover:  #4338ca;
+      --text:          #111827;
+      --muted:         #6b7280;
+      --border:        #e5e7eb;
+      --bg:            #ffffff;
+      --bg-subtle:     #f9fafb;
+      --font: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      --radius: 10px;
+    }
+
+    body {
+      font-family: var(--font);
+      color: var(--text);
+      background: var(--bg);
+      line-height: 1.65;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* ── Header ── */
+    header {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      background: rgba(255, 255, 255, 0.92);
+      backdrop-filter: blur(10px);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .header-inner {
+      max-width: 880px;
+      margin: 0 auto;
+      padding: 0 24px;
+      height: 60px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .logo {
+      font-weight: 700;
+      font-size: 1rem;
+      color: var(--text);
+      text-decoration: none;
+      letter-spacing: -0.02em;
+    }
+
+    nav { display: flex; gap: 2px; }
+
+    .nav-btn {
+      padding: 6px 14px;
+      border: none;
+      background: none;
+      font-family: var(--font);
+      font-size: 0.875rem;
+      font-weight: 500;
+      color: var(--muted);
+      cursor: pointer;
+      border-radius: 7px;
+      transition: color 0.12s, background 0.12s;
+    }
+    .nav-btn:hover  { color: var(--text); background: var(--bg-subtle); }
+    .nav-btn.active { color: var(--accent); background: var(--accent-light); font-weight: 600; }
+
+    /* ── Layout ── */
+    main { max-width: 880px; margin: 0 auto; padding: 0 24px; flex: 1; }
+
+    .section { display: none; padding: 56px 0 72px; }
+    .section.active { display: block; }
+
+    /* ── Shared typography ── */
+    .eyebrow {
+      font-size: 0.75rem;
+      font-weight: 700;
+      color: var(--accent);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      margin-bottom: 10px;
+    }
+
+    .section-title {
+      font-size: 1.875rem;
+      font-weight: 800;
+      letter-spacing: -0.025em;
+      margin-bottom: 8px;
+    }
+
+    .section-sub {
+      color: var(--muted);
+      font-size: 0.9375rem;
+      margin-bottom: 40px;
+    }
+
+    hr.divider { border: none; border-top: 1px solid var(--border); margin: 44px 0; }
+
+    /* ── Buttons ── */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 20px;
+      border-radius: 8px;
+      font-family: var(--font);
+      font-size: 0.875rem;
+      font-weight: 600;
+      cursor: pointer;
+      text-decoration: none;
+      border: none;
+      transition: background 0.12s, border-color 0.12s;
+    }
+    .btn-primary { background: var(--accent); color: #fff; }
+    .btn-primary:hover { background: var(--accent-hover); }
+    .btn-outline  { background: transparent; color: var(--text); border: 1.5px solid var(--border); }
+    .btn-outline:hover { border-color: #9ca3af; }
+
+    /* ── Tags ── */
+    .tag {
+      display: inline-block;
+      padding: 3px 10px;
+      background: var(--accent-light);
+      color: var(--accent);
+      border-radius: 99px;
+      font-size: 0.775rem;
+      font-weight: 600;
+    }
+
+    .tags { display: flex; flex-wrap: wrap; gap: 6px; }
+
+    /* ────────────────────────────────────────
+       ABOUT
+    ──────────────────────────────────────── */
+    .hero { padding: 72px 0 44px; }
+
+    .hero h1 {
+      font-size: clamp(2rem, 5vw, 3.25rem);
+      font-weight: 800;
+      letter-spacing: -0.035em;
+      line-height: 1.1;
+      margin-bottom: 18px;
+    }
+
+    .hero-sub {
+      font-size: 1.0625rem;
+      color: var(--muted);
+      max-width: 540px;
+      margin-bottom: 32px;
+    }
+
+    .hero-actions { display: flex; gap: 10px; flex-wrap: wrap; }
+
+    .about-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+
+    .about-card {
+      background: var(--bg-subtle);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 22px;
+    }
+
+    .about-card h3 {
+      font-size: 0.7rem;
+      font-weight: 700;
+      color: var(--accent);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      margin-bottom: 8px;
+    }
+
+    .about-card p { font-size: 0.875rem; color: var(--muted); }
+
+    /* ────────────────────────────────────────
+       PROJECTS
+    ──────────────────────────────────────── */
+    .projects-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 18px;
+    }
+
+    .project-card {
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      transition: border-color 0.15s, box-shadow 0.15s;
+    }
+
+    .project-card:hover {
+      border-color: var(--accent);
+      box-shadow: 0 4px 20px rgba(79, 70, 229, 0.08);
+    }
+
+    .project-card h3 {
+      font-size: 1rem;
+      font-weight: 700;
+      margin-bottom: 8px;
+    }
+
+    .project-card p {
+      font-size: 0.875rem;
+      color: var(--muted);
+      flex: 1;
+      margin-bottom: 16px;
+    }
+
+    .project-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      margin-top: 14px;
+      font-size: 0.825rem;
+      font-weight: 600;
+      color: var(--accent);
+      text-decoration: none;
+    }
+    .project-link:hover { text-decoration: underline; }
+
+    /* ────────────────────────────────────────
+       RESUME
+    ──────────────────────────────────────── */
+    .resume-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 40px;
+      flex-wrap: wrap;
+      gap: 16px;
+    }
+
+    .timeline { display: flex; flex-direction: column; }
+
+    .timeline-item {
+      display: grid;
+      grid-template-columns: 150px 1fr;
+      gap: 24px;
+      padding: 24px 0;
+      border-bottom: 1px solid var(--border);
+    }
+    .timeline-item:last-child { border-bottom: none; }
+
+    .tl-date {
+      font-size: 0.8rem;
+      color: var(--muted);
+      font-weight: 500;
+      padding-top: 3px;
+    }
+
+    .tl-body h3 { font-size: 1rem; font-weight: 700; margin-bottom: 2px; }
+    .tl-org { font-size: 0.85rem; color: var(--accent); font-weight: 600; margin-bottom: 8px; }
+    .tl-body p { font-size: 0.85rem; color: var(--muted); }
+
+    .skills-section { margin-top: 48px; }
+
+    .skills-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 14px;
+      margin-top: 16px;
+    }
+
+    .skill-group {
+      background: var(--bg-subtle);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 16px;
+    }
+
+    .skill-group h4 {
+      font-size: 0.72rem;
+      font-weight: 700;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.07em;
+      margin-bottom: 10px;
+    }
+
+    /* ────────────────────────────────────────
+       CONTACT
+    ──────────────────────────────────────── */
+    .contact-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+      margin-top: 32px;
+    }
+
+    .contact-card {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      padding: 20px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      text-decoration: none;
+      color: var(--text);
+      transition: border-color 0.15s, box-shadow 0.15s;
+    }
+    .contact-card:hover {
+      border-color: var(--accent);
+      box-shadow: 0 2px 14px rgba(79, 70, 229, 0.08);
+    }
+
+    .contact-icon {
+      width: 44px;
+      height: 44px;
+      background: var(--accent-light);
+      color: var(--accent);
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.1rem;
+      font-weight: 700;
+      flex-shrink: 0;
+    }
+
+    .contact-info span {
+      display: block;
+      font-size: 0.72rem;
+      color: var(--muted);
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 3px;
+    }
+    .contact-info strong { font-size: 0.875rem; }
+
+    /* ── Footer ── */
+    footer {
+      border-top: 1px solid var(--border);
+      padding: 24px;
+      text-align: center;
+      font-size: 0.8rem;
+      color: var(--muted);
+    }
+
+    /* ── Responsive ── */
+    @media (max-width: 600px) {
+      .about-grid      { grid-template-columns: 1fr; }
+      .projects-grid   { grid-template-columns: 1fr; }
+      .skills-grid     { grid-template-columns: 1fr 1fr; }
+      .contact-grid    { grid-template-columns: 1fr; }
+      .timeline-item   { grid-template-columns: 1fr; gap: 2px; }
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="header-inner">
+    <a href="#" class="logo" onclick="showTab('about'); return false;">Jeremy Seebohm</a>
+    <nav>
+      <button class="nav-btn active" onclick="showTab('about')">About</button>
+      <button class="nav-btn"        onclick="showTab('projects')">Projects</button>
+      <button class="nav-btn"        onclick="showTab('resume')">Resume</button>
+      <button class="nav-btn"        onclick="showTab('contact')">Contact</button>
+    </nav>
+  </div>
+</header>
+
+<main>
+
+  <!-- ══════════════ ABOUT ══════════════ -->
+  <section id="tab-about" class="section active">
+
+    <div class="hero">
+      <div class="eyebrow">Data &amp; Statistics</div>
+      <h1>Hi, I'm<br>Jeremy Seebohm.</h1>
+      <p class="hero-sub">
+        An early-career data and statistics student passionate about turning complex
+        data into clear, meaningful insights. I enjoy statistical analysis, building
+        tools, and making sense of messy numbers.
+      </p>
+      <div class="hero-actions">
+        <button class="btn btn-primary" onclick="showTab('projects')">View My Work</button>
+        <button class="btn btn-outline" onclick="showTab('contact')">Get In Touch</button>
+      </div>
+    </div>
+
+    <hr class="divider">
+
+    <div class="eyebrow">About Me</div>
+    <p style="max-width:600px; margin-bottom:32px; color:var(--muted);">
+      I'm studying statistics and data science with a focus on analytical problem-solving
+      and data-driven decision making. I'm currently building my skills through coursework
+      and personal projects, and I'm actively looking for opportunities to apply them in
+      a professional setting.
+    </p>
+
+    <div class="about-grid">
+      <div class="about-card">
+        <h3>Interests</h3>
+        <p>Statistical modeling, data visualization, machine learning, and building
+           web tools that make data more accessible and interpretable.</p>
+      </div>
+      <div class="about-card">
+        <h3>Currently</h3>
+        <p>Completing my degree, working on personal data projects, and seeking
+           internships or co-op positions in data analysis or statistics.</p>
+      </div>
+      <div class="about-card">
+        <h3>Skills</h3>
+        <div class="tags" style="margin-top:6px;">
+          <span class="tag">Python</span>
+          <span class="tag">R</span>
+          <span class="tag">SQL</span>
+          <span class="tag">JavaScript</span>
+          <span class="tag">Statistics</span>
+          <span class="tag">Data Viz</span>
+        </div>
+      </div>
+      <div class="about-card">
+        <h3>Looking For</h3>
+        <p>Data analysis internships, co-op roles, or entry-level positions where
+           I can contribute analytically and continue growing.</p>
+      </div>
+    </div>
+
+  </section>
+
+  <!-- ══════════════ PROJECTS ══════════════ -->
+  <section id="tab-projects" class="section">
+
+    <div class="eyebrow">Projects</div>
+    <h2 class="section-title">Things I've Built</h2>
+    <p class="section-sub">A selection of personal and academic projects across data analysis and web development.</p>
+
+    <div class="projects-grid">
+
+      <div class="project-card">
+        <h3>Project One</h3>
+        <p>Describe a data analysis, statistical model, or tool you built. What was
+           the question? What data did you use? What did you find?</p>
+        <div class="tags">
+          <span class="tag">Python</span>
+          <span class="tag">Pandas</span>
+          <span class="tag">Matplotlib</span>
+        </div>
+      </div>
+
+      <div class="project-card">
+        <h3>Project Two</h3>
+        <p>Another project — a regression model, a dashboard, a scraper, an analysis.
+           Replace this with your real work.</p>
+        <div class="tags">
+          <span class="tag">R</span>
+          <span class="tag">ggplot2</span>
+        </div>
+      </div>
+
+      <div class="project-card">
+        <h3>Project Three</h3>
+        <p>Add projects as you complete them. Even small notebooks and scripts count
+           as evidence of skill and curiosity.</p>
+        <div class="tags">
+          <span class="tag">SQL</span>
+          <span class="tag">Tableau</span>
+        </div>
+      </div>
+
+      <div class="project-card">
+        <h3>Project Four</h3>
+        <p>Describe what the project does, why you built it, and what you learned.
+           Link to GitHub if it's public.</p>
+        <div class="tags">
+          <span class="tag">JavaScript</span>
+          <span class="tag">HTML/CSS</span>
+        </div>
+      </div>
+
+    </div>
+
+  </section>
+
+  <!-- ══════════════ RESUME ══════════════ -->
+  <section id="tab-resume" class="section">
+
+    <div class="resume-header">
+      <div>
+        <div class="eyebrow">Resume</div>
+        <h2 class="section-title">Experience &amp; Education</h2>
+      </div>
+      <!-- Link to a PDF resume when you have one ready:
+      <a href="resume.pdf" class="btn btn-outline" target="_blank">Download PDF ↓</a>
+      -->
+    </div>
+
+    <div class="eyebrow" style="margin-bottom:16px;">Education</div>
+    <div class="timeline">
+      <div class="timeline-item">
+        <div class="tl-date">2023 – Present</div>
+        <div class="tl-body">
+          <h3>Bachelor's — Statistics / Data Science</h3>
+          <div class="tl-org">Your University Name</div>
+          <p>Relevant coursework: probability, regression analysis, statistical inference,
+             data visualization, machine learning. Expected graduation: YYYY.</p>
+        </div>
+      </div>
+    </div>
+
+    <hr class="divider">
+
+    <div class="eyebrow" style="margin-bottom:16px;">Experience</div>
+    <div class="timeline">
+      <div class="timeline-item">
+        <div class="tl-date">Month YYYY</div>
+        <div class="tl-body">
+          <h3>Role / Position</h3>
+          <div class="tl-org">Company or Organization</div>
+          <p>What you did, what tools or methods you used, and what impact it had.
+             Keep it to 1–2 sentences.</p>
+        </div>
+      </div>
+      <div class="timeline-item">
+        <div class="tl-date">Month YYYY</div>
+        <div class="tl-body">
+          <h3>Another Role</h3>
+          <div class="tl-org">Another Organization</div>
+          <p>Add more entries as you gain experience. Academic projects and
+             research assistantships count too.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="skills-section">
+      <div class="eyebrow" style="margin-bottom:16px;">Skills</div>
+      <div class="skills-grid">
+        <div class="skill-group">
+          <h4>Languages</h4>
+          <div class="tags">
+            <span class="tag">Python</span>
+            <span class="tag">R</span>
+            <span class="tag">SQL</span>
+            <span class="tag">JavaScript</span>
+          </div>
+        </div>
+        <div class="skill-group">
+          <h4>Data &amp; Analysis</h4>
+          <div class="tags">
+            <span class="tag">Pandas</span>
+            <span class="tag">NumPy</span>
+            <span class="tag">ggplot2</span>
+            <span class="tag">Matplotlib</span>
+          </div>
+        </div>
+        <div class="skill-group">
+          <h4>Tools</h4>
+          <div class="tags">
+            <span class="tag">Git</span>
+            <span class="tag">Jupyter</span>
+            <span class="tag">VS Code</span>
+            <span class="tag">Tableau</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </section>
+
+  <!-- ══════════════ CONTACT ══════════════ -->
+  <section id="tab-contact" class="section">
+
+    <div class="eyebrow">Contact</div>
+    <h2 class="section-title">Get In Touch</h2>
+    <p class="section-sub">
+      I'm open to internships, co-op positions, and opportunities to collaborate on
+      interesting data and analytics projects.
+    </p>
+
+    <div class="contact-grid">
+      <a href="mailto:jseebohm2@gmail.com" class="contact-card">
+        <div class="contact-icon">✉</div>
+        <div class="contact-info">
+          <span>Email</span>
+          <strong>jseebohm2@gmail.com</strong>
+        </div>
+      </a>
+      <a href="https://github.com/Walblo" class="contact-card" target="_blank" rel="noopener">
+        <div class="contact-icon">GH</div>
+        <div class="contact-info">
+          <span>GitHub</span>
+          <strong>github.com/Walblo</strong>
+        </div>
+      </a>
+      <!-- Update the LinkedIn URL to match your actual profile handle -->
+      <a href="https://linkedin.com/in/jeremy-seebohm" class="contact-card" target="_blank" rel="noopener">
+        <div class="contact-icon">in</div>
+        <div class="contact-info">
+          <span>LinkedIn</span>
+          <strong>linkedin.com/in/jeremy-seebohm</strong>
+        </div>
+      </a>
+    </div>
+
+    <p style="margin-top:40px; font-size:0.875rem; color:var(--muted);">
+      I typically respond within a few days. Looking forward to connecting.
+    </p>
+
+  </section>
+
+</main>
+
+<footer>
+  <p>&copy; 2026 Jeremy Seebohm</p>
+</footer>
+
+<script>
+  const TABS = ['about', 'projects', 'resume', 'contact'];
+
+  function showTab(name) {
+    TABS.forEach(t => {
+      document.getElementById('tab-' + t).classList.toggle('active', t === name);
+    });
+    document.querySelectorAll('.nav-btn').forEach((btn, i) => {
+      btn.classList.toggle('active', TABS[i] === name);
+    });
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+</script>
+
+</body>
+</html>
